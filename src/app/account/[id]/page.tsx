@@ -4,8 +4,10 @@ import { use, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, Brain, ShieldAlert, Activity, Play, Layers, BadgeAlert, 
-  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles
+  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles, Inbox, BrainCircuit
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface TimelineItem {
   id: string;
@@ -504,8 +506,9 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
               {/* Memory List */}
               {memories.length === 0 ? (
-                <div className="py-4 text-center text-muted-foreground text-xs border border-dashed border-border rounded-lg">
-                  No memories cached for this account. Teach the agent via chat, or log a memory below!
+                <div className="py-8 px-4 flex flex-col items-center justify-center text-center text-muted-foreground text-xs border border-dashed border-border rounded-lg bg-card/20">
+                  <BrainCircuit className="h-8 w-8 mb-3 opacity-40 text-blue-400" />
+                  <p className="max-w-[200px]">No memories cached for this account. Teach the agent via chat, or log a memory below!</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2.5 max-h-48 overflow-y-auto pr-1">
@@ -563,8 +566,9 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Customer Journey Timeline</h2>
               
               {timeline.length === 0 ? (
-                <div className="bg-background border border-border rounded-xl p-12 text-center text-xs text-muted-foreground">
-                  No activity logs registered.
+                <div className="bg-background border border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                  <Inbox className="h-10 w-10 mb-4 opacity-30" />
+                  <p>No activity logs registered for this account.</p>
                 </div>
               ) : (
                 <div className="relative pl-6 border-l border-border/80 ml-3 flex flex-col gap-6">
@@ -672,12 +676,14 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                       key={idx} 
                       className={`max-w-[85%] ${isUser ? 'self-end' : 'self-start'} animate-fade-in`}
                     >
-                      <div className={`p-3 rounded-lg text-xs leading-relaxed ${
+                      <div className={`p-4 rounded-xl text-sm leading-relaxed prose prose-invert max-w-none ${
                         isUser 
-                          ? 'bg-blue-600 text-foreground rounded-br-none' 
-                          : 'bg-card border border-border text-foreground rounded-bl-none'
+                          ? 'bg-blue-600 text-foreground rounded-br-none prose-p:text-white prose-strong:text-white' 
+                          : 'bg-card border border-border text-foreground rounded-bl-none prose-p:text-foreground prose-strong:text-foreground'
                       }`}>
-                        {msg.text}
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.text}
+                        </ReactMarkdown>
                       </div>
                       <span className={`text-[9px] text-muted-foreground mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
                         {msg.timestamp}

@@ -4,9 +4,11 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Search, LayoutDashboard, Brain, Activity, ShieldAlert, CheckCircle2, 
-  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database
+  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database, SearchX
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessage {
   sender: 'user' | 'agent';
@@ -600,12 +602,33 @@ export default function Dashboard() {
                   </h3>
 
                   {loading ? (
-                    <div className="bg-background/40 border border-border rounded-xl p-12 text-center">
-                      <span className="text-xs text-muted-foreground animate-pulse">Loading accounts from Elasticsearch...</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-background/40 border border-border rounded-xl p-4.5 flex flex-col gap-3.5 h-[140px] animate-pulse">
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-2 w-1/2">
+                              <div className="h-4 bg-muted rounded w-full"></div>
+                              <div className="h-3 bg-muted/60 rounded w-2/3"></div>
+                            </div>
+                            <div className="h-5 bg-muted rounded w-16"></div>
+                          </div>
+                          <div className="flex justify-between items-center border-t border-border/50 pt-2 mt-auto">
+                            <div className="space-y-1 w-16">
+                              <div className="h-2 bg-muted/60 rounded w-full"></div>
+                              <div className="h-3 bg-muted rounded w-3/4"></div>
+                            </div>
+                            <div className="space-y-1 w-16 items-end flex flex-col">
+                              <div className="h-2 bg-muted/60 rounded w-full"></div>
+                              <div className="h-3 bg-muted rounded w-3/4"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : filteredAccounts.length === 0 ? (
-                    <div className="bg-background/40 border border-border rounded-xl p-12 text-center text-xs text-muted-foreground">
-                      No accounts matching "{searchTerm}" found.
+                    <div className="bg-background/40 border border-border border-dashed rounded-xl p-12 flex flex-col items-center justify-center text-center text-xs text-muted-foreground">
+                      <SearchX className="h-10 w-10 mb-4 opacity-30" />
+                      <p>No accounts matching "{searchTerm}" found.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -946,12 +969,20 @@ export default function Dashboard() {
 
                   {/* Submission Confirmation Banner (Bug 8 / Suggestion 5) */}
                   {simMessage && (
-                    <div className={`p-3.5 rounded-xl border flex flex-col gap-2.5 ${
+                    <div className={`p-3.5 rounded-xl border flex flex-col gap-2.5 relative ${
                       simMessage.startsWith('Success') 
                         ? 'bg-emerald-950/20 text-emerald-350 border-emerald-900/40' 
                         : 'bg-red-950/20 text-red-350 border-red-900/40'
                     }`}>
-                      <span className="font-semibold text-xs">{simMessage}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setSimMessage('')}
+                        className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition cursor-pointer"
+                        aria-label="Dismiss notification"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="font-semibold text-xs pr-6">{simMessage}</span>
                       {lastSubmittedEvent && (
                         <div className="text-[11px] text-muted-foreground mt-1 border-t border-border/80 pt-2.5 flex flex-col gap-2">
                           <div className="flex justify-between items-center">
@@ -1008,12 +1039,14 @@ export default function Dashboard() {
                         key={idx} 
                         className={`max-w-[80%] ${isUser ? 'self-end' : 'self-start'} animate-fade-in`}
                       >
-                        <div className={`p-3.5 rounded-xl text-xs leading-relaxed ${
+                        <div className={`p-4 rounded-xl text-sm leading-relaxed prose prose-invert max-w-none ${
                           isUser 
-                            ? 'bg-blue-600 text-foreground rounded-br-none' 
-                            : 'bg-card border border-border text-foreground rounded-bl-none'
+                            ? 'bg-blue-600 text-foreground rounded-br-none prose-p:text-white prose-strong:text-white' 
+                            : 'bg-card border border-border text-foreground rounded-bl-none prose-p:text-foreground prose-strong:text-foreground'
                         }`}>
-                          {msg.text}
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.text}
+                          </ReactMarkdown>
                         </div>
                         <span className={`text-[9px] text-muted-foreground mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
                           {msg.timestamp}
