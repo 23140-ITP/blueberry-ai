@@ -4,10 +4,11 @@ import { use, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, Brain, ShieldAlert, Activity, Play, Layers, BadgeAlert, 
-  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles, Inbox, BrainCircuit
+  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles, Inbox, BrainCircuit, ChevronDown
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useRouter } from 'next/navigation';
 
 interface TimelineItem {
   id: string;
@@ -30,8 +31,10 @@ interface ChatMessage {
 
 export default function AccountDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: accountId } = use(params);
+  const router = useRouter();
   
   const [account, setAccount] = useState<any>(null);
+  const [allAccounts, setAllAccounts] = useState<any[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +133,13 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       
       const data = await res.json();
       setAccount(data.account);
+
+      // Fetch all accounts for the switcher
+      const allAccRes = await fetch('/api/accounts');
+      if (allAccRes.ok) {
+        const allAccData = await allAccRes.json();
+        setAllAccounts(allAccData.accounts || []);
+      }
 
       // Construct a unified, sorted timeline
       const unifiedTimeline: TimelineItem[] = [];
@@ -301,14 +311,21 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-[1500px] mx-auto px-4 py-8 md:px-8 min-h-screen flex flex-col">
-      {/* Back Button */}
-      <div className="mb-6">
+      {/* Navigation Buttons */}
+      <div className="mb-6 flex justify-between items-center">
         <Link 
           href="/" 
-          className="cursor-pointer text-muted-foreground hover:text-foreground text-xs font-semibold flex items-center gap-1.5 self-start transition"
+          className="cursor-pointer text-muted-foreground hover:text-foreground text-xs font-semibold flex items-center gap-1.5 transition"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to Retention Radar
+        </Link>
+        <Link 
+          href="/?view=copilot" 
+          className="cursor-pointer text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition"
+        >
+          <Brain className="h-3.5 w-3.5" />
+          Open Blueberry Copilot
         </Link>
       </div>
 
@@ -337,7 +354,24 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 Customer War Room
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground tracking-tight mb-1">{account.company_name}</h1>
+                <div className="flex items-center gap-2 mb-1">
+                  <select 
+                    value={accountId}
+                    onChange={(e) => router.push(`/account/${e.target.value}`)}
+                    className="text-xl font-bold text-foreground tracking-tight bg-transparent border-none appearance-none cursor-pointer focus:outline-none hover:bg-muted/50 rounded px-1 -ml-1 transition"
+                  >
+                    {allAccounts.length > 0 ? (
+                      allAccounts.map((acc: any) => (
+                        <option key={acc.account_id} value={acc.account_id} className="bg-background text-foreground text-sm">
+                          {acc.company_name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value={accountId} className="bg-background text-foreground">{account.company_name}</option>
+                    )}
+                  </select>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground pointer-events-none -ml-1" />
+                </div>
                 <span className="text-xs text-muted-foreground block">
                   Account ID: <strong className="text-muted-foreground">{account.account_id}</strong> • Industry: {account.industry}
                 </span>
