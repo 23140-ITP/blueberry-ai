@@ -1,0 +1,269 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Blueberry AI Elastic Tools",
+    "description": "API tools for querying and updating customer retention data stored in Elasticsearch Serverless.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://sharp-geese-repair.loca.lt",
+      "description": "Local development server (expose via ngrok or localtunnel)"
+    }
+  ],
+  "paths": {
+    "/api/tools/account-context": {
+      "get": {
+        "summary": "Get Account Context",
+        "description": "Fetches complete customer details, open tickets, recent CSM health notes, and call transcripts from Elasticsearch.",
+        "operationId": "getAccountContext",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "description": "The unique identifier of the customer account (e.g. ACC-002)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved account context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "account": {
+                      "type": "object",
+                      "properties": {
+                        "account_id": { "type": "string" },
+                        "company_name": { "type": "string" },
+                        "industry": { "type": "string" },
+                        "arr": { "type": "number" },
+                        "risk_score": { "type": "number" },
+                        "status": { "type": "string" },
+                        "last_contact_date": { "type": "string" }
+                      }
+                    },
+                    "tickets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ticket_id": { "type": "string" },
+                          "account_id": { "type": "string" },
+                          "subject": { "type": "string" },
+                          "description": { "type": "string" },
+                          "status": { "type": "string" },
+                          "priority": { "type": "string" },
+                          "created_at": { "type": "string" }
+                        }
+                      }
+                    },
+                    "healthNotes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "note_id": { "type": "string" },
+                          "account_id": { "type": "string" },
+                          "author": { "type": "string" },
+                          "note_text": { "type": "string" },
+                          "sentiment": { "type": "string" },
+                          "created_at": { "type": "string" }
+                        }
+                      }
+                    },
+                    "callTranscripts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "call_id": { "type": "string" },
+                          "account_id": { "type": "string" },
+                          "transcript": { "type": "string" },
+                          "summary": { "type": "string" },
+                          "duration_minutes": { "type": "integer" },
+                          "date": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/tools/search-issues": {
+      "get": {
+        "summary": "Search Customer Issues",
+        "description": "Searches for matching tickets, notes, and transcripts semantically using a natural language query.",
+        "operationId": "searchIssues",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "The natural language search query (e.g. 'SSO login error' or 'threatened to churn')",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "query",
+            "description": "Optional account ID to filter search results to a specific customer",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tickets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_score": { "type": "number" },
+                          "ticket_id": { "type": "string" },
+                          "account_id": { "type": "string" },
+                          "subject": { "type": "string" },
+                          "description": { "type": "string" },
+                          "status": { "type": "string" },
+                          "priority": { "type": "string" }
+                        }
+                      }
+                    },
+                    "transcripts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_score": { "type": "number" },
+                          "call_id": { "type": "string" },
+                          "account_id": { "type": "string" },
+                          "transcript": { "type": "string" },
+                          "summary": { "type": "string" }
+                        }
+                      }
+                    },
+                    "healthNotes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_score": { "type": "number" },
+                          "note_id": { "type": "string" },
+                          "account_id": { "type": "string" },
+                          "note_text": { "type": "string" },
+                          "sentiment": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/tools/write-note": {
+      "post": {
+        "summary": "Write Health Note",
+        "description": "Adds a new customer health note or escalation summary into Elasticsearch.",
+        "operationId": "writeHealthNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "accountId",
+                  "noteText",
+                  "sentiment"
+                ],
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "description": "The unique identifier of the customer account (e.g. ACC-002)"
+                  },
+                  "noteText": {
+                    "type": "string",
+                    "description": "The content of the note or escalation summary"
+                  },
+                  "sentiment": {
+                    "type": "string",
+                    "description": "The sentiment associated with the note",
+                    "enum": [
+                      "Positive",
+                      "Neutral",
+                      "Negative"
+                    ]
+                  },
+                  "author": {
+                    "type": "string",
+                    "description": "The author of the note",
+                    "default": "Blueberry Copilot"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully indexed health note",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "note": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  }
+}
