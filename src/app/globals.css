@@ -1,51 +1,67 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
 
-:root {
-  --bg-main: #070913;
-  --bg-card: rgba(18, 24, 46, 0.7);
-  --bg-card-hover: rgba(26, 34, 64, 0.95);
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-glow: rgba(59, 130, 246, 0.12);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  
-  --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.25);
-  
-  --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.15);
-  --warning: #f59e0b;
-  --warning-glow: rgba(245, 158, 11, 0.15);
-  --danger: #ef4444;
-  --danger-glow: rgba(239, 68, 68, 0.15);
 
-  --font-title: 'Outfit', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
+@theme {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: 'Outfit', sans-serif;
   
-  --glass-effect: backdrop-filter: blur(16px);
-  --shadow-lg: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --color-border: hsl(240 5.9% 13%);
+  --color-input: hsl(240 5.9% 10%);
+  --color-ring: hsl(240 4.9% 83.9%);
+  --color-background: hsl(240 10% 3.9%);
+  --color-foreground: hsl(0 0% 98%);
+  
+  --color-primary: hsl(0 0% 98%);
+  --color-primary-foreground: hsl(240 5.9% 10%);
+  
+  --color-secondary: hsl(240 3.7% 15.9%);
+  --color-secondary-foreground: hsl(0 0% 98%);
+  
+  --color-destructive: hsl(0 62.8% 30.6%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  
+  --color-muted: hsl(240 3.7% 15.9%);
+  --color-muted-foreground: hsl(240 5% 64.9%);
+  
+  --color-accent: hsl(240 3.7% 15.9%);
+  --color-accent-foreground: hsl(0 0% 98%);
+  
+  --color-popover: hsl(240 10% 3.9%);
+  --color-popover-foreground: hsl(0 0% 98%);
+  
+  --color-card: hsl(240 10% 5.9%);
+  --color-card-foreground: hsl(0 0% 98%);
+  
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+
+  --animate-fade-in: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
-
-body {
-  background: radial-gradient(circle at 50% 0%, #0f1636 0%, var(--bg-main) 70%);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  min-height: 100vh;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background: radial-gradient(circle at 50% 0%, hsl(240, 10%, 7%) 0%, hsl(240, 10% , 3.9%) 100%);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
 }
 
 /* Custom Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.05) transparent;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -54,67 +70,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Glass Panels */
-.glass-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-lg);
-  transition: var(--transition);
-}
-
-.glass-panel:hover {
-  border-color: var(--border-glow);
-  box-shadow: 0 12px 40px -12px rgba(59, 130, 246, 0.1);
-}
-
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-title);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-/* Risk Badges */
-.risk-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 99px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.risk-badge.critical {
-  background: var(--danger-glow);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.05);
-}
-
-.risk-badge.at-risk {
-  background: var(--warning-glow);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.05);
-}
-
-.risk-badge.healthy {
-  background: var(--success-glow);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.05);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Glowing Pulse dots */
@@ -123,50 +83,32 @@ h1, h2, h3, h4, h5, h6 {
   height: 8px;
   border-radius: 50%;
   position: relative;
+  display: inline-block;
 }
 
-.pulse-dot.critical { background: var(--danger); }
+.pulse-dot.critical { @apply bg-red-500; }
 .pulse-dot.critical::after {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: 50%;
-  border: 2px solid var(--danger);
-  animation: pulse 1.5s infinite;
+  border: 2px solid #ef4444;
+  animation: pulse-ring 1.5s infinite;
 }
 
-.pulse-dot.at-risk { background: var(--warning); }
+.pulse-dot.at-risk { @apply bg-amber-500; }
 .pulse-dot.at-risk::after {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: 50%;
-  border: 2px solid var(--warning);
-  animation: pulse 1.5s infinite;
+  border: 2px solid #f59e0b;
+  animation: pulse-ring 1.5s infinite;
 }
 
-.pulse-dot.healthy { background: var(--success); }
+.pulse-dot.healthy { @apply bg-emerald-500; }
 
-@keyframes pulse {
+@keyframes pulse-ring {
   0% { transform: scale(1); opacity: 1; }
   100% { transform: scale(3); opacity: 0; }
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-pulse {
-  animation: pulse-opacity 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse-opacity {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .5; }
 }

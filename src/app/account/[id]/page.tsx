@@ -2,6 +2,10 @@
 
 import { use, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { 
+  ArrowLeft, Brain, ShieldAlert, Activity, Play, Layers, BadgeAlert, 
+  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText
+} from 'lucide-react';
 
 interface TimelineItem {
   id: string;
@@ -49,6 +53,32 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const [escalating, setEscalating] = useState(false);
   const [showEscalationModal, setShowEscalationModal] = useState(false);
 
+  // Chat states
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. How can I help you manage this account's retention status today?", timestamp: '' }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sessionId, setSessionId] = useState('');
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize session ID and timestamp on mount to prevent SSR hydration mismatch
+  useEffect(() => {
+    setSessionId(`session-${Date.now()}`);
+    setMessages(prev => [
+      {
+        ...prev[0],
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
+  }, []);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sending]);
+
   const fetchRunbook = async (ticketId: string) => {
     setLoadingRunbook(true);
     setRecommendedRunbook(null);
@@ -85,32 +115,6 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       setEscalating(false);
     }
   };
-
-  // Chat states
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. How can I help you manage this account's retention status today?", timestamp: '' }
-  ]);
-  const [inputValue, setInputValue] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sessionId, setSessionId] = useState('');
-
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // Initialize session ID and timestamp on mount to prevent SSR hydration mismatch
-  useEffect(() => {
-    setSessionId(`session-${Date.now()}`);
-    setMessages(prev => [
-      {
-        ...prev[0],
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    ]);
-  }, []);
-
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, sending]);
 
   // Fetch data
   const fetchData = async () => {
@@ -289,231 +293,117 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const riskScore = account ? Math.round(account.risk_score * 100) : 0;
   const isCritical = riskScore >= 75;
   const isWarning = riskScore >= 25 && riskScore < 75;
-  const healthClass = isCritical ? 'critical' : isWarning ? 'at-risk' : 'healthy';
   const healthColor = isCritical ? '#f87171' : isWarning ? '#fbbf24' : '#34d399';
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1450px', margin: '0 auto', width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="max-w-[1500px] mx-auto px-4 py-8 md:px-8 min-h-screen flex flex-col">
       {/* Back Button */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div className="mb-6">
         <Link href="/">
-          <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            ← Back to Retention Radar
+          <span className="cursor-pointer text-zinc-400 hover:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 self-start transition">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Retention Radar
           </span>
         </Link>
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
-          <span className="animate-pulse" style={{ color: 'var(--text-secondary)' }}>Loading customer account details...</span>
+        <div className="flex-grow flex justify-center items-center">
+          <span className="text-xs text-zinc-400 animate-pulse">Loading customer account details...</span>
         </div>
       ) : error ? (
-        <div className="glass-panel" style={{ padding: '4rem', textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-          <h2 style={{ color: 'var(--danger)' }}>An Error Occurred</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
+        <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-12 text-center flex-grow flex flex-col justify-center items-center gap-3">
+          <h2 className="text-sm font-bold text-red-400 uppercase tracking-wider">Account Data Error</h2>
+          <p className="text-xs text-zinc-400">{error}</p>
           <Link href="/">
-            <button style={{ padding: '0.75rem 1.5rem', background: '#3b82f6', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>Go Back</button>
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer transition">Go Back</button>
           </Link>
         </div>
       ) : (
         /* Main Layout Grid */
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem', flexGrow: 1 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Details & Timeline */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* Account Info Header */}
-            <div className="glass-panel" style={{ padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
               <div>
-                <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{account.company_name}</h1>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                  Account ID: <strong>{account.account_id}</strong> • Industry: {account.industry}
+                <h1 className="text-xl font-bold text-zinc-50 tracking-tight mb-1">{account.company_name}</h1>
+                <span className="text-xs text-zinc-500 block">
+                  Account ID: <strong className="text-zinc-350">{account.account_id}</strong> • Industry: {account.industry}
                 </span>
                 
-                <div style={{ display: 'flex', gap: '2rem', marginTop: '1.5rem' }}>
+                <div className="flex gap-8 mt-5">
                   <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Annual Recurring Revenue</span>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>${account.arr.toLocaleString()}</span>
+                    <span className="text-[10px] text-zinc-550 uppercase block">Annual Recurring ARR</span>
+                    <strong className="text-sm text-zinc-200 font-mono">${account.arr.toLocaleString()}</strong>
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Last Contact Date</span>
-                    <span style={{ fontSize: '1.1rem' }}>{new Date(account.last_contact_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
+                    <span className="text-[10px] text-zinc-550 uppercase block">Last Contact Date</span>
+                    <strong className="text-xs text-zinc-200">
+                      {new Date(account.last_contact_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                    </strong>
                   </div>
                 </div>
 
                 <button
                   onClick={handleTriggerEscalation}
                   disabled={escalating || account?.status === 'Critical'}
-                  style={{
-                    marginTop: '1.5rem',
-                    padding: '0.65rem 1.25rem',
-                    background: account?.status === 'Critical' ? 'rgba(239, 68, 68, 0.15)' : '#ef4444',
-                    color: account?.status === 'Critical' ? '#f87171' : 'white',
-                    border: account?.status === 'Critical' ? '1px solid rgba(239, 68, 68, 0.3)' : 'none',
-                    borderRadius: '8px',
-                    fontWeight: 600,
-                    cursor: account?.status === 'Critical' ? 'default' : 'pointer',
-                    fontSize: '0.8rem',
-                    opacity: escalating ? 0.7 : 1,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: account?.status === 'Critical' ? 'none' : '0 4px 15px rgba(239, 68, 68, 0.25)'
-                  }}
+                  className={`mt-5 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                    account?.status === 'Critical' 
+                      ? 'bg-red-950/20 text-red-400 border border-red-900/40 cursor-default' 
+                      : 'bg-red-600 hover:bg-red-700 text-zinc-50 border border-red-500 shadow-sm'
+                  }`}
                 >
-                  🚨 {escalating ? 'Escalating...' : account?.status === 'Critical' ? 'Account Escalated' : 'Trigger Emergency Escalation'}
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  {escalating ? 'Escalating...' : account?.status === 'Critical' ? 'Account Escalated' : 'Trigger Escalation'}
                 </button>
               </div>
 
               {/* Glowing circular health meter */}
-              <div style={{ position: 'relative', width: '100px', height: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <svg width="100" height="100" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="3.5" />
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke={healthColor} strokeWidth="3.5" 
-                    strokeDasharray={`${riskScore} ${100 - riskScore}`} strokeDashoffset="25"
+              <div className="relative w-24 h-24 flex justify-center items-center self-start sm:self-auto">
+                <svg width="90" height="90" viewBox="0 0 36 36" className="-rotate-90">
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3.2" />
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke={healthColor} strokeWidth="3.2" 
+                    strokeDasharray={`${riskScore} ${100 - riskScore}`} strokeDashoffset="0"
                     style={{ transition: 'stroke-dasharray 0.5s ease', transformOrigin: 'center' }} />
                 </svg>
-                <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'var(--font-title)', color: healthColor }}>{riskScore}%</span>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Risk</span>
+                <div className="absolute flex flex-col items-center">
+                  <span className="text-xl font-bold font-mono tracking-tight" style={{ color: healthColor }}>{riskScore}%</span>
+                  <span className="text-[9px] text-zinc-500 uppercase">Risk</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Agent Memory Bank */}
-            <div className="glass-panel animate-fade-in" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-                  <span>🧠 Agent Memory Bank</span>
-                  <span style={{ fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Elastic Managed Memory</span>
-                </h2>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{memories.length} facts remembered</span>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-                Long-term facts, preferences, and context cached by the copilot in the <code style={{ color: '#60a5fa' }}>agent_memory</code> index.
-              </p>
-
-              {/* Memory List */}
-              {memories.length === 0 ? (
-                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                  No memories cached for this account. Teach the agent via chat, or log a memory below!
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
-                  {memories.map((mem) => (
-                    <div key={mem.memory_id || mem.created_at} style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: '8px',
-                      background: 'rgba(255,255,255,0.01)',
-                      border: '1px solid rgba(255,255,255,0.03)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '4px'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          color: mem.category === 'preference' ? '#fbbf24' : mem.category === 'escalation' ? '#f87171' : '#60a5fa'
-                        }}>
-                          {mem.category}
-                        </span>
-                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                          {new Date(mem.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
-                        {mem.content}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add Memory Form */}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
-                <select
-                  value={newMemoryCategory}
-                  onChange={(e) => setNewMemoryCategory(e.target.value)}
-                  style={{
-                    padding: '0.5rem',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    background: 'rgba(255,255,255,0.02)',
-                    color: 'var(--text-secondary)',
-                    fontFamily: 'var(--font-body)',
-                    outline: 'none',
-                    fontSize: '0.8rem'
-                  }}
-                >
-                  <option value="preference">Preference</option>
-                  <option value="escalation">Escalation</option>
-                  <option value="milestone">Milestone</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Remember a new customer fact or preference..."
-                  value={newMemoryText}
-                  onChange={(e) => setNewMemoryText(e.target.value)}
-                  style={{
-                    flexGrow: 1,
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    background: 'rgba(255,255,255,0.02)',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-body)',
-                    outline: 'none',
-                    fontSize: '0.8rem'
-                  }}
-                />
-                <button
-                  onClick={handleSaveMemory}
-                  disabled={addingMemory || !newMemoryText.trim()}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    opacity: (addingMemory || !newMemoryText.trim()) ? 0.5 : 1
-                  }}
-                >
-                  {addingMemory ? 'Saving...' : 'Remember'}
-                </button>
               </div>
             </div>
 
             {/* Dynamic ES|QL Risk Factors Breakdown */}
             {dynamicRiskData && dynamicRiskData.factors && (
-              <div className="glass-panel animate-fade-in" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>📊 Dynamic Risk Analysis</span>
-                    <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>ES|QL Engine</span>
+              <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3">
+                <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                  <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                    <Activity className="h-3.5 w-3.5 text-blue-450" />
+                    <span>Dynamic Risk Analysis</span>
                   </h2>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status: <strong style={{ color: healthColor }}>{dynamicRiskData.status}</strong></span>
+                  <span className="text-xs text-zinc-400">
+                    Status: <strong style={{ color: healthColor }}>{dynamicRiskData.status}</strong>
+                  </span>
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex flex-col gap-3">
                   {dynamicRiskData.factors.length === 0 ? (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Baseline risk environment. No high-threat risk factors active.</span>
+                    <span className="text-xs text-zinc-500 py-2">Baseline risk environment. No high-threat risk factors active.</span>
                   ) : (
                     dynamicRiskData.factors.map((factor: any) => {
                       const isAdded = factor.riskAdded > 0;
                       const sign = isAdded ? '+' : '';
-                      const color = isAdded ? 'var(--danger)' : 'var(--success)';
+                      const colorClass = isAdded ? 'text-red-400' : 'text-emerald-400';
                       return (
-                        <div key={factor.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem', borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: '0.5rem' }}>
+                        <div key={factor.name} className="flex justify-between items-center text-xs pb-2.5 border-b border-zinc-900 last:border-b-0 last:pb-0">
                           <div>
-                            <strong style={{ color: 'var(--text-primary)' }}>{factor.name}</strong>
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>{factor.value}</span>
+                            <strong className="text-zinc-200 font-semibold">{factor.name}</strong>
+                            <span className="block text-[10px] text-zinc-500 mt-0.5">{factor.value}</span>
                           </div>
-                          <span style={{ fontWeight: 700, color }}>{sign}{factor.riskAdded}%</span>
+                          <span className={`font-mono font-bold ${colorClass}`}>{sign}{factor.riskAdded}%</span>
                         </div>
                       );
                     })
@@ -523,16 +413,16 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             )}
 
             {/* Support Runbook Recommender */}
-            <div className="glass-panel animate-fade-in" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>💡 Runbook Resolver</span>
-                  <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>AI semantic matching</span>
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3.5">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                  <Brain className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Runbook Resolver</span>
                 </h2>
                 {selectedTicketId && (
                   <button 
                     onClick={() => { setSelectedTicketId(null); setRecommendedRunbook(null); }}
-                    style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                    className="text-[10px] text-blue-450 hover:text-blue-350 cursor-pointer font-bold transition"
                   >
                     Clear Match
                   </button>
@@ -540,109 +430,147 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               </div>
               
               {!selectedTicketId ? (
-                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '8px', lineHeight: '1.4' }}>
+                <div className="py-4 text-center text-zinc-500 text-xs border border-dashed border-zinc-850 rounded-lg leading-relaxed">
                   Click "🔍 Runbook" on any support ticket in the timeline to pull up the matching troubleshooting procedures.
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="flex flex-col gap-3">
                   {loadingRunbook ? (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Finding runbook in knowledge base...</span>
+                    <span className="text-xs text-zinc-400 animate-pulse">Finding runbook in knowledge base...</span>
                   ) : recommendedRunbook ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase' }}>
+                    <div className="flex flex-col gap-2.5">
+                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
                         Category: {recommendedRunbook.category}
                       </span>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc', margin: 0 }}>
+                      <h4 className="text-sm font-semibold text-zinc-200">
                         {recommendedRunbook.title}
                       </h4>
-                      <div style={{
-                        padding: '0.75rem 1rem',
-                        borderRadius: '8px',
-                        background: 'rgba(0,0,0,0.2)',
-                        border: '1px solid rgba(255,255,255,0.03)',
-                        fontSize: '0.8rem',
-                        color: 'var(--text-secondary)',
-                        lineHeight: '1.5',
-                        whiteSpace: 'pre-wrap'
-                      }}>
+                      <div className="p-3.5 rounded-lg bg-zinc-900/50 border border-zinc-850 text-xs text-zinc-350 leading-relaxed white-space-pre-wrap font-mono">
                         {recommendedRunbook.content}
                       </div>
                     </div>
                   ) : (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No runbook found matching this ticket's issues.</span>
+                    <span className="text-xs text-zinc-500">No runbook found matching this ticket's issues.</span>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Timeline */}
-            <div>
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '1.25rem' }}>Customer Journey Timeline</h2>
-              
-              {timeline.length === 0 ? (
-                <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  No customer activity or tickets logged yet.
+            {/* Agent Memory Bank */}
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3.5">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                  <Brain className="h-3.5 w-3.5 text-blue-450" />
+                  <span>Agent Memory Bank</span>
+                </h2>
+                <span className="text-[10px] bg-blue-950/20 text-blue-400 border border-blue-900/40 px-2 py-0.5 rounded font-mono">
+                  {memories.length} facts cached
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500">
+                Long-term preferences and escalation triggers cached in the <code className="text-[10px] text-blue-400 bg-zinc-900 px-1 py-0.5 rounded">agent_memory</code> index.
+              </p>
+
+              {/* Memory List */}
+              {memories.length === 0 ? (
+                <div className="py-4 text-center text-zinc-550 text-xs border border-dashed border-zinc-850 rounded-lg">
+                  No memories cached for this account. Teach the agent via chat, or log a memory below!
                 </div>
               ) : (
-                <div style={{ position: 'relative', paddingLeft: '1.5rem', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
-                  {timeline.map((item, idx) => {
-                    let typeColor = '#3b82f6'; // Blue for call
-                    let typeIcon = '📞';
+                <div className="flex flex-col gap-2.5 max-h-48 overflow-y-auto pr-1">
+                  {memories.map((mem) => (
+                    <div key={mem.memory_id || mem.created_at} className="p-3 rounded-lg bg-zinc-900/40 border border-zinc-850 flex flex-col gap-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className={`text-[9px] font-bold uppercase ${
+                          mem.category === 'preference' ? 'text-amber-400' : 
+                          mem.category === 'escalation' ? 'text-red-400' : 'text-blue-400'
+                        }`}>
+                          {mem.category}
+                        </span>
+                        <span className="text-[9px] text-zinc-500">
+                          {new Date(mem.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-350 leading-relaxed">
+                        {mem.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add Memory Form */}
+              <div className="flex gap-2 mt-2 border-t border-zinc-900 pt-4">
+                <select
+                  value={newMemoryCategory}
+                  onChange={(e) => setNewMemoryCategory(e.target.value)}
+                  className="p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-350 focus:outline-none"
+                >
+                  <option value="preference">Preference</option>
+                  <option value="escalation">Escalation</option>
+                  <option value="milestone">Milestone</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Remember a new customer preference..."
+                  value={newMemoryText}
+                  onChange={(e) => setNewMemoryText(e.target.value)}
+                  className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-650 focus:outline-none"
+                />
+                <button
+                  onClick={handleSaveMemory}
+                  disabled={addingMemory || !newMemoryText.trim()}
+                  className="px-3 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
+                >
+                  {addingMemory ? 'Saving...' : 'Remember'}
+                </button>
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div>
+              <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Customer Journey Timeline</h2>
+              
+              {timeline.length === 0 ? (
+                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-12 text-center text-xs text-zinc-500">
+                  No activity logs registered.
+                </div>
+              ) : (
+                <div className="relative pl-6 border-l border-zinc-800/80 ml-3 flex flex-col gap-6">
+                  {timeline.map((item) => {
+                    let typeColor = 'text-blue-400';
+                    let typeIcon = <Play className="h-3.5 w-3.5" />;
                     if (item.type === 'ticket') {
-                      typeColor = item.priority === 'Urgent' ? '#ef4444' : item.priority === 'High' ? '#f59e0b' : '#3b82f6';
-                      typeIcon = '🎫';
+                      typeColor = item.priority === 'Urgent' ? 'text-red-400' : item.priority === 'High' ? 'text-amber-400' : 'text-blue-400';
+                      typeIcon = <BadgeAlert className="h-3.5 w-3.5" />;
                     } else if (item.type === 'note') {
-                      typeColor = item.sentiment === 'Negative' ? '#ef4444' : item.sentiment === 'Positive' ? '#10b981' : '#f59e0b';
-                      typeIcon = '📝';
+                      typeColor = item.sentiment === 'Negative' ? 'text-red-400' : item.sentiment === 'Positive' ? 'text-emerald-400' : 'text-amber-400';
+                      typeIcon = <Layers className="h-3.5 w-3.5" />;
                     }
 
                     return (
-                      <div key={item.id} className="glass-panel animate-fade-in" style={{
-                        padding: '1.25rem',
-                        marginBottom: '1.5rem',
-                        position: 'relative',
-                        animationDelay: `${idx * 0.1}s`
-                      }}>
-                        {/* Timeline Node Connector Circle */}
-                        <div style={{
-                          position: 'absolute',
-                          left: '-2.1rem',
-                          top: '1.5rem',
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--bg-main)',
-                          border: `3px solid ${typeColor}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: `0 0 10px ${typeColor}40`
-                        }}></div>
+                      <div key={item.id} className="bg-zinc-950 border border-zinc-850 p-4.5 rounded-xl relative flex flex-col gap-2.5 animate-fade-in">
+                        {/* Circle node on line */}
+                        <div className={`absolute -left-[2.15rem] top-4.5 w-3.5 h-3.5 rounded-full bg-zinc-950 border-2 flex items-center justify-center`} style={{ borderColor: 'currentColor', color: typeColor === 'text-red-400' ? '#ef4444' : typeColor === 'text-amber-400' ? '#f59e0b' : typeColor === 'text-emerald-400' ? '#10b981' : '#3b82f6' }}></div>
 
-                        {/* Card Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        {/* Timeline Card Header */}
+                        <div className="flex justify-between items-start gap-4">
                           <div>
-                            <span style={{ fontSize: '1.05rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                              <span>{typeIcon}</span> {item.title}
+                            <span className="text-xs font-bold text-zinc-100 flex items-center gap-2">
+                              <span style={{ color: typeColor === 'text-red-400' ? '#ef4444' : typeColor === 'text-amber-400' ? '#f59e0b' : typeColor === 'text-emerald-400' ? '#10b981' : '#3b82f6' }}>{typeIcon}</span>
+                              {item.title}
                             </span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                            <span className="text-[10px] text-zinc-500 block mt-0.5">
                               {new Date(item.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                             </span>
                           </div>
                           
                           {/* Badges depending on item type */}
                           {item.type === 'ticket' && (
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <span style={{
-                                fontSize: '0.7rem',
-                                fontWeight: 700,
-                                textTransform: 'uppercase',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                                backgroundColor: item.priority === 'Urgent' ? 'var(--danger-glow)' : 'rgba(255,255,255,0.05)',
-                                color: item.priority === 'Urgent' ? '#f87171' : 'var(--text-secondary)',
-                                border: item.priority === 'Urgent' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(255,255,255,0.05)'
-                              }}>
+                            <div className="flex gap-2 items-center">
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                                item.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-zinc-900 border border-zinc-800 text-zinc-400'
+                              }`}>
                                 {item.priority} Priority
                               </span>
                               <button
@@ -650,38 +578,35 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                                   setSelectedTicketId(item.id);
                                   fetchRunbook(item.id);
                                 }}
-                                style={{
-                                  padding: '2px 8px',
-                                  background: selectedTicketId === item.id ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.02)',
-                                  border: '1px solid rgba(255,255,255,0.05)',
-                                  borderRadius: '4px',
-                                  color: selectedTicketId === item.id ? '#60a5fa' : 'var(--text-muted)',
-                                  fontSize: '0.65rem',
-                                  cursor: 'pointer',
-                                  fontWeight: 600,
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '2px'
-                                }}
+                                className={`padding-2 px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer border flex items-center gap-1 transition ${
+                                  selectedTicketId === item.id 
+                                    ? 'bg-blue-950/20 text-blue-400 border-blue-900/40' 
+                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                                }`}
                               >
-                                🔍 Runbook
+                                <HelpCircle className="h-3 w-3" />
+                                Runbook
                               </button>
                             </div>
                           )}
                           {item.type === 'note' && (
-                            <span className={`risk-badge ${item.sentiment === 'Negative' ? 'critical' : item.sentiment === 'Positive' ? 'healthy' : 'at-risk'}`} style={{ fontSize: '0.65rem', padding: '2px 8px' }}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              item.sentiment === 'Negative' ? 'bg-red-950/30 text-red-400 border border-red-900/40' :
+                              item.sentiment === 'Positive' ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-900/40' :
+                              'bg-amber-950/30 text-amber-400 border border-amber-900/40'
+                            }`}>
                               {item.sentiment} Sentiment
                             </span>
                           )}
                           {item.type === 'call' && (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            <span className="text-[10px] text-zinc-555 font-mono bg-zinc-900 px-1.5 py-0.5 rounded">
                               ⏱ {item.duration} mins
                             </span>
                           )}
                         </div>
 
                         {/* Card Body */}
-                        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
+                        <p className="text-xs text-zinc-350 leading-relaxed white-space-pre-line">
                           {item.description}
                         </p>
                       </div>
@@ -693,243 +618,139 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Right Column: Chat panel */}
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', position: 'sticky', top: '2rem', overflow: 'hidden' }}>
-            {/* Chat Header */}
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className={`pulse-dot ${healthClass}`}></span>
-              <div>
-                <h2 style={{ fontSize: '1.1rem' }}>Blueberry Copilot</h2>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Connected to Google Cloud Agent Builder</span>
-              </div>
-            </div>
-
-            {/* Chat messages list */}
-            <div style={{ flexGrow: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {messages.map((msg, idx) => {
-                const isUser = msg.sender === 'user';
-                return (
-                  <div key={idx} style={{
-                    alignSelf: isUser ? 'flex-end' : 'flex-start',
-                    maxWidth: '85%',
-                    animation: 'fadeIn 0.2s ease forwards'
-                  }}>
-                    <div style={{
-                      padding: '0.85rem 1.1rem',
-                      borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                      background: isUser ? '#3b82f6' : 'rgba(255,255,255,0.04)',
-                      border: isUser ? 'none' : '1px solid var(--border-color)',
-                      color: '#f8fafc',
-                      fontSize: '0.9rem',
-                      lineHeight: '1.45',
-                      whiteSpace: 'pre-line',
-                      boxShadow: isUser ? '0 4px 15px rgba(59, 130, 246, 0.15)' : 'none'
-                    }}>
-                      {msg.text}
-                    </div>
-                    <span style={{
-                      fontSize: '0.7rem',
-                      color: 'var(--text-muted)',
-                      display: 'block',
-                      marginTop: '4px',
-                      textAlign: isUser ? 'right' : 'left'
-                    }}>
-                      {msg.timestamp}
-                    </span>
-                  </div>
-                );
-              })}
-
-              {sending && (
-                <div style={{ alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '16px 16px 16px 2px',
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}>
-                    <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%' }}></span>
-                    <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animationDelay: '0.2s' }}></span>
-                    <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animationDelay: '0.4s' }}></span>
-                  </div>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Calling tools...</span>
+          <div className="lg:col-span-4 lg:sticky lg:top-8">
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col h-[580px] overflow-hidden shadow-sm">
+              
+              {/* Chat Header */}
+              <div className="p-4 border-b border-zinc-900 flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full inline-block ${
+                  isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
+                }`}></span>
+                <div>
+                  <h2 className="text-xs font-bold text-zinc-200">Blueberry Copilot</h2>
+                  <span className="text-[10px] text-zinc-500">Connected to GCP Agent Builder</span>
                 </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
+              </div>
 
-            {/* Quick Actions Panel */}
-            <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.1)', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              <button 
-                onClick={() => handleSendMessage("Why is this account at risk?")} 
-                disabled={sending}
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '6px 12px',
-                  borderRadius: '99px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6', e.currentTarget.style.color = 'white')}
-                onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)', e.currentTarget.style.color = 'var(--text-secondary)')}
-              >
-                ❓ Why at risk?
-              </button>
-              <button 
-                onClick={() => handleSendMessage("Search for support issues in this account")} 
-                disabled={sending}
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '6px 12px',
-                  borderRadius: '99px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6', e.currentTarget.style.color = 'white')}
-                onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)', e.currentTarget.style.color = 'var(--text-secondary)')}
-              >
-                🔍 Search tickets
-              </button>
-              <button 
-                onClick={() => handleSendMessage(`Log a new health note: 'Reviewed ${account?.company_name || 'customer'} support tickets and assigned an escalation owner to patch issues.'`)} 
-                disabled={sending}
-                style={{
-                  fontSize: '0.75rem',
-                  padding: '6px 12px',
-                  borderRadius: '99px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6', e.currentTarget.style.color = 'white')}
-                onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)', e.currentTarget.style.color = 'var(--text-secondary)')}
-              >
-                ✍ Log CSM update
-              </button>
-            </div>
+              {/* Chat messages list */}
+              <div className="flex-grow p-4 overflow-y-auto flex flex-col gap-3.5">
+                {messages.map((msg, idx) => {
+                  const isUser = msg.sender === 'user';
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`max-w-[85%] ${isUser ? 'self-end' : 'self-start'} animate-fade-in`}
+                    >
+                      <div className={`p-3 rounded-lg text-xs leading-relaxed ${
+                        isUser 
+                          ? 'bg-blue-600 text-zinc-50 rounded-br-none' 
+                          : 'bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-bl-none'
+                      }`}>
+                        {msg.text}
+                      </div>
+                      <span className={`text-[9px] text-zinc-550 mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
+                        {msg.timestamp}
+                      </span>
+                    </div>
+                  );
+                })}
 
-            {/* Chat Input form */}
-            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} style={{ padding: '1rem 1.5rem', display: 'flex', gap: '10px' }}>
-              <input
-                type="text"
-                placeholder="Ask your copilot anything..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                disabled={sending}
-                style={{
-                  flexGrow: 1,
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border-color)',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-body)',
-                  outline: 'none',
-                  fontSize: '0.9rem'
-                }}
-              />
-              <button
-                type="submit"
-                disabled={sending || !inputValue.trim()}
-                style={{
-                  padding: '0.75rem 1.25rem',
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  opacity: (sending || !inputValue.trim()) ? 0.5 : 1
-                }}
-              >
-                Send
-              </button>
-            </form>
+                {sending && (
+                  <div className="self-start flex flex-col gap-1.5">
+                    <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse"></span>
+                      <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-75"></span>
+                      <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-150"></span>
+                    </div>
+                    <span className="text-[9px] text-zinc-500">Calling tools...</span>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Quick Actions Panel */}
+              <div className="p-3 border-t border-zinc-900 bg-zinc-950 flex flex-wrap gap-1.5">
+                <button 
+                  onClick={() => handleSendMessage("Why is this account at risk?")} 
+                  disabled={sending}
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                >
+                  ❓ Why at risk?
+                </button>
+                <button 
+                  onClick={() => handleSendMessage("Search for support issues in this account")} 
+                  disabled={sending}
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                >
+                  🔍 Search tickets
+                </button>
+                <button 
+                  onClick={() => handleSendMessage(`Log a new health note: 'Reviewed ${account?.company_name || 'customer'} support tickets and assigned an escalation owner to patch issues.'`)} 
+                  disabled={sending}
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                >
+                  ✍ Log CSM note
+                </button>
+              </div>
+
+              {/* Chat Input form */}
+              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} className="p-3 border-t border-zinc-900 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ask your copilot anything..."
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  disabled={sending}
+                  className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-zinc-700"
+                />
+                <button
+                  type="submit"
+                  disabled={sending || !inputValue.trim()}
+                  className="px-3 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
+                >
+                  Send
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Escalation Modal Overlay */}
       {showEscalationModal && escalationData && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.85)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999,
-          backdropFilter: 'blur(8px)'
-        }}>
-          <div className="glass-panel" style={{
-            width: '90%',
-            maxWidth: '800px',
-            maxHeight: '85vh',
-            overflowY: 'auto',
-            padding: '2.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
-            border: '1px solid rgba(239, 68, 68, 0.2)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.4rem', color: '#f87171', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🚨 Emergency Escalation Triggered</span>
+        <div className="fixed inset-0 bg-black/85 flex justify-center items-center z-[999] backdrop-blur-md">
+          <div className="bg-zinc-950 border border-red-900/30 w-[90%] max-w-[800px] max-h-[85vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-5 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
+              <h2 className="text-base font-bold text-red-400 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4" />
+                <span>Emergency Escalation Triggered</span>
               </h2>
               <button 
                 onClick={() => setShowEscalationModal(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  borderRadius: '6px',
-                  color: 'var(--text-secondary)',
-                  padding: '4px 10px',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem'
-                }}
+                className="px-2.5 py-1 text-xs rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
               >
                 Close
               </button>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
-              The account status has been updated to <strong>Critical (99% Risk)</strong> in Elasticsearch. An escalation milestone has been logged to the memory bank.
+            <p className="text-xs text-zinc-450 leading-relaxed">
+              The account status has been updated to <strong className="text-red-400 font-bold">Critical (99% Risk)</strong> in Elasticsearch. An escalation milestone has been written to the agent memory bank.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* Copyable Email Draft */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Email Draft (Markdown):</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="h-3 w-3" />
+                    Email Draft (Markdown)
+                  </span>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(escalationData.emailDraft);
-                      alert('Copied to clipboard!');
+                      alert('Copied email to clipboard!');
                     }}
-                    style={{
-                      background: '#3b82f6',
-                      border: 'none',
-                      borderRadius: '4px',
-                      color: 'white',
-                      fontSize: '0.7rem',
-                      padding: '2px 8px',
-                      cursor: 'pointer',
-                      fontWeight: 600
-                    }}
+                    className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded text-[10px] font-bold cursor-pointer transition"
                   >
                     Copy Email
                   </button>
@@ -937,41 +758,20 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 <textarea
                   readOnly
                   value={escalationData.emailDraft}
-                  style={{
-                    width: '100%',
-                    height: '240px',
-                    background: 'rgba(0,0,0,0.2)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '0.8rem',
-                    padding: '10px',
-                    outline: 'none',
-                    resize: 'none'
-                  }}
+                  className="w-full h-64 p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-zinc-200 font-mono text-[10px] leading-relaxed resize-none outline-none"
                 />
               </div>
 
               {/* Slack Card Layout preview */}
-              <div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Slack Layout (JSON Block Kit):</span>
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Terminal className="h-3 w-3" />
+                  Slack Layout (JSON Block Kit)
+                </span>
                 <textarea
                   readOnly
                   value={escalationData.slackCard}
-                  style={{
-                    width: '100%',
-                    height: '240px',
-                    background: 'rgba(0,0,0,0.3)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px',
-                    color: '#34d399',
-                    fontFamily: 'Courier New, monospace',
-                    fontSize: '0.75rem',
-                    padding: '10px',
-                    outline: 'none',
-                    resize: 'none'
-                  }}
+                  className="w-full h-64 p-3 bg-zinc-900/80 border border-zinc-800 rounded-lg text-emerald-450 font-mono text-[10px] leading-relaxed resize-none outline-none"
                 />
               </div>
             </div>

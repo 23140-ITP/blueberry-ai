@@ -12,10 +12,14 @@
   "dependencies": {
     "@elastic/elasticsearch": "^9.4.2",
     "@google-cloud/dialogflow-cx": "^5.8.2",
+    "@tailwindcss/postcss": "^4.3.0",
     "dotenv": "^17.4.2",
+    "lucide-react": "^1.17.0",
     "next": "16.2.7",
+    "postcss": "^8.5.15",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -2,6 +2,10 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { 
+  Search, LayoutDashboard, Brain, Activity, ShieldAlert, CheckCircle2, 
+  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles
+} from 'lucide-react';
 
 interface ChatMessage {
   sender: 'user' | 'agent';
@@ -307,38 +311,21 @@ export default function Dashboard() {
   const warningPct = (warningCount / totalCount) * 100;
   const healthyPct = (healthyCount / totalCount) * 100;
 
-  function getRiskClass(score: number) {
-    if (score >= 0.75) return 'critical';
-    if (score >= 0.25) return 'at-risk';
-    return 'healthy';
-  }
-
-  function getRiskLabel(score: number) {
-    if (score >= 0.75) return 'Critical';
-    if (score >= 0.25) return 'At Risk';
-    return 'Healthy';
-  }
-
   return (
-    <div className="dashboard-container" style={{ padding: '2rem', maxWidth: '1650px', margin: '0 auto', width: '100%' }}>
+    <div className="max-w-[1600px] mx-auto px-4 py-8 md:px-8 min-h-screen flex flex-col">
       {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+      <header className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center mb-8 pb-6 border-b border-zinc-800/80">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-            <span style={{
-              width: '12px',
-              height: '12px',
-              backgroundColor: '#3b82f6',
-              borderRadius: '50%',
-              display: 'inline-block',
-              boxShadow: '0 0 12px #3b82f6'
-            }}></span>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.03em' }}>Blueberry AI</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2.5 h-2.5 bg-blue-500 rounded-full inline-block shadow-[0_0_10px_#3b82f6]"></span>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-50 font-heading">Blueberry AI</h1>
           </div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Customer Retention Radar • Google Cloud Agent Builder + Elastic</p>
+          <p className="text-xs text-zinc-400">Customer Retention Radar • Google Cloud Agent Builder + Elastic</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div className="glass-panel" style={{ display: 'flex', padding: '3px', borderRadius: '10px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)' }}>
+        
+        {/* Search & Mode selectors */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="inline-flex bg-zinc-900 border border-zinc-800 rounded-lg p-0.5 self-start sm:self-auto">
             {(['client', 'keyword', 'vector', 'hybrid'] as const).map(mode => (
               <button
                 key={mode}
@@ -347,928 +334,534 @@ export default function Dashboard() {
                   setSearchTerm('');
                   setSemanticMatches({});
                 }}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: searchMode === mode ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                  color: searchMode === mode ? '#60a5fa' : 'var(--text-secondary)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  fontFamily: 'var(--font-body)',
-                  boxShadow: searchMode === mode ? '0 0 10px rgba(59, 130, 246, 0.1)' : 'none'
-                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                  searchMode === mode 
+                    ? 'bg-zinc-800 text-zinc-50 border border-zinc-700/50 shadow-sm' 
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
               >
-                {mode === 'client' && '📱 Local'}
-                {mode === 'keyword' && '🔍 BM25'}
-                {mode === 'vector' && '⚡ Vector'}
-                {mode === 'hybrid' && '🧬 Hybrid'}
+                {mode === 'client' && 'Local'}
+                {mode === 'keyword' && 'BM25'}
+                {mode === 'vector' && 'Vector'}
+                {mode === 'hybrid' && 'Hybrid'}
               </button>
             ))}
           </div>
-          <input
-            type="text"
-            placeholder={
-              searchMode === 'client' ? "Filter list locally..." :
-              searchMode === 'keyword' ? "Elastic keyword search..." :
-              searchMode === 'vector' ? "Elastic semantic search..." : "Elastic hybrid search..."
-            }
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              padding: '0.75rem 1.25rem',
-              borderRadius: '12px',
-              border: '1px solid var(--border-color)',
-              background: 'rgba(255, 255, 255, 0.03)',
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-body)',
-              outline: 'none',
-              width: '320px',
-              transition: 'all 0.2s'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-          />
+
+          <div className="relative w-full sm:w-[280px]">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder={
+                searchMode === 'client' ? "Filter list locally..." :
+                searchMode === 'keyword' ? "Elastic keyword search..." :
+                searchMode === 'vector' ? "Elastic semantic search..." : "Elastic hybrid search..."
+              }
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950/80 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700 transition"
+            />
+          </div>
         </div>
       </header>
 
       {/* Tabs Navigation */}
-      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2.5rem', paddingBottom: '0.5rem' }}>
+      <div className="flex gap-2 border-b border-zinc-850 mb-8 pb-px">
         <button
           onClick={() => setActiveTab('radar')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: activeTab === 'radar' ? '#60a5fa' : 'var(--text-secondary)',
-            fontSize: '1rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: '0.5rem 1.25rem',
-            borderBottom: activeTab === 'radar' ? '2px solid #3b82f6' : 'none',
-            transition: 'all 0.2s',
-            fontFamily: 'var(--font-body)'
-          }}
+          className={`pb-3 px-4 text-sm font-semibold transition-all relative cursor-pointer ${
+            activeTab === 'radar' 
+              ? 'text-zinc-50 font-semibold border-b-2 border-blue-500' 
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
         >
-          📊 Retention Radar
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Retention Radar</span>
+          </div>
         </button>
         <button
           onClick={() => setActiveTab('mcp')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: activeTab === 'mcp' ? '#60a5fa' : 'var(--text-secondary)',
-            fontSize: '1rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: '0.5rem 1.25rem',
-            borderBottom: activeTab === 'mcp' ? '2px solid #3b82f6' : 'none',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontFamily: 'var(--font-body)'
-          }}
+          className={`pb-3 px-4 text-sm font-semibold transition-all relative cursor-pointer ${
+            activeTab === 'mcp' 
+              ? 'text-zinc-50 font-semibold border-b-2 border-blue-500' 
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
         >
-          ⚡ Elastic MCP Hub
+          <div className="flex items-center gap-2">
+            <Terminal className="h-4 w-4" />
+            <span>Elastic MCP Hub</span>
+          </div>
         </button>
       </div>
 
       {activeTab === 'radar' && (
         <>
           {/* KPI Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total ARR Managed</span>
-          <span style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-title)' }}>
-            ${totalARR.toLocaleString()}
-          </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            ● {accounts.length} active customer accounts
-          </span>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+              <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Total ARR Managed</span>
+              <span className="text-2xl font-bold text-zinc-50 font-heading">${totalARR.toLocaleString()}</span>
+              <span className="text-[11px] text-emerald-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
+                {accounts.length} active customer accounts
+              </span>
+            </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>At Risk Accounts</span>
-          <span style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-title)', color: criticalCount > 0 ? '#f87171' : 'inherit' }}>
-            {criticalCount} <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-secondary)' }}>critical</span>
-          </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            {warningCount} warning status alerts active
-          </span>
-        </div>
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+              <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">At Risk Accounts</span>
+              <span className="text-2xl font-bold text-zinc-50 font-heading">
+                {criticalCount} <span className="text-sm font-normal text-zinc-400">critical</span>
+              </span>
+              <span className="text-[11px] text-zinc-400">
+                {warningCount} accounts flagged in warning status
+              </span>
+            </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Average Health Score</span>
-          <span style={{ fontSize: '2rem', fontWeight: 700, fontFamily: 'var(--font-title)' }}>
-            {avgHealth}%
-          </span>
-          <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
-            <div style={{
-              width: `${avgHealth}%`,
-              height: '100%',
-              backgroundColor: avgHealth > 70 ? 'var(--success)' : avgHealth > 40 ? 'var(--warning)' : 'var(--danger)',
-              boxShadow: '0 0 8px rgba(59,130,246,0.3)'
-            }}></div>
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+              <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Portfolio Health</span>
+              <span className="text-2xl font-bold text-zinc-50 font-heading">{avgHealth}%</span>
+              <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden mt-1">
+                <div 
+                  className={`h-full rounded-full ${
+                    avgHealth > 75 ? 'bg-emerald-500' : avgHealth > 45 ? 'bg-amber-500' : 'bg-red-500'
+                  }`} 
+                  style={{ width: `${avgHealth}%` }}
+                ></div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Grid: Accounts List, Analytics, and Copilot Chat */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.1fr', gap: '2rem' }}>
-        {/* Account List Column */}
-        <div>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>Account Radar</span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
-              {filteredAccounts.length} listed
-            </span>
-          </h2>
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Account List Column */}
+            <div className="lg:col-span-4">
+              <h2 className="text-sm font-semibold text-zinc-350 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span>Account Radar</span>
+                <span className="text-xs bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full font-mono font-normal">
+                  {filteredAccounts.length}
+                </span>
+              </h2>
 
-          {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-              <span className="animate-pulse" style={{ color: 'var(--text-secondary)' }}>Fetching accounts from Elasticsearch...</span>
-            </div>
-          ) : filteredAccounts.length === 0 ? (
-            <div className="glass-panel" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              No accounts matching "{searchTerm}" found.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {filteredAccounts.map(acc => {
-                const riskTier = getRiskClass(acc.risk_score);
-                const riskPct = Math.round(acc.risk_score * 100);
+              {loading ? (
+                <div className="bg-zinc-950/40 border border-zinc-850 rounded-xl p-12 text-center">
+                  <span className="text-xs text-zinc-400 animate-pulse">Loading accounts from Elasticsearch...</span>
+                </div>
+              ) : filteredAccounts.length === 0 ? (
+                <div className="bg-zinc-950/40 border border-zinc-850 rounded-xl p-12 text-center text-xs text-zinc-400">
+                  No accounts matching "{searchTerm}" found.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {filteredAccounts.map(acc => {
+                    const isCrit = acc.risk_score >= 0.75;
+                    const isWarn = acc.risk_score >= 0.25 && acc.risk_score < 0.75;
+                    const riskPct = Math.round(acc.risk_score * 100);
 
-                return (
-                  <Link key={acc.account_id} href={`/account/${acc.account_id}`}>
-                    <div className="glass-panel animate-fade-in" style={{
-                      padding: '1.25rem 1.5rem',
-                      display: 'grid',
-                      gridTemplateColumns: '1.5fr 1fr 1fr 1fr 12px',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      gap: '1rem',
-                      transition: 'all 0.2s ease'
-                    }}>
-                      {/* Name & ID */}
-                      <div>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>{acc.company_name}</h3>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{acc.account_id} • {acc.industry}</span>
-                      </div>
-
-                      {/* ARR */}
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>ARR</span>
-                        <span style={{ fontWeight: 600 }}>${acc.arr.toLocaleString()}</span>
-                      </div>
-
-                      {/* Risk Score */}
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Risk Score</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ flexGrow: 1, height: '6px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden', width: '80px' }}>
-                            <div style={{
-                              width: `${riskPct}%`,
-                              height: '100%',
-                              backgroundColor: riskTier === 'critical' ? 'var(--danger)' : riskTier === 'at-risk' ? 'var(--warning)' : 'var(--success)'
-                            }}></div>
+                    return (
+                      <Link key={acc.account_id} href={`/account/${acc.account_id}`}>
+                        <div className="bg-zinc-950 border border-zinc-850 hover:border-zinc-750 p-4 rounded-xl cursor-pointer transition flex flex-col gap-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="text-sm font-bold text-zinc-100 hover:text-blue-400 transition">{acc.company_name}</h3>
+                              <span className="text-[11px] text-zinc-500">{acc.account_id} • {acc.industry}</span>
+                            </div>
+                            
+                            <span className={`risk-badge ${
+                              isCrit ? 'bg-red-950/30 text-red-400 border border-red-900/50' :
+                              isWarn ? 'bg-amber-950/30 text-amber-400 border border-amber-900/50' :
+                              'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50'
+                            } px-2 py-0.5 rounded text-[10px] font-bold uppercase`}>
+                              {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
+                            </span>
                           </div>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: riskTier === 'critical' ? '#f87171' : riskTier === 'at-risk' ? '#fbbf24' : '#34d399' }}>{riskPct}%</span>
+
+                          <div className="flex justify-between items-center border-t border-zinc-900/50 pt-2 text-xs">
+                            <div>
+                              <span className="text-[10px] text-zinc-500 uppercase block">ARR</span>
+                              <strong className="text-zinc-200">${acc.arr.toLocaleString()}</strong>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[10px] text-zinc-500 uppercase block">Risk Score</span>
+                              <strong className={`font-mono ${
+                                isCrit ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-emerald-400'
+                              }`}>{riskPct}%</strong>
+                            </div>
+                          </div>
+
+                          {/* Semantic Match Reason Snippet */}
+                          {searchMode !== 'client' && semanticMatches[acc.account_id] && (
+                            <div className="mt-1 p-2.5 rounded bg-zinc-900/60 border border-zinc-800 text-[11px] text-zinc-300 leading-relaxed">
+                              <span className="font-semibold text-blue-400 flex items-center gap-1.5 mb-1.5">
+                                <Sparkles className="h-3 w-3" />
+                                {searchMode.charAt(0).toUpperCase() + searchMode.slice(1)} Match ({semanticMatches[acc.account_id].relevanceScore}% Relevance)
+                              </span>
+                              <p dangerouslySetInnerHTML={{ __html: semanticMatches[acc.account_id].matchReason }} />
+                            </div>
+                          )}
                         </div>
-                      </div>
-
-                      {/* Status */}
-                      <div>
-                        <span className={`risk-badge ${riskTier}`}>
-                          <span className={`pulse-dot ${riskTier}`}></span>
-                          {getRiskLabel(acc.risk_score)}
-                        </span>
-                      </div>
-
-                      {/* Arrow Icon */}
-                      <div style={{ color: 'var(--text-muted)', textAlign: 'right' }}>
-                        →
-                      </div>
-
-                      {/* Semantic Match Reason Snippet */}
-                      {searchMode !== 'client' && semanticMatches[acc.account_id] && (
-                        <div style={{
-                          gridColumn: '1 / -1',
-                          marginTop: '0.75rem',
-                          padding: '0.75rem 1rem',
-                          borderRadius: '8px',
-                          background: 'rgba(59, 130, 246, 0.05)',
-                          border: '1px solid rgba(59, 130, 246, 0.15)',
-                          fontSize: '0.8rem',
-                          color: 'var(--text-secondary)',
-                          lineHeight: '1.4'
-                        }}>
-                          <span style={{ fontWeight: 700, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                            ⚡ Elastic {searchMode.charAt(0).toUpperCase() + searchMode.slice(1)} Match • {semanticMatches[acc.account_id].relevanceScore}% Relevance
-                          </span>
-                          <p dangerouslySetInnerHTML={{ __html: semanticMatches[acc.account_id].matchReason }} style={{ margin: 0 }} />
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Analytics Column */}
-        <div>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '1.25rem' }}>Distribution</h2>
-          
-          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2.5rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>Portfolio Health Status</h3>
-            
-            {/* Simple SV Donut/Distribution representation */}
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem 0' }}>
-              <svg width="140" height="140" viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="3" />
-                
-                {/* Dynamically drawing donut parts based on counts */}
-                {accounts.length > 0 ? (
-                  <>
-                    {/* Critical section */}
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--danger)" strokeWidth="3" 
-                      strokeDasharray={`${criticalPct} ${100 - criticalPct}`} strokeDashoffset="0" />
-                      
-                    {/* Warning section */}
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--warning)" strokeWidth="3" 
-                      strokeDasharray={`${warningPct} ${100 - warningPct}`} strokeDashoffset={`-${criticalPct}`} />
-                      
-                    {/* Healthy section */}
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--success)" strokeWidth="3" 
-                      strokeDasharray={`${healthyPct} ${100 - healthyPct}`} strokeDashoffset={`-${criticalPct + warningPct}`} />
-                  </>
-                ) : (
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-                )}
-                  
-                {/* Text overlay */}
-                <g style={{ transform: 'rotate(90deg) translate(0px, -36px)' }}>
-                  <text x="50%" y="45%" dominantBaseline="middle" textAnchor="middle" fill="var(--text-primary)" fontSize="5" fontWeight="bold" fontFamily="var(--font-title)">
-                    {accounts.length}
-                  </text>
-                  <text x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" fill="var(--text-muted)" fontSize="2.5" fontWeight="normal">
-                    Accounts
-                  </text>
-                </g>
-              </svg>
-            </div>
-
-            {/* Legend */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                  <span style={{ width: '8px', height: '8px', backgroundColor: 'var(--danger)', borderRadius: '50%' }}></span>
-                  <span>Critical Risk (≥75%)</span>
-                </div>
-                <span style={{ fontWeight: 600 }}>{criticalCount}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                  <span style={{ width: '8px', height: '8px', backgroundColor: 'var(--warning)', borderRadius: '50%' }}></span>
-                  <span>Warning Status (25-74%)</span>
-                </div>
-                <span style={{ fontWeight: 600 }}>{warningCount}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                  <span style={{ width: '8px', height: '8px', backgroundColor: 'var(--success)', borderRadius: '50%' }}></span>
-                  <span>Healthy (&lt;25%)</span>
-                </div>
-                <span style={{ fontWeight: 600 }}>{healthyCount}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Prioritization Quadrant Card */}
-          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>CSM Prioritization Quadrant</h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Action map of ARR vs Churn Risk. Click points to inspect.</span>
-
-            <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <svg width="100%" height="220" viewBox="0 0 320 220" style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                {/* Quadrant backgrounds */}
-                <rect x="40" y="20" width="120" height="70" fill="rgba(52, 211, 153, 0.02)" /> {/* Top Left: Safe High ARR */}
-                <rect x="160" y="20" width="120" height="70" fill="rgba(239, 68, 68, 0.04)" />  {/* Top Right: Critical Churn */}
-                <rect x="40" y="90" width="120" height="70" fill="rgba(255, 255, 255, 0.01)" /> {/* Bottom Left: Low Risk */}
-                <rect x="160" y="90" width="120" height="70" fill="rgba(245, 158, 11, 0.02)" />  {/* Bottom Right: Low ARR Risk */}
-
-                {/* Grid Axes */}
-                <line x1="40" y1="160" x2="280" y2="160" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-                <line x1="40" y1="20" x2="40" y2="160" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-
-                {/* Quadrant Divider Gridlines */}
-                <line x1="160" y1="20" x2="160" y2="160" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
-                <line x1="40" y1="90" x2="280" y2="90" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
-
-                {/* Grid Labels */}
-                <text x="160" y="180" textAnchor="middle" fill="var(--text-muted)" fontSize="8">Risk Score (%)</text>
-                <text x="10" y="90" textAnchor="middle" fill="var(--text-muted)" fontSize="8" transform="rotate(-90 10 90)">ARR ($k)</text>
-
-                {/* Grid ticks */}
-                <text x="40" y="170" textAnchor="middle" fill="var(--text-muted)" fontSize="7">0%</text>
-                <text x="160" y="170" textAnchor="middle" fill="var(--text-muted)" fontSize="7">50%</text>
-                <text x="280" y="170" textAnchor="middle" fill="var(--text-muted)" fontSize="7">100%</text>
-
-                <text x="35" y="160" textAnchor="end" fill="var(--text-muted)" fontSize="7" dominantBaseline="middle">$0</text>
-                <text x="35" y="90" textAnchor="end" fill="var(--text-muted)" fontSize="7" dominantBaseline="middle">$300k</text>
-                <text x="35" y="20" textAnchor="end" fill="var(--text-muted)" fontSize="7" dominantBaseline="middle">$600k</text>
-
-                {/* Quadrant Name Overlays */}
-                <text x="100" y="30" textAnchor="middle" fill="rgba(52, 211, 153, 0.4)" fontSize="6" fontWeight="bold">SAFE KEY</text>
-                <text x="220" y="30" textAnchor="middle" fill="rgba(239, 68, 68, 0.7)" fontSize="6" fontWeight="bold" className="animate-pulse">CRITICAL ACTION 🔥</text>
-                <text x="100" y="100" textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="6" fontWeight="bold">HEALTHY</text>
-                <text x="220" y="100" textAnchor="middle" fill="rgba(245, 158, 11, 0.4)" fontSize="6" fontWeight="bold">WATCHLIST</text>
-
-                {/* Plot Data points */}
-                {accounts.map(acc => {
-                  const x = 40 + (acc.risk_score * 240);
-                  const y = 160 - (Math.min(acc.arr, 600000) / 600000) * 140;
-                  const color = acc.risk_score >= 0.75 ? 'var(--danger)' : acc.risk_score >= 0.25 ? 'var(--warning)' : 'var(--success)';
-                  const glowColor = acc.risk_score >= 0.75 ? 'rgba(239, 68, 68, 0.8)' : acc.risk_score >= 0.25 ? 'rgba(245, 158, 11, 0.6)' : 'rgba(52, 211, 153, 0.6)';
-
-                  return (
-                    <a key={acc.account_id} href={`/account/${acc.account_id}`} style={{ cursor: 'pointer' }}>
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r="6"
-                        fill={color}
-                        stroke="#fff"
-                        strokeWidth="1.5"
-                        style={{
-                          filter: `drop-shadow(0 0 6px ${glowColor})`,
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseOver={(e) => { e.currentTarget.setAttribute('r', '9'); }}
-                        onMouseOut={(e) => { e.currentTarget.setAttribute('r', '6'); }}
-                      />
-                      {/* Label next to circle */}
-                      <text x={x} y={y - 10} textAnchor="middle" fill="var(--text-primary)" fontSize="7" fontWeight="bold" style={{ pointerEvents: 'none' }}>
-                        {acc.company_name}
-                      </text>
-                    </a>
-                  );
-                })}
-              </svg>
-            </div>
-          </div>
-
-          {/* Product Pain Points Clusters (ARR at Risk) */}
-          {painPoints.length > 0 && (
-            <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>Product Pain-Point Clusters</h3>
-                <span style={{ fontSize: '0.65rem', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>ARR Impact</span>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Active support tickets grouped into pain-point clusters and aggregated by financial ARR impact.</p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {painPoints.map(cluster => {
-                  const isHigh = cluster.arrAtRisk >= 500000;
-                  const barColor = isHigh ? 'var(--danger)' : 'var(--warning)';
-
-                  return (
-                    <div key={cluster.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{cluster.category}</span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: barColor }}>
-                          ${cluster.arrAtRisk.toLocaleString()} ARR
-                        </span>
-                      </div>
-                      
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0' }}>{cluster.description}</p>
-                      
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        <span>{cluster.count} open {cluster.count === 1 ? 'ticket' : 'tickets'}</span>
-                        <span>Impacted: {cluster.accounts.join(', ') || 'None'}</span>
-                      </div>
-
-                      {/* Financial impact visual bar */}
-                      <div style={{ width: '100%', height: '5px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '2.5px', overflow: 'hidden', marginTop: '6px' }}>
-                        <div style={{
-                          width: `${Math.min(100, (cluster.arrAtRisk / 600000) * 100)}%`,
-                          height: '100%',
-                          backgroundColor: barColor
-                        }}></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* CSM Ingestion & Event Simulator */}
-          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>CSM Event Simulator</h3>
-              <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Demo Tool</span>
-            </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-              Simulate real-time ingestion of support tickets, CSM check-ins, or phone calls. Watch risk scores update instantly.
-            </p>
-
-            <form onSubmit={handleSimulateEvent} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Account</label>
-                  <select
-                    value={simAccountId}
-                    onChange={(e) => setSimAccountId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'rgba(0,0,0,0.2)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.8rem',
-                      fontFamily: 'var(--font-body)',
-                      outline: 'none'
-                    }}
-                  >
-                    {accounts.map(acc => (
-                      <option key={acc.account_id} value={acc.account_id}>{acc.company_name} ({acc.account_id})</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Event Type</label>
-                  <select
-                    value={simType}
-                    onChange={(e) => setSimType(e.target.value as any)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'rgba(0,0,0,0.2)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.8rem',
-                      fontFamily: 'var(--font-body)',
-                      outline: 'none'
-                    }}
-                  >
-                    <option value="ticket">🎫 Support Ticket</option>
-                    <option value="note">📝 CSM Health Note</option>
-                    <option value="call">📞 Phone Transcript</option>
-                  </select>
-                </div>
-              </div>
-
-              {simType === 'ticket' && (
-                <>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Subject</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Okta SSO Auth Failure"
-                      value={simSubject}
-                      onChange={(e) => setSimSubject(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Description</label>
-                    <textarea
-                      placeholder="Details of the issue..."
-                      value={simDesc}
-                      onChange={(e) => setSimDesc(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        height: '60px',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Priority</label>
-                    <select
-                      value={simPriority}
-                      onChange={(e) => setSimPriority(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    >
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                      <option value="Urgent">Urgent</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {simType === 'note' && (
-                <>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Note Text</label>
-                    <textarea
-                      placeholder="Log details of check-in. Words like 'angry' or 'cancel' trigger negative sentiment..."
-                      value={simNoteText}
-                      onChange={(e) => setSimNoteText(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        height: '80px',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>CSM Author</label>
-                    <input
-                      type="text"
-                      value={simAuthor}
-                      onChange={(e) => setSimAuthor(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-
-              {simType === 'call' && (
-                <>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Call Transcript</label>
-                    <textarea
-                      placeholder="CSM: Hello... Customer: SSO fails..."
-                      value={simTranscript}
-                      onChange={(e) => setSimTranscript(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        height: '70px',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Call Summary</label>
-                    <input
-                      type="text"
-                      placeholder="Frustrated about SSO failure."
-                      value={simSummary}
-                      onChange={(e) => setSimSummary(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Duration (Minutes)</label>
-                    <input
-                      type="number"
-                      value={simDuration}
-                      onChange={(e) => setSimDuration(Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'rgba(0,0,0,0.2)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.8rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-
-              <button
-                type="submit"
-                disabled={simulating}
-                style={{
-                  width: '100%',
-                  padding: '0.65rem',
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
-                  opacity: simulating ? 0.6 : 1,
-                  marginTop: '0.5rem'
-                }}
-              >
-                {simulating ? 'Ingesting Event...' : '🚀 Inject Event'}
-              </button>
-
-              {simMessage && (
-                <div style={{
-                  padding: '0.5rem',
-                  borderRadius: '6px',
-                  background: simMessage.startsWith('Success') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                  color: simMessage.startsWith('Success') ? '#34d399' : '#f87171',
-                  fontSize: '0.75rem',
-                  textAlign: 'center'
-                }}>
-                  {simMessage}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
-            </form>
-          </div>
-
-          {/* Industry Breakdown Card (Elastic Aggregations) */}
-          {aggregations.length > 0 && (
-            <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>Industry Health Profile</h3>
-                <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Elastic Aggs</span>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Dynamic terms and average metric aggregates computed directly inside Elasticsearch.</p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {aggregations.map(agg => {
-                  const riskPct = Math.round(agg.avgRisk * 100);
-                  const isHigh = riskPct >= 75;
-                  const isWarn = riskPct >= 25 && riskPct < 75;
-                  const riskColor = isHigh ? 'var(--danger)' : isWarn ? 'var(--warning)' : 'var(--success)';
-
-                  return (
-                    <div key={agg.industry} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{agg.industry}</span>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: riskColor }}>
-                          {riskPct}% Avg Risk
-                        </span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        <span>{agg.count} {agg.count === 1 ? 'account' : 'accounts'} active</span>
-                        <span>Total ARR: ${agg.totalArr.toLocaleString()}</span>
-                      </div>
-
-                      {/* Small aggregation visual bar */}
-                      <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '2px', overflow: 'hidden', marginTop: '6px' }}>
-                        <div style={{
-                          width: `${riskPct}%`,
-                          height: '100%',
-                          backgroundColor: riskColor
-                        }}></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          )}
 
-          {/* Alert Center */}
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>Live Alert Center</span>
-              <span className="pulse-dot critical"></span>
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ borderLeft: '3px solid var(--danger)', paddingLeft: '12px', paddingTop: '4px', paddingBottom: '4px' }}>
-                <span style={{ fontSize: '0.7rem', color: '#f87171', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>SSO / Export Crash</span>
-                <span style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginTop: '2px', marginBottom: '2px' }}>TechFlow (ACC-002)</span>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>VP threatened to churn by Friday due to report timeout crashes.</p>
-              </div>
+            {/* Analytics Column */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
               
-              <div style={{ borderLeft: '3px solid var(--warning)', paddingLeft: '12px', paddingTop: '4px', paddingBottom: '4px' }}>
-                <span style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 600, display: 'block', textTransform: 'uppercase' }}>Missing Contact Alert</span>
-                <span style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginTop: '2px', marginBottom: '2px' }}>Global Industries (ACC-003)</span>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>No CSM activity recorded for 25 days. Risk score rising.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Blueberry Copilot Column */}
-        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 240px)', position: 'sticky', top: '2rem', overflow: 'hidden' }}>
-          {/* Chat Header */}
-          <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span className="pulse-dot healthy"></span>
-            <div>
-              <h2 style={{ fontSize: '1.1rem' }}>Blueberry Copilot</h2>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Connected to GCP Agent Builder</span>
-            </div>
-          </div>
-
-          {/* Chat messages list */}
-          <div style={{ flexGrow: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {messages.map((msg, idx) => {
-              const isUser = msg.sender === 'user';
-              return (
-                <div key={idx} style={{
-                  alignSelf: isUser ? 'flex-end' : 'flex-start',
-                  maxWidth: '85%',
-                  animation: 'fadeIn 0.2s ease forwards'
-                }}>
-                  <div style={{
-                    padding: '0.85rem 1.1rem',
-                    borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                    background: isUser ? '#3b82f6' : 'rgba(255,255,255,0.04)',
-                    border: isUser ? 'none' : '1px solid var(--border-color)',
-                    color: '#f8fafc',
-                    fontSize: '0.9rem',
-                    lineHeight: '1.45',
-                    whiteSpace: 'pre-line',
-                    boxShadow: isUser ? '0 4px 15px rgba(59, 130, 246, 0.15)' : 'none'
-                  }}>
-                    {msg.text}
+              {/* Distribution Chart */}
+              <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm">
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Portfolio Distribution</h3>
+                <div className="flex justify-center py-4">
+                  <svg width="120" height="120" viewBox="0 0 36 36" className="-rotate-90">
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3" />
+                    {accounts.length > 0 ? (
+                      <>
+                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="3.2" 
+                          strokeDasharray={`${criticalPct} ${100 - criticalPct}`} strokeDashoffset="0" />
+                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f59e0b" strokeWidth="3.2" 
+                          strokeDasharray={`${warningPct} ${100 - warningPct}`} strokeDashoffset={`-${criticalPct}`} />
+                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10b981" strokeWidth="3.2" 
+                          strokeDasharray={`${healthyPct} ${100 - healthyPct}`} strokeDashoffset={`-${criticalPct + warningPct}`} />
+                      </>
+                    ) : (
+                      <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                    )}
+                  </svg>
+                </div>
+                
+                {/* Legend */}
+                <div className="flex flex-col gap-2 mt-4 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-zinc-400">
+                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                      Critical Risk (≥75%)
+                    </span>
+                    <strong className="text-zinc-200">{criticalCount}</strong>
                   </div>
-                  <span style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--text-muted)',
-                    display: 'block',
-                    marginTop: '4px',
-                    textAlign: isUser ? 'right' : 'left'
-                  }}>
-                    {msg.timestamp}
-                  </span>
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-zinc-400">
+                      <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                      At Risk (25-74%)
+                    </span>
+                    <strong className="text-zinc-200">{warningCount}</strong>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-zinc-400">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                      Healthy (&lt;25%)
+                    </span>
+                    <strong className="text-zinc-200">{healthyCount}</strong>
+                  </div>
                 </div>
-              );
-            })}
-
-            {sending && (
-              <div style={{ alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '16px 16px 16px 2px',
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%' }}></span>
-                  <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animationDelay: '0.2s' }}></span>
-                  <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animationDelay: '0.4s' }}></span>
-                </div>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Calling tools...</span>
               </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
 
-          {/* Quick Actions Panel */}
-          <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.1)', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <button 
-              onClick={() => handleSendMessage("Which accounts are currently at critical risk?")} 
-              disabled={sending}
-              style={{
-                fontSize: '0.75rem',
-                padding: '6px 12px',
-                borderRadius: '99px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(255, 255, 255, 0.03)',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6', e.currentTarget.style.color = 'white')}
-              onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)', e.currentTarget.style.color = 'var(--text-secondary)')}
-            >
-              ⚠️ Churn Risks
-            </button>
-            <button 
-              onClick={() => handleSendMessage("Summarize support ticket issues across the portfolio")} 
-              disabled={sending}
-              style={{
-                fontSize: '0.75rem',
-                padding: '6px 12px',
-                borderRadius: '99px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(255, 255, 255, 0.03)',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6', e.currentTarget.style.color = 'white')}
-              onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)', e.currentTarget.style.color = 'var(--text-secondary)')}
-            >
-              🎫 Ticket Summary
-            </button>
-          </div>
+              {/* Product Pain Points Clusters */}
+              {painPoints.length > 0 && (
+                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Product Pain-Points</h3>
+                    <span className="text-[10px] bg-red-950/30 text-red-400 border border-red-900/40 px-2 py-0.5 rounded font-semibold uppercase">ARR Impact</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mb-4">Financial impact calculated by aggregating open tickets by category.</p>
 
-          {/* Chat Input form */}
-          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} style={{ padding: '1rem 1.5rem', display: 'flex', gap: '10px' }}>
-            <input
-              type="text"
-              placeholder="Ask copilot anything..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              disabled={sending}
-              style={{
-                flexGrow: 1,
-                padding: '0.75rem 1.25rem',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                background: 'rgba(255, 255, 255, 0.03)',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-body)',
-                outline: 'none',
-                fontSize: '0.9rem'
-              }}
-            />
-            <button
-              type="submit"
-              disabled={sending || !inputValue.trim()}
-              style={{
-                padding: '0.75rem 1.25rem',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                opacity: (sending || !inputValue.trim()) ? 0.5 : 1
-              }}
-            >
-              Send
-            </button>
-          </form>
-        </div>
-      </div>
-      </>
+                  <div className="flex flex-col gap-4">
+                    {painPoints.map(cluster => {
+                      const isHigh = cluster.arrAtRisk >= 500000;
+                      const color = isHigh ? 'text-red-400' : 'text-amber-400';
+                      const progressColor = isHigh ? 'bg-red-500' : 'bg-amber-500';
+
+                      return (
+                        <div key={cluster.id} className="border-b border-zinc-900/60 pb-3 last:border-b-0 last:pb-0">
+                          <div className="flex justify-between items-start mb-1 text-xs">
+                            <span className="font-semibold text-zinc-200">{cluster.category}</span>
+                            <span className={`font-mono font-bold ${color}`}>${cluster.arrAtRisk.toLocaleString()}</span>
+                          </div>
+                          
+                          <p className="text-[11px] text-zinc-450 leading-relaxed mb-2">{cluster.description}</p>
+                          
+                          <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                            <span>{cluster.count} open {cluster.count === 1 ? 'ticket' : 'tickets'}</span>
+                            <span>Affected: {cluster.accounts.join(', ') || 'None'}</span>
+                          </div>
+
+                          <div className="w-full bg-zinc-900 h-1 rounded-full overflow-hidden mt-2">
+                            <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${Math.min(100, (cluster.arrAtRisk / 600000) * 100)}%` }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* CSM Ingestion & Event Simulator */}
+              <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">CSM Event Simulator</h3>
+                  <span className="text-[10px] bg-blue-950/30 text-blue-400 border border-blue-900/40 px-2 py-0.5 rounded font-semibold uppercase">Demo Tool</span>
+                </div>
+                <p className="text-[11px] text-zinc-500 mb-4">Ingest simulated customer tickets, CSM notes, or calls and watch metrics update.</p>
+
+                <form onSubmit={handleSimulateEvent} className="flex flex-col gap-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-zinc-500 uppercase block mb-1">Account</label>
+                      <select
+                        value={simAccountId}
+                        onChange={(e) => setSimAccountId(e.target.value)}
+                        className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-300 focus:outline-none focus:border-zinc-700"
+                      >
+                        {accounts.map(acc => (
+                          <option key={acc.account_id} value={acc.account_id}>{acc.company_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-zinc-500 uppercase block mb-1">Type</label>
+                      <select
+                        value={simType}
+                        onChange={(e) => setSimType(e.target.value as any)}
+                        className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-300 focus:outline-none focus:border-zinc-700"
+                      >
+                        <option value="ticket">Ticket</option>
+                        <option value="note">CSM Note</option>
+                        <option value="call">Phone Call</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {simType === 'ticket' && (
+                    <>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Subject</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. SSO authentication failure"
+                          value={simSubject}
+                          onChange={(e) => setSimSubject(e.target.value)}
+                          required
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Description</label>
+                        <textarea
+                          placeholder="Bug details..."
+                          value={simDesc}
+                          onChange={(e) => setSimDesc(e.target.value)}
+                          required
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none h-14 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Priority</label>
+                        <select
+                          value={simPriority}
+                          onChange={(e) => setSimPriority(e.target.value)}
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-350 focus:outline-none"
+                        >
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                          <option value="Urgent">Urgent</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  {simType === 'note' && (
+                    <>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Note Content</label>
+                        <textarea
+                          placeholder="Keywords like 'angry' or 'cancel' trigger negative sentiment..."
+                          value={simNoteText}
+                          onChange={(e) => setSimNoteText(e.target.value)}
+                          required
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none h-16 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Author</label>
+                        <input
+                          type="text"
+                          value={simAuthor}
+                          onChange={(e) => setSimAuthor(e.target.value)}
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-100 focus:outline-none"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {simType === 'call' && (
+                    <>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Phone Transcript</label>
+                        <textarea
+                          placeholder="Customer: The export timeout crashes..."
+                          value={simTranscript}
+                          onChange={(e) => setSimTranscript(e.target.value)}
+                          required
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none h-16 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Summary</label>
+                        <input
+                          type="text"
+                          placeholder="SSO export crashes."
+                          value={simSummary}
+                          onChange={(e) => setSimSummary(e.target.value)}
+                          required
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1">Duration (Mins)</label>
+                        <input
+                          type="number"
+                          value={simDuration}
+                          onChange={(e) => setSimDuration(Number(e.target.value))}
+                          className="w-full p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-100 focus:outline-none"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={simulating}
+                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer opacity-90 hover:opacity-100 transition flex items-center justify-center gap-1.5"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${simulating ? 'animate-spin' : ''}`} />
+                    {simulating ? 'Ingesting Event...' : 'Inject Event'}
+                  </button>
+
+                  {simMessage && (
+                    <div className={`p-2 rounded text-center text-xs border ${
+                      simMessage.startsWith('Success') 
+                        ? 'bg-emerald-950/30 text-emerald-400 border-emerald-900/40' 
+                        : 'bg-red-950/30 text-red-400 border-red-900/40'
+                    }`}>
+                      {simMessage}
+                    </div>
+                  )}
+                </form>
+              </div>
+            </div>
+
+            {/* Blueberry Copilot Column */}
+            <div className="lg:col-span-4">
+              <div className="bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col h-[580px] overflow-hidden shadow-sm">
+                
+                {/* Chat Header */}
+                <div className="p-4 border-b border-zinc-900 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full inline-block"></span>
+                  <div>
+                    <h2 className="text-xs font-bold text-zinc-200">Blueberry Copilot</h2>
+                    <span className="text-[10px] text-zinc-500">Connected to GCP Agent Builder</span>
+                  </div>
+                </div>
+
+                {/* Messages list */}
+                <div className="flex-grow p-4 overflow-y-auto flex flex-col gap-3.5">
+                  {messages.map((msg, idx) => {
+                    const isUser = msg.sender === 'user';
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`max-w-[85%] ${isUser ? 'self-end' : 'self-start'} animate-fade-in`}
+                      >
+                        <div className={`p-3 rounded-lg text-xs leading-relaxed ${
+                          isUser 
+                            ? 'bg-blue-600 text-zinc-50 rounded-br-none' 
+                            : 'bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-bl-none'
+                        }`}>
+                          {msg.text}
+                        </div>
+                        <span className={`text-[9px] text-zinc-550 mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
+                          {msg.timestamp}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {sending && (
+                    <div className="self-start flex flex-col gap-1.5">
+                      <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse"></span>
+                        <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-75"></span>
+                        <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-150"></span>
+                      </div>
+                      <span className="text-[9px] text-zinc-500">Calling tools...</span>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Quick Actions Panel */}
+                <div className="p-3 border-t border-zinc-900 bg-zinc-950 flex flex-wrap gap-1.5">
+                  <button 
+                    onClick={() => handleSendMessage("Which accounts are currently at critical risk?")} 
+                    disabled={sending}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                  >
+                    ⚠️ Risks
+                  </button>
+                  <button 
+                    onClick={() => handleSendMessage("Summarize support ticket issues across the portfolio")} 
+                    disabled={sending}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                  >
+                    🎫 Tickets
+                  </button>
+                </div>
+
+                {/* Chat Input form */}
+                <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} className="p-3 border-t border-zinc-900 flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ask copilot anything..."
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    disabled={sending}
+                    className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !inputValue.trim()}
+                    className="px-3 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
+                  >
+                    Send
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {activeTab === 'mcp' && (
-        <div className="glass-panel animate-fade-in" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 md:p-8 flex flex-col gap-6 animate-fade-in shadow-sm">
           <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 className="text-base font-bold text-zinc-100 mb-1 flex items-center gap-2">
               <span>Model Context Protocol (MCP) Server Hub</span>
-              <span className="pulse-dot healthy"></span>
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '800px', lineHeight: '1.6' }}>
-              Blueberry AI implements a fully compliant MCP Server at <code style={{ color: '#60a5fa', background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: '4px' }}>/api/mcp</code>.
+            <p className="text-xs text-zinc-450 max-w-3xl leading-relaxed">
+              Blueberry AI implements a fully compliant MCP Server at <code className="text-[11px] text-blue-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 font-mono">/api/mcp</code>.
               This interface allows external AI engines (such as Google Cloud Agent Builder) to query database indices, perform semantic lookups, and log customer health notes in real time.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '2.5rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start border-t border-zinc-900 pt-6">
             {/* Tool list */}
             <div>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Registered MCP Tools</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Registered MCP Tools</h3>
+              <div className="flex flex-col gap-3">
                 {mcpTools.map(tool => (
                   <div
                     key={tool.name}
@@ -1290,24 +883,23 @@ export default function Dashboard() {
                         setMcpArgs('{}');
                       }
                     }}
-                    style={{
-                      padding: '1.25rem',
-                      borderRadius: '12px',
-                      border: selectedMcpTool?.name === tool.name ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)',
-                      background: selectedMcpTool?.name === tool.name ? 'rgba(59, 130, 246, 0.03)' : 'rgba(255,255,255,0.01)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
+                    className={`p-3.5 rounded-lg border transition cursor-pointer ${
+                      selectedMcpTool?.name === tool.name 
+                        ? 'border-blue-500 bg-blue-950/10' 
+                        : 'border-zinc-850 bg-zinc-950 hover:bg-zinc-900/40'
+                    }`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <strong style={{ fontSize: '1rem', color: selectedMcpTool?.name === tool.name ? '#60a5fa' : 'var(--text-primary)' }}>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <strong className={`text-xs font-bold ${
+                        selectedMcpTool?.name === tool.name ? 'text-blue-400' : 'text-zinc-200'
+                      }`}>
                         {tool.name}
                       </strong>
-                      <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '4px' }}>
+                      <span className="text-[9px] bg-zinc-900 border border-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded">
                         tool
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+                    <p className="text-[11px] text-zinc-450 leading-relaxed">
                       {tool.description}
                     </p>
                   </div>
@@ -1317,76 +909,43 @@ export default function Dashboard() {
 
             {/* Run Tool Console */}
             <div>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>MCP Execution Console</h3>
+              <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">MCP Execution Console</h3>
               {selectedMcpTool ? (
-                <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-4">
                   <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Executing:</span>
-                    <strong style={{ display: 'block', fontSize: '1.1rem', color: '#60a5fa', marginTop: '2px' }}>{selectedMcpTool.name}</strong>
+                    <span className="text-[10px] text-zinc-550 uppercase">Executing:</span>
+                    <strong className="block text-xs font-bold text-blue-450 mt-0.5">{selectedMcpTool.name}</strong>
                   </div>
 
                   <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Arguments JSON:</span>
+                    <span className="text-[10px] text-zinc-550 uppercase block mb-1.5">Arguments JSON:</span>
                     <textarea
                       value={mcpArgs}
                       onChange={(e) => setMcpArgs(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: '110px',
-                        background: 'rgba(0,0,0,0.2)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        color: '#34d399',
-                        fontFamily: 'Courier New, monospace',
-                        fontSize: '0.85rem',
-                        padding: '10px',
-                        outline: 'none'
-                      }}
+                      className="w-full h-24 p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-emerald-400 font-mono text-[11px] outline-none"
                     />
                   </div>
 
                   <button
                     onClick={runMcpTool}
                     disabled={mcpRunning}
-                    style={{
-                      padding: '0.75rem 1.5rem',
-                      background: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      opacity: mcpRunning ? 0.6 : 1
-                    }}
+                    className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-60 transition"
                   >
                     {mcpRunning ? 'Running tool...' : '🔌 Call Tool'}
                   </button>
 
                   {mcpResult && (
                     <div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Response Content:</span>
-                      <pre style={{
-                        width: '100%',
-                        maxHeight: '220px',
-                        overflow: 'auto',
-                        background: 'rgba(0,0,0,0.3)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        color: '#f8fafc',
-                        fontFamily: 'Courier New, monospace',
-                        fontSize: '0.8rem',
-                        padding: '12px',
-                        margin: 0
-                      }}>
+                      <span className="text-[10px] text-zinc-550 uppercase block mb-1.5">Response Content:</span>
+                      <pre className="w-full max-h-56 overflow-auto p-3.5 bg-zinc-900/80 border border-zinc-800 rounded-lg text-zinc-200 font-mono text-[11px] leading-relaxed">
                         {mcpResult}
                       </pre>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  Select a tool from the left list to execute.
+                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-8 text-center text-xs text-zinc-500">
+                  Select a tool from the list to execute in the console.
                 </div>
               )}
             </div>
