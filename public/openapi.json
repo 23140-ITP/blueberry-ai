@@ -381,6 +381,131 @@
           }
         }
       }
+    },
+    "/api/tools/dynamic-risk": {
+      "get": {
+        "summary": "Calculate Dynamic Churn Risk",
+        "description": "Uses live ES|QL aggregations to dynamically calculate the retention risk of a customer account and write it back to Elasticsearch.",
+        "operationId": "getDynamicRiskScore",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "description": "The unique identifier of the customer account (e.g. ACC-002)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dynamic risk calculation complete"
+          }
+        }
+      }
+    },
+    "/api/tools/recommend-runbook": {
+      "get": {
+        "summary": "Recommend Resolution Runbook",
+        "description": "Semantically searches the knowledge base index to match runbook steps for a ticket description or search string.",
+        "operationId": "recommendRunbook",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "query",
+            "description": "Optional support ticket ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Optional raw search string",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved runbook recommendations"
+          }
+        }
+      }
+    },
+    "/api/tools/escalate": {
+      "post": {
+        "summary": "Trigger Account Escalation",
+        "description": "Sets account risk to 99%, creates an escalation milestone in agent memory, and generates Slack JSON block kit cards and email templates.",
+        "operationId": "escalateAccount",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["accountId"],
+                "properties": {
+                  "accountId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Escalation triggered successfully"
+          }
+        }
+      }
+    },
+    "/api/tools/simulate-event": {
+      "post": {
+        "summary": "Simulate Customer Event Ingestion",
+        "description": "Indexes a new ticket, call, or CSM note to simulate customer activity, automatically updating risk metrics.",
+        "operationId": "simulateEvent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type", "accountId"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["ticket", "call", "note"]
+                  },
+                  "accountId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event indexed and metrics re-computed"
+          }
+        }
+      }
+    },
+    "/api/tools/pain-points": {
+      "get": {
+        "summary": "Get Product Pain-Points Clusters",
+        "description": "Aggregates open tickets across the portfolio, clusters them into categories, and calculates ARR at Risk for each.",
+        "operationId": "getPainPoints",
+        "responses": {
+          "200": {
+            "description": "Aggregations completed successfully"
+          }
+        }
+      }
     }
   }
 }

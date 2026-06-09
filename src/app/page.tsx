@@ -105,6 +105,89 @@ export default function Dashboard() {
   const [semanticMatches, setSemanticMatches] = useState<Record<string, { relevanceScore: number; matchReason: string; matchType: string }>>({});
   const [aggregations, setAggregations] = useState<any[]>([]);
 
+  // Pain points clustering state
+  const [painPoints, setPainPoints] = useState<any[]>([]);
+
+  // Simulation form states
+  const [simType, setSimType] = useState<'ticket' | 'note' | 'call'>('ticket');
+  const [simAccountId, setSimAccountId] = useState('ACC-002');
+  const [simSubject, setSimSubject] = useState('');
+  const [simDesc, setSimDesc] = useState('');
+  const [simPriority, setSimPriority] = useState('High');
+  const [simNoteText, setSimNoteText] = useState('');
+  const [simAuthor, setSimAuthor] = useState('Sarah (CSM)');
+  const [simTranscript, setSimTranscript] = useState('');
+  const [simSummary, setSimSummary] = useState('');
+  const [simDuration, setSimDuration] = useState(15);
+  const [simulating, setSimulating] = useState(false);
+  const [simMessage, setSimMessage] = useState('');
+
+  const fetchPainPoints = async () => {
+    try {
+      const res = await fetch('/api/tools/pain-points');
+      const data = await res.json();
+      if (data.clusters) {
+        setPainPoints(data.clusters);
+      }
+    } catch (err) {
+      console.error('Failed to fetch pain points:', err);
+    }
+  };
+
+  const handleSimulateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSimulating(true);
+    setSimMessage('');
+    try {
+      let body: any = { type: simType, accountId: simAccountId };
+      if (simType === 'ticket') {
+        body.subject = simSubject;
+        body.description = simDesc;
+        body.priority = simPriority;
+      } else if (simType === 'note') {
+        body.noteText = simNoteText;
+        body.author = simAuthor;
+      } else if (simType === 'call') {
+        body.transcript = simTranscript;
+        body.summary = simSummary;
+        body.durationMinutes = simDuration;
+      }
+
+      const res = await fetch('/api/tools/simulate-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSimMessage(`Success: ${data.message}`);
+        setSimSubject('');
+        setSimDesc('');
+        setSimNoteText('');
+        setSimTranscript('');
+        setSimSummary('');
+        
+        // Reload all data
+        const resAcc = await fetch('/api/accounts');
+        const dataAcc = await resAcc.json();
+        if (dataAcc.accounts) {
+          setAccounts(dataAcc.accounts);
+        }
+        if (dataAcc.aggregations) {
+          setAggregations(dataAcc.aggregations);
+        }
+        fetchPainPoints();
+      } else {
+        setSimMessage(`Error: ${data.error}`);
+      }
+    } catch (err: any) {
+      setSimMessage(`Error: ${err.message}`);
+    } finally {
+      setSimulating(false);
+      setTimeout(() => setSimMessage(''), 5000);
+    }
+  };
+
   useEffect(() => {
     async function fetchAccounts() {
       try {
@@ -123,6 +206,7 @@ export default function Dashboard() {
       }
     }
     fetchAccounts();
+    fetchPainPoints();
   }, []);
 
   useEffect(() => {
@@ -637,6 +721,318 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Product Pain Points Clusters (ARR at Risk) */}
+          {painPoints.length > 0 && (
+            <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>Product Pain-Point Clusters</h3>
+                <span style={{ fontSize: '0.65rem', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>ARR Impact</span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Active support tickets grouped into pain-point clusters and aggregated by financial ARR impact.</p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {painPoints.map(cluster => {
+                  const isHigh = cluster.arrAtRisk >= 500000;
+                  const barColor = isHigh ? 'var(--danger)' : 'var(--warning)';
+
+                  return (
+                    <div key={cluster.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{cluster.category}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: barColor }}>
+                          ${cluster.arrAtRisk.toLocaleString()} ARR
+                        </span>
+                      </div>
+                      
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0' }}>{cluster.description}</p>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        <span>{cluster.count} open {cluster.count === 1 ? 'ticket' : 'tickets'}</span>
+                        <span>Impacted: {cluster.accounts.join(', ') || 'None'}</span>
+                      </div>
+
+                      {/* Financial impact visual bar */}
+                      <div style={{ width: '100%', height: '5px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '2.5px', overflow: 'hidden', marginTop: '6px' }}>
+                        <div style={{
+                          width: `${Math.min(100, (cluster.arrAtRisk / 600000) * 100)}%`,
+                          height: '100%',
+                          backgroundColor: barColor
+                        }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* CSM Ingestion & Event Simulator */}
+          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>CSM Event Simulator</h3>
+              <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Demo Tool</span>
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+              Simulate real-time ingestion of support tickets, CSM check-ins, or phone calls. Watch risk scores update instantly.
+            </p>
+
+            <form onSubmit={handleSimulateEvent} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Account</label>
+                  <select
+                    value={simAccountId}
+                    onChange={(e) => setSimAccountId(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'rgba(0,0,0,0.2)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8rem',
+                      fontFamily: 'var(--font-body)',
+                      outline: 'none'
+                    }}
+                  >
+                    {accounts.map(acc => (
+                      <option key={acc.account_id} value={acc.account_id}>{acc.company_name} ({acc.account_id})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Event Type</label>
+                  <select
+                    value={simType}
+                    onChange={(e) => setSimType(e.target.value as any)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'rgba(0,0,0,0.2)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8rem',
+                      fontFamily: 'var(--font-body)',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="ticket">🎫 Support Ticket</option>
+                    <option value="note">📝 CSM Health Note</option>
+                    <option value="call">📞 Phone Transcript</option>
+                  </select>
+                </div>
+              </div>
+
+              {simType === 'ticket' && (
+                <>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Subject</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Okta SSO Auth Failure"
+                      value={simSubject}
+                      onChange={(e) => setSimSubject(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Description</label>
+                    <textarea
+                      placeholder="Details of the issue..."
+                      value={simDesc}
+                      onChange={(e) => setSimDesc(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        height: '60px',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Priority</label>
+                    <select
+                      value={simPriority}
+                      onChange={(e) => setSimPriority(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Urgent">Urgent</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {simType === 'note' && (
+                <>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Note Text</label>
+                    <textarea
+                      placeholder="Log details of check-in. Words like 'angry' or 'cancel' trigger negative sentiment..."
+                      value={simNoteText}
+                      onChange={(e) => setSimNoteText(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        height: '80px',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>CSM Author</label>
+                    <input
+                      type="text"
+                      value={simAuthor}
+                      onChange={(e) => setSimAuthor(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {simType === 'call' && (
+                <>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Call Transcript</label>
+                    <textarea
+                      placeholder="CSM: Hello... Customer: SSO fails..."
+                      value={simTranscript}
+                      onChange={(e) => setSimTranscript(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        height: '70px',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Call Summary</label>
+                    <input
+                      type="text"
+                      placeholder="Frustrated about SSO failure."
+                      value={simSummary}
+                      onChange={(e) => setSimSummary(e.target.value)}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Duration (Minutes)</label>
+                    <input
+                      type="number"
+                      value={simDuration}
+                      onChange={(e) => setSimDuration(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'rgba(0,0,0,0.2)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
+              <button
+                type="submit"
+                disabled={simulating}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  opacity: simulating ? 0.6 : 1,
+                  marginTop: '0.5rem'
+                }}
+              >
+                {simulating ? 'Ingesting Event...' : '🚀 Inject Event'}
+              </button>
+
+              {simMessage && (
+                <div style={{
+                  padding: '0.5rem',
+                  borderRadius: '6px',
+                  background: simMessage.startsWith('Success') ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  color: simMessage.startsWith('Success') ? '#34d399' : '#f87171',
+                  fontSize: '0.75rem',
+                  textAlign: 'center'
+                }}>
+                  {simMessage}
+                </div>
+              )}
+            </form>
+          </div>
+
           {/* Industry Breakdown Card (Elastic Aggregations) */}
           {aggregations.length > 0 && (
             <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
@@ -878,7 +1274,7 @@ export default function Dashboard() {
                     key={tool.name}
                     onClick={() => {
                       setSelectedMcpTool(tool);
-                      if (tool.name === 'getAccountContext' || tool.name === 'getAgentMemory') {
+                      if (tool.name === 'getAccountContext' || tool.name === 'getAgentMemory' || tool.name === 'getDynamicRiskScore' || tool.name === 'escalateAccount') {
                         setMcpArgs(JSON.stringify({ accountId: 'ACC-002' }, null, 2));
                       } else if (tool.name === 'writeHealthNote') {
                         setMcpArgs(JSON.stringify({ accountId: 'ACC-002', noteText: 'CSM scheduled a follow-up review for Friday.', sentiment: 'Neutral' }, null, 2));
@@ -886,6 +1282,10 @@ export default function Dashboard() {
                         setMcpArgs(JSON.stringify({ query: 'export crash', accountId: 'ACC-002' }, null, 2));
                       } else if (tool.name === 'writeAgentMemory') {
                         setMcpArgs(JSON.stringify({ accountId: 'ACC-002', content: 'Customer prefers morning calls.', category: 'preference' }, null, 2));
+                      } else if (tool.name === 'recommendRunbook') {
+                        setMcpArgs(JSON.stringify({ ticketId: 'TKT-101' }, null, 2));
+                      } else if (tool.name === 'simulateEvent') {
+                        setMcpArgs(JSON.stringify({ type: 'ticket', accountId: 'ACC-002', subject: 'Simulated Crash Ticket', description: 'Okta SSO timeout failures in production.', priority: 'Urgent' }, null, 2));
                       } else {
                         setMcpArgs('{}');
                       }

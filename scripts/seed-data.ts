@@ -23,7 +23,7 @@ async function main() {
   }
 
   // Define our indices
-  const indices = ['accounts', 'tickets', 'health_notes', 'call_transcripts', 'agent_memory'];
+  const indices = ['accounts', 'tickets', 'health_notes', 'call_transcripts', 'agent_memory', 'knowledge_base'];
   
   // Delete existing indices if they exist (for clean restart during testing)
   for (const index of indices) {
@@ -119,6 +119,19 @@ async function main() {
     }
   });
 
+  // Knowledge base mapping using semantic_text for semantic runbook matching
+  await client.indices.create({
+    index: 'knowledge_base',
+    mappings: {
+      properties: {
+        runbook_id: { type: 'keyword' },
+        title: { type: 'semantic_text' },
+        content: { type: 'semantic_text' },
+        category: { type: 'keyword' }
+      }
+    }
+  });
+
   console.log('Indices created successfully.');
 
   console.log('Seeding Demo Data...');
@@ -192,6 +205,36 @@ async function main() {
       index: 'agent_memory',
       id: memory.memory_id,
       document: memory
+    });
+  }
+
+  // Mock Runbooks
+  const runbooks = [
+    {
+      runbook_id: 'RB-01',
+      category: 'Export Issues',
+      title: 'Resolving Report Data Export Timeout Crashes',
+      content: 'Steps to resolve reports timing out during CSV/Excel export:\n1. Check if the query limits exceed 50,000 rows. If so, apply pagination or partition the export.\n2. Increase the database query timeout from the default 30s to 120s in the gateway config.\n3. Verify memory allocation on the export microservice. Temporarily double worker node memory to 4GB.\n4. Recommend the customer filter their date range to decrease the dataset size before executing the export.'
+    },
+    {
+      runbook_id: 'RB-02',
+      category: 'SSO Issues',
+      title: 'Okta SSO 403 Forbidden Login Error',
+      content: 'Troubleshooting Okta Single Sign-On authentication failures:\n1. Verify that the user is assigned to the active AD group linked in Okta admin console.\n2. Clear browser cache or run in incognito mode to clear expired session tokens.\n3. Check if the Okta certificate has expired. If so, renew the cert in Okta settings and upload the new public key metadata to Blueberry AI settings.\n4. Ensure users are logging in through the custom subdomain URL.'
+    },
+    {
+      runbook_id: 'RB-03',
+      category: 'Rate Limits',
+      title: 'Increasing API Rate Limits for Customers',
+      content: 'Standard operating procedure for API quota increases:\n1. Review the customer account tier. Enterprise accounts are entitled to up to 10,000 requests/minute.\n2. Check if the usage pattern is malicious or anomalous. If it is standard batch sync, proceed.\n3. Update the rate limiter Redis/Env config for the specific account ID by raising the limit threshold.\n4. Notify the account CSM once the deployment updates are completed.'
+    }
+  ];
+
+  for (const rb of runbooks) {
+    await client.index({
+      index: 'knowledge_base',
+      id: rb.runbook_id,
+      document: rb
     });
   }
 

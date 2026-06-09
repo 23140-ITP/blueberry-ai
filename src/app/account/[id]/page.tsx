@@ -36,6 +36,56 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const [newMemoryCategory, setNewMemoryCategory] = useState('preference');
   const [addingMemory, setAddingMemory] = useState(false);
 
+  // Dynamic Risk states
+  const [dynamicRiskData, setDynamicRiskData] = useState<any>(null);
+  
+  // Selected ticket / Runbook matching
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [recommendedRunbook, setRecommendedRunbook] = useState<any>(null);
+  const [loadingRunbook, setLoadingRunbook] = useState(false);
+
+  // Escalation flow
+  const [escalationData, setEscalationData] = useState<any>(null);
+  const [escalating, setEscalating] = useState(false);
+  const [showEscalationModal, setShowEscalationModal] = useState(false);
+
+  const fetchRunbook = async (ticketId: string) => {
+    setLoadingRunbook(true);
+    setRecommendedRunbook(null);
+    try {
+      const res = await fetch(`/api/tools/recommend-runbook?ticketId=${ticketId}`);
+      const data = await res.json();
+      if (data.success && data.runbook) {
+        setRecommendedRunbook(data.runbook);
+      }
+    } catch (err) {
+      console.error('Failed to fetch runbook:', err);
+    } finally {
+      setLoadingRunbook(false);
+    }
+  };
+
+  const handleTriggerEscalation = async () => {
+    setEscalating(true);
+    try {
+      const res = await fetch('/api/tools/escalate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEscalationData(data);
+        setShowEscalationModal(true);
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Failed to trigger escalation:', err);
+    } finally {
+      setEscalating(false);
+    }
+  };
+
   // Chat states
   const [messages, setMessages] = useState<ChatMessage[]>([
     { sender: 'agent', text: "Hello! I am your Blueberry Copilot. How can I help you manage this account's retention status today?", timestamp: '' }
@@ -133,6 +183,13 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
         if (memoryData.memories) {
           setMemories(memoryData.memories);
         }
+      }
+
+      // 5. Fetch Dynamic Risk Score Breakdown
+      const riskRes = await fetch(`/api/tools/dynamic-risk?accountId=${accountId}`);
+      if (riskRes.ok) {
+        const riskData = await riskRes.json();
+        setDynamicRiskData(riskData);
       }
 
     } catch (err: any) {
@@ -283,6 +340,29 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                     <span style={{ fontSize: '1.1rem' }}>{new Date(account.last_contact_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
                   </div>
                 </div>
+
+                <button
+                  onClick={handleTriggerEscalation}
+                  disabled={escalating || account?.status === 'Critical'}
+                  style={{
+                    marginTop: '1.5rem',
+                    padding: '0.65rem 1.25rem',
+                    background: account?.status === 'Critical' ? 'rgba(239, 68, 68, 0.15)' : '#ef4444',
+                    color: account?.status === 'Critical' ? '#f87171' : 'white',
+                    border: account?.status === 'Critical' ? '1px solid rgba(239, 68, 68, 0.3)' : 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: account?.status === 'Critical' ? 'default' : 'pointer',
+                    fontSize: '0.8rem',
+                    opacity: escalating ? 0.7 : 1,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: account?.status === 'Critical' ? 'none' : '0 4px 15px rgba(239, 68, 68, 0.25)'
+                  }}
+                >
+                  🚨 {escalating ? 'Escalating...' : account?.status === 'Critical' ? 'Account Escalated' : 'Trigger Emergency Escalation'}
+                </button>
               </div>
 
               {/* Glowing circular health meter */}
@@ -408,6 +488,93 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
+            {/* Dynamic ES|QL Risk Factors Breakdown */}
+            {dynamicRiskData && dynamicRiskData.factors && (
+              <div className="glass-panel animate-fade-in" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📊 Dynamic Risk Analysis</span>
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>ES|QL Engine</span>
+                  </h2>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status: <strong style={{ color: healthColor }}>{dynamicRiskData.status}</strong></span>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {dynamicRiskData.factors.length === 0 ? (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Baseline risk environment. No high-threat risk factors active.</span>
+                  ) : (
+                    dynamicRiskData.factors.map((factor: any) => {
+                      const isAdded = factor.riskAdded > 0;
+                      const sign = isAdded ? '+' : '';
+                      const color = isAdded ? 'var(--danger)' : 'var(--success)';
+                      return (
+                        <div key={factor.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem', borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: '0.5rem' }}>
+                          <div>
+                            <strong style={{ color: 'var(--text-primary)' }}>{factor.name}</strong>
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>{factor.value}</span>
+                          </div>
+                          <span style={{ fontWeight: 700, color }}>{sign}{factor.riskAdded}%</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Support Runbook Recommender */}
+            <div className="glass-panel animate-fade-in" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>💡 Runbook Resolver</span>
+                  <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>AI semantic matching</span>
+                </h2>
+                {selectedTicketId && (
+                  <button 
+                    onClick={() => { setSelectedTicketId(null); setRecommendedRunbook(null); }}
+                    style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                  >
+                    Clear Match
+                  </button>
+                )}
+              </div>
+              
+              {!selectedTicketId ? (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '8px', lineHeight: '1.4' }}>
+                  Click "🔍 Runbook" on any support ticket in the timeline to pull up the matching troubleshooting procedures.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {loadingRunbook ? (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Finding runbook in knowledge base...</span>
+                  ) : recommendedRunbook ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#60a5fa', textTransform: 'uppercase' }}>
+                        Category: {recommendedRunbook.category}
+                      </span>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc', margin: 0 }}>
+                        {recommendedRunbook.title}
+                      </h4>
+                      <div style={{
+                        padding: '0.75rem 1rem',
+                        borderRadius: '8px',
+                        background: 'rgba(0,0,0,0.2)',
+                        border: '1px solid rgba(255,255,255,0.03)',
+                        fontSize: '0.8rem',
+                        color: 'var(--text-secondary)',
+                        lineHeight: '1.5',
+                        whiteSpace: 'pre-wrap'
+                      }}>
+                        {recommendedRunbook.content}
+                      </div>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No runbook found matching this ticket's issues.</span>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Timeline */}
             <div>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '1.25rem' }}>Customer Journey Timeline</h2>
@@ -465,18 +632,41 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                           
                           {/* Badges depending on item type */}
                           {item.type === 'ticket' && (
-                            <span style={{
-                              fontSize: '0.7rem',
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              backgroundColor: item.priority === 'Urgent' ? 'var(--danger-glow)' : 'rgba(255,255,255,0.05)',
-                              color: item.priority === 'Urgent' ? '#f87171' : 'var(--text-secondary)',
-                              border: item.priority === 'Urgent' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(255,255,255,0.05)'
-                            }}>
-                              {item.priority} Priority
-                            </span>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                backgroundColor: item.priority === 'Urgent' ? 'var(--danger-glow)' : 'rgba(255,255,255,0.05)',
+                                color: item.priority === 'Urgent' ? '#f87171' : 'var(--text-secondary)',
+                                border: item.priority === 'Urgent' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(255,255,255,0.05)'
+                              }}>
+                                {item.priority} Priority
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setSelectedTicketId(item.id);
+                                  fetchRunbook(item.id);
+                                }}
+                                style={{
+                                  padding: '2px 8px',
+                                  background: selectedTicketId === item.id ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.02)',
+                                  border: '1px solid rgba(255,255,255,0.05)',
+                                  borderRadius: '4px',
+                                  color: selectedTicketId === item.id ? '#60a5fa' : 'var(--text-muted)',
+                                  fontSize: '0.65rem',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px'
+                                }}
+                              >
+                                🔍 Runbook
+                              </button>
+                            </div>
                           )}
                           {item.type === 'note' && (
                             <span className={`risk-badge ${item.sentiment === 'Negative' ? 'critical' : item.sentiment === 'Positive' ? 'healthy' : 'at-risk'}`} style={{ fontSize: '0.65rem', padding: '2px 8px' }}>
@@ -665,6 +855,126 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 Send
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Escalation Modal Overlay */}
+      {showEscalationModal && escalationData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div className="glass-panel" style={{
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            padding: '2.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+            border: '1px solid rgba(239, 68, 68, 0.2)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.4rem', color: '#f87171', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🚨 Emergency Escalation Triggered</span>
+              </h2>
+              <button 
+                onClick={() => setShowEscalationModal(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: '6px',
+                  color: 'var(--text-secondary)',
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem'
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+              The account status has been updated to <strong>Critical (99% Risk)</strong> in Elasticsearch. An escalation milestone has been logged to the memory bank.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+              {/* Copyable Email Draft */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>Email Draft (Markdown):</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(escalationData.emailDraft);
+                      alert('Copied to clipboard!');
+                    }}
+                    style={{
+                      background: '#3b82f6',
+                      border: 'none',
+                      borderRadius: '4px',
+                      color: 'white',
+                      fontSize: '0.7rem',
+                      padding: '2px 8px',
+                      cursor: 'pointer',
+                      fontWeight: 600
+                    }}
+                  >
+                    Copy Email
+                  </button>
+                </div>
+                <textarea
+                  readOnly
+                  value={escalationData.emailDraft}
+                  style={{
+                    width: '100%',
+                    height: '240px',
+                    background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.8rem',
+                    padding: '10px',
+                    outline: 'none',
+                    resize: 'none'
+                  }}
+                />
+              </div>
+
+              {/* Slack Card Layout preview */}
+              <div>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Slack Layout (JSON Block Kit):</span>
+                <textarea
+                  readOnly
+                  value={escalationData.slackCard}
+                  style={{
+                    width: '100%',
+                    height: '240px',
+                    background: 'rgba(0,0,0,0.3)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    color: '#34d399',
+                    fontFamily: 'Courier New, monospace',
+                    fontSize: '0.75rem',
+                    padding: '10px',
+                    outline: 'none',
+                    resize: 'none'
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
