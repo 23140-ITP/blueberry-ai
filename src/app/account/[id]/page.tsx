@@ -303,7 +303,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       <div className="mb-6">
         <Link 
           href="/" 
-          className="cursor-pointer text-zinc-400 hover:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 self-start transition"
+          className="cursor-pointer text-muted-foreground hover:text-foreground text-xs font-semibold flex items-center gap-1.5 self-start transition"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to Retention Radar
@@ -312,14 +312,14 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
       {loading ? (
         <div className="flex-grow flex justify-center items-center">
-          <span className="text-xs text-zinc-400 animate-pulse">Loading customer account details...</span>
+          <span className="text-xs text-muted-foreground animate-pulse">Loading customer account details...</span>
         </div>
       ) : error ? (
-        <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-12 text-center flex-grow flex flex-col justify-center items-center gap-3">
+        <div className="bg-background border border-border rounded-xl p-12 text-center flex-grow flex flex-col justify-center items-center gap-3">
           <h2 className="text-sm font-bold text-red-400 uppercase tracking-wider">Account Data Error</h2>
-          <p className="text-xs text-zinc-400">{error}</p>
+          <p className="text-xs text-muted-foreground">{error}</p>
           <Link href="/">
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer transition">Go Back</button>
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer transition">Go Back</button>
           </Link>
         </div>
       ) : (
@@ -330,21 +330,21 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* Account Info Header */}
-            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+            <div className="bg-background border border-border rounded-xl p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
               <div>
-                <h1 className="text-xl font-bold text-zinc-50 tracking-tight mb-1">{account.company_name}</h1>
-                <span className="text-xs text-zinc-500 block">
-                  Account ID: <strong className="text-zinc-350">{account.account_id}</strong> • Industry: {account.industry}
+                <h1 className="text-xl font-bold text-foreground tracking-tight mb-1">{account.company_name}</h1>
+                <span className="text-xs text-muted-foreground block">
+                  Account ID: <strong className="text-muted-foreground">{account.account_id}</strong> • Industry: {account.industry}
                 </span>
                 
                 <div className="flex gap-8 mt-5">
                   <div>
-                    <span className="text-[10px] text-zinc-550 uppercase block">Annual Recurring ARR</span>
-                    <strong className="text-sm text-zinc-200 font-mono">${account.arr.toLocaleString()}</strong>
+                    <span className="text-[10px] text-muted-foreground uppercase block">Annual Recurring ARR</span>
+                    <strong className="text-sm text-foreground font-mono">${account.arr.toLocaleString()}</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] text-zinc-550 uppercase block">Last Contact Date</span>
-                    <strong className="text-xs text-zinc-200">
+                    <span className="text-[10px] text-muted-foreground uppercase block">Last Contact Date</span>
+                    <strong className="text-xs text-foreground">
                       {new Date(account.last_contact_date).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                     </strong>
                   </div>
@@ -356,7 +356,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   className={`mt-5 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                     account?.status === 'Critical' 
                       ? 'bg-red-950/20 text-red-400 border border-red-900/40 cursor-default' 
-                      : 'bg-red-600 hover:bg-red-700 text-zinc-50 border border-red-500 shadow-sm'
+                      : 'bg-red-600 hover:bg-red-700 text-foreground border border-red-500 shadow-sm'
                   }`}
                 >
                   <ShieldAlert className="h-3.5 w-3.5" />
@@ -374,15 +374,15 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 </svg>
                 <div className="absolute flex flex-col items-center">
                   <span className="text-xl font-bold font-mono tracking-tight" style={{ color: healthColor }}>{riskScore}%</span>
-                  <span className="text-[9px] text-zinc-500 uppercase">Risk</span>
+                  <span className="text-[9px] text-muted-foreground uppercase">Risk</span>
                 </div>
               </div>
             </div>
 
             {/* Dynamic ES|QL Risk Factors Breakdown */}
-            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3">
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-3">
+              <div className="flex justify-between items-center pb-2 border-b border-border">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <Activity className="h-3.5 w-3.5 text-blue-450" />
                   <span>Dynamic Risk Analysis</span>
                 </h2>
@@ -393,11 +393,11 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                       await fetch(`/api/tools/dynamic-risk?accountId=${accountId}&save=true`);
                       await fetchData();
                     }}
-                    className="text-[10px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-zinc-200 px-2 py-0.5 rounded font-semibold transition cursor-pointer"
+                    className="text-[10px] bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground px-2 py-0.5 rounded font-semibold transition cursor-pointer"
                   >
                     Recalculate & Sync
                   </button>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-muted-foreground">
                     Status: <strong style={{ color: healthColor }}>{dynamicRiskData?.status || account?.status}</strong>
                   </span>
                 </div>
@@ -405,17 +405,17 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               
               <div className="flex flex-col gap-3">
                 {!dynamicRiskData || !dynamicRiskData.factors || dynamicRiskData.factors.length === 0 ? (
-                  <span className="text-xs text-zinc-500 py-2">Baseline risk environment. No high-threat risk factors active.</span>
+                  <span className="text-xs text-muted-foreground py-2">Baseline risk environment. No high-threat risk factors active.</span>
                 ) : (
                   dynamicRiskData.factors.map((factor: any) => {
                     const isAdded = factor.riskAdded > 0;
                     const sign = isAdded ? '+' : '';
                     const colorClass = isAdded ? 'text-red-400' : 'text-emerald-400';
                     return (
-                      <div key={factor.name} className="flex justify-between items-center text-xs pb-2.5 border-b border-zinc-900 last:border-b-0 last:pb-0">
+                      <div key={factor.name} className="flex justify-between items-center text-xs pb-2.5 border-b border-border last:border-b-0 last:pb-0">
                         <div>
-                          <strong className="text-zinc-200 font-semibold">{factor.name}</strong>
-                          <span className="block text-[10px] text-zinc-500 mt-0.5">{factor.value}</span>
+                          <strong className="text-foreground font-semibold">{factor.name}</strong>
+                          <span className="block text-[10px] text-muted-foreground mt-0.5">{factor.value}</span>
                         </div>
                         <span className={`font-mono font-bold ${colorClass}`}>{sign}{factor.riskAdded}%</span>
                       </div>
@@ -426,9 +426,9 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Support Runbook Recommender */}
-            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3.5">
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-3.5">
+              <div className="flex justify-between items-center pb-2 border-b border-border">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <Brain className="h-3.5 w-3.5 text-emerald-400" />
                   <span>Runbook Resolver</span>
                 </h2>
@@ -443,36 +443,36 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               </div>
               
               {!selectedTicketId ? (
-                <div className="py-4 text-center text-zinc-500 text-xs border border-dashed border-zinc-850 rounded-lg leading-relaxed">
+                <div className="py-4 text-center text-muted-foreground text-xs border border-dashed border-border rounded-lg leading-relaxed">
                   Click "🔍 Runbook" on any support ticket in the timeline to pull up the matching troubleshooting procedures.
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
                   {loadingRunbook ? (
-                    <span className="text-xs text-zinc-400 animate-pulse">Finding runbook in knowledge base...</span>
+                    <span className="text-xs text-muted-foreground animate-pulse">Finding runbook in knowledge base...</span>
                   ) : recommendedRunbook ? (
                     <div className="flex flex-col gap-2.5">
                       <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
                         Category: {recommendedRunbook.category}
                       </span>
-                      <h4 className="text-sm font-semibold text-zinc-200">
+                      <h4 className="text-sm font-semibold text-foreground">
                         {recommendedRunbook.title}
                       </h4>
-                      <div className="p-3.5 rounded-lg bg-zinc-900/50 border border-zinc-850 text-xs text-zinc-350 leading-relaxed white-space-pre-wrap font-mono">
+                      <div className="p-3.5 rounded-lg bg-card/50 border border-border text-xs text-muted-foreground leading-relaxed white-space-pre-wrap font-mono">
                         {recommendedRunbook.content}
                       </div>
                     </div>
                   ) : (
-                    <span className="text-xs text-zinc-550">No runbook found matching this ticket's issues.</span>
+                    <span className="text-xs text-muted-foreground">No runbook found matching this ticket's issues.</span>
                   )}
                 </div>
               )}
             </div>
 
             {/* Agent Memory Bank */}
-            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3.5">
-              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-3.5">
+              <div className="flex justify-between items-center pb-2 border-b border-border">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <Brain className="h-3.5 w-3.5 text-blue-450" />
                   <span>Agent Memory Bank</span>
                 </h2>
@@ -480,19 +480,19 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   {memories.length} facts cached
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-500">
-                Long-term preferences and escalation triggers cached in the <code className="text-[10px] text-blue-400 bg-zinc-900 px-1 py-0.5 rounded">agent_memory</code> index.
+              <p className="text-[11px] text-muted-foreground">
+                Long-term preferences and escalation triggers cached in the <code className="text-[10px] text-blue-400 bg-card px-1 py-0.5 rounded">agent_memory</code> index.
               </p>
 
               {/* Memory List */}
               {memories.length === 0 ? (
-                <div className="py-4 text-center text-zinc-555 text-xs border border-dashed border-zinc-850 rounded-lg">
+                <div className="py-4 text-center text-muted-foreground text-xs border border-dashed border-border rounded-lg">
                   No memories cached for this account. Teach the agent via chat, or log a memory below!
                 </div>
               ) : (
                 <div className="flex flex-col gap-2.5 max-h-48 overflow-y-auto pr-1">
                   {memories.map((mem) => (
-                    <div key={mem.memory_id || mem.created_at} className="p-3 rounded-lg bg-zinc-900/40 border border-zinc-850 flex flex-col gap-1.5">
+                    <div key={mem.memory_id || mem.created_at} className="p-3 rounded-lg bg-card/40 border border-border flex flex-col gap-1.5">
                       <div className="flex justify-between items-center">
                         <span className={`text-[9px] font-bold uppercase ${
                           mem.category === 'preference' ? 'text-amber-400' : 
@@ -500,11 +500,11 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                         }`}>
                           {mem.category}
                         </span>
-                        <span className="text-[9px] text-zinc-500">
+                        <span className="text-[9px] text-muted-foreground">
                           {new Date(mem.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-350 leading-relaxed">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
                         {mem.content}
                       </p>
                     </div>
@@ -513,11 +513,11 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               )}
 
               {/* Add Memory Form */}
-              <div className="flex gap-2 mt-2 border-t border-zinc-900 pt-4">
+              <div className="flex gap-2 mt-2 border-t border-border pt-4">
                 <select
                   value={newMemoryCategory}
                   onChange={(e) => setNewMemoryCategory(e.target.value)}
-                  className="p-2 text-xs rounded border border-zinc-800 bg-zinc-950 text-zinc-350 focus:outline-none"
+                  className="p-2 text-xs rounded border border-border bg-background text-muted-foreground focus:outline-none"
                 >
                   <option value="preference">Preference</option>
                   <option value="escalation">Escalation</option>
@@ -528,12 +528,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   placeholder="Remember a new customer preference..."
                   value={newMemoryText}
                   onChange={(e) => setNewMemoryText(e.target.value)}
-                  className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-650 focus:outline-none"
+                  className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-border bg-background text-foreground placeholder-zinc-650 focus:outline-none"
                 />
                 <button
                   onClick={handleSaveMemory}
                   disabled={addingMemory || !newMemoryText.trim()}
-                  className="px-3 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
+                  className="px-3 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
                 >
                   {addingMemory ? 'Saving...' : 'Remember'}
                 </button>
@@ -542,14 +542,14 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
             {/* Timeline */}
             <div>
-              <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Customer Journey Timeline</h2>
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Customer Journey Timeline</h2>
               
               {timeline.length === 0 ? (
-                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-12 text-center text-xs text-zinc-555">
+                <div className="bg-background border border-border rounded-xl p-12 text-center text-xs text-muted-foreground">
                   No activity logs registered.
                 </div>
               ) : (
-                <div className="relative pl-6 border-l border-zinc-800/80 ml-3 flex flex-col gap-6">
+                <div className="relative pl-6 border-l border-border/80 ml-3 flex flex-col gap-6">
                   {timeline.map((item) => {
                     let typeColor = 'text-blue-400';
                     let typeIcon = <Play className="h-3.5 w-3.5" />;
@@ -562,18 +562,18 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                     }
 
                     return (
-                      <div key={item.id} className="bg-zinc-950 border border-zinc-850 p-4.5 rounded-xl relative flex flex-col gap-2.5 animate-fade-in">
+                      <div key={item.id} className="bg-background border border-border p-4.5 rounded-xl relative flex flex-col gap-2.5 animate-fade-in">
                         {/* Circle node on line */}
-                        <div className={`absolute -left-[2.15rem] top-4.5 w-3.5 h-3.5 rounded-full bg-zinc-950 border-2 flex items-center justify-center`} style={{ borderColor: 'currentColor', color: typeColor === 'text-red-400' ? '#ef4444' : typeColor === 'text-amber-400' ? '#f59e0b' : typeColor === 'text-emerald-400' ? '#10b981' : '#3b82f6' }}></div>
+                        <div className={`absolute -left-[2.15rem] top-4.5 w-3.5 h-3.5 rounded-full bg-background border-2 flex items-center justify-center`} style={{ borderColor: 'currentColor', color: typeColor === 'text-red-400' ? '#ef4444' : typeColor === 'text-amber-400' ? '#f59e0b' : typeColor === 'text-emerald-400' ? '#10b981' : '#3b82f6' }}></div>
 
                         {/* Timeline Card Header */}
                         <div className="flex justify-between items-start gap-4">
                           <div>
-                            <span className="text-xs font-bold text-zinc-100 flex items-center gap-2">
+                            <span className="text-xs font-bold text-foreground flex items-center gap-2">
                               <span style={{ color: typeColor === 'text-red-400' ? '#ef4444' : typeColor === 'text-amber-400' ? '#f59e0b' : typeColor === 'text-emerald-400' ? '#10b981' : '#3b82f6' }}>{typeIcon}</span>
                               {item.title}
                             </span>
-                            <span className="text-[10px] text-zinc-500 block mt-0.5">
+                            <span className="text-[10px] text-muted-foreground block mt-0.5">
                               {new Date(item.date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
                             </span>
                           </div>
@@ -582,7 +582,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                           {item.type === 'ticket' && (
                             <div className="flex gap-2 items-center">
                               <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                                item.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-zinc-900 border border-zinc-800 text-zinc-400'
+                                item.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-card border border-border text-muted-foreground'
                               }`}>
                                 {item.priority} Priority
                               </span>
@@ -594,7 +594,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                                 className={`padding-2 px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer border flex items-center gap-1 transition ${
                                   selectedTicketId === item.id 
                                     ? 'bg-blue-950/20 text-blue-400 border-blue-900/40' 
-                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                                    : 'bg-card border-border text-muted-foreground hover:text-foreground'
                                 }`}
                               >
                                 <HelpCircle className="h-3 w-3" />
@@ -612,14 +612,14 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                             </span>
                           )}
                           {item.type === 'call' && (
-                            <span className="text-[10px] text-zinc-500 font-mono bg-zinc-900 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] text-muted-foreground font-mono bg-card px-1.5 py-0.5 rounded">
                               ⏱ {item.duration} mins
                             </span>
                           )}
                         </div>
 
                         {/* Card Body */}
-                        <p className="text-xs text-zinc-350 leading-relaxed white-space-pre-line">
+                        <p className="text-xs text-muted-foreground leading-relaxed white-space-pre-line">
                           {item.description}
                         </p>
                       </div>
@@ -632,16 +632,16 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
           {/* Right Column: Chat panel */}
           <div className="lg:col-span-4 lg:sticky lg:top-8">
-            <div className="bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col h-[580px] overflow-hidden shadow-sm">
+            <div className="bg-background border border-border rounded-xl flex flex-col h-[580px] overflow-hidden shadow-sm">
               
               {/* Chat Header */}
-              <div className="p-4 border-b border-zinc-900 flex items-center gap-2">
+              <div className="p-4 border-b border-border flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full inline-block ${
                   isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
                 }`}></span>
                 <div>
-                  <h2 className="text-xs font-bold text-zinc-200">Blueberry Copilot</h2>
-                  <span className="text-[10px] text-zinc-500">Connected to GCP Agent Builder</span>
+                  <h2 className="text-xs font-bold text-foreground">Blueberry Copilot</h2>
+                  <span className="text-[10px] text-muted-foreground">Connected to GCP Agent Builder</span>
                 </div>
               </div>
 
@@ -656,12 +656,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                     >
                       <div className={`p-3 rounded-lg text-xs leading-relaxed ${
                         isUser 
-                          ? 'bg-blue-600 text-zinc-50 rounded-br-none' 
-                          : 'bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-bl-none'
+                          ? 'bg-blue-600 text-foreground rounded-br-none' 
+                          : 'bg-card border border-border text-foreground rounded-bl-none'
                       }`}>
                         {msg.text}
                       </div>
-                      <span className={`text-[9px] text-zinc-550 mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
+                      <span className={`text-[9px] text-muted-foreground mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
                         {msg.timestamp}
                       </span>
                     </div>
@@ -670,56 +670,56 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
                 {sending && (
                   <div className="self-start flex flex-col gap-1.5">
-                    <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center gap-1">
+                    <div className="p-2.5 rounded-lg bg-card border border-border flex items-center gap-1">
                       <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse"></span>
                       <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-75"></span>
                       <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-150"></span>
                     </div>
-                    <span className="text-[9px] text-zinc-550">Calling tools...</span>
+                    <span className="text-[9px] text-muted-foreground">Calling tools...</span>
                   </div>
                 )}
                 <div ref={chatEndRef} />
               </div>
 
               {/* Quick Actions Panel (Contextually Updated) */}
-              <div className="p-3 border-t border-zinc-900 bg-zinc-950 flex flex-wrap gap-1.5">
+              <div className="p-3 border-t border-border bg-background flex flex-wrap gap-1.5">
                 <button 
                   onClick={() => handleSendMessage(`Why is this account (${account?.company_name}) at risk?`)} 
                   disabled={sending}
-                  className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
                 >
                   ❓ Why at risk?
                 </button>
                 <button 
                   onClick={() => handleSendMessage(`Search for open support tickets in this account`)} 
                   disabled={sending}
-                  className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
                 >
                   🔍 Search tickets
                 </button>
                 <button 
                   onClick={() => handleSendMessage(`Log a new negative sentiment health note: 'Customer David is extremely frustrated about the data export timeouts and requested a competitor evaluation.'`)} 
                   disabled={sending}
-                  className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
                 >
                   ✍ Log CSM note
                 </button>
               </div>
 
               {/* Chat Input form */}
-              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} className="p-3 border-t border-zinc-900 flex gap-2">
+              <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} className="p-3 border-t border-border flex gap-2">
                 <input
                   type="text"
                   placeholder="Ask your copilot anything..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   disabled={sending}
-                  className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-zinc-700"
+                  className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-border bg-background text-foreground placeholder-zinc-650 focus:outline-none focus:border-zinc-700"
                 />
                 <button
                   type="submit"
                   disabled={sending || !inputValue.trim()}
-                  className="px-3 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
+                  className="px-3 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
                 >
                   Send
                 </button>
@@ -732,21 +732,21 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       {/* Escalation Modal Overlay */}
       {showEscalationModal && escalationData && (
         <div className="fixed inset-0 bg-black/85 flex justify-center items-center z-[999] backdrop-blur-md">
-          <div className="bg-zinc-950 border border-red-900/30 w-[90%] max-w-[800px] max-h-[85vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-5 shadow-2xl">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
+          <div className="bg-background border border-red-900/30 w-[90%] max-w-[800px] max-h-[85vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-5 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-border pb-4">
               <h2 className="text-base font-bold text-red-400 flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4" />
                 <span>Emergency Escalation Triggered</span>
               </h2>
               <button 
                 onClick={() => setShowEscalationModal(false)}
-                className="px-2.5 py-1 text-xs rounded border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                className="px-2.5 py-1 text-xs rounded border border-border bg-card text-muted-foreground hover:text-foreground cursor-pointer transition"
               >
                 Close
               </button>
             </div>
 
-            <p className="text-xs text-zinc-450 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               The account status has been updated to <strong className="text-red-400 font-bold">Critical (99% Risk)</strong> in Elasticsearch. An escalation milestone has been written to the agent memory bank.
             </p>
 
@@ -754,7 +754,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               {/* Copyable Email Draft */}
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-zinc-550 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <FileText className="h-3 w-3" />
                     Email Draft (Markdown)
                   </span>
@@ -763,7 +763,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                       navigator.clipboard.writeText(escalationData.emailDraft);
                       alert('Copied email to clipboard!');
                     }}
-                    className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded text-[10px] font-bold cursor-pointer transition"
+                    className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-foreground rounded text-[10px] font-bold cursor-pointer transition"
                   >
                     Copy Email
                   </button>
@@ -771,20 +771,20 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 <textarea
                   readOnly
                   value={escalationData.emailDraft}
-                  className="w-full h-64 p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-zinc-200 font-mono text-[10px] leading-relaxed resize-none outline-none"
+                  className="w-full h-64 p-3 bg-card/60 border border-border rounded-lg text-foreground font-mono text-[10px] leading-relaxed resize-none outline-none"
                 />
               </div>
 
               {/* Slack Card Layout preview */}
               <div className="flex flex-col gap-2">
-                <span className="text-[10px] text-zinc-550 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <Terminal className="h-3 w-3" />
                   Slack Layout (JSON Block Kit)
                 </span>
                 <textarea
                   readOnly
                   value={escalationData.slackCard}
-                  className="w-full h-64 p-3 bg-zinc-900/80 border border-zinc-800 rounded-lg text-emerald-450 font-mono text-[10px] leading-relaxed resize-none outline-none"
+                  className="w-full h-64 p-3 bg-card/80 border border-border rounded-lg text-emerald-450 font-mono text-[10px] leading-relaxed resize-none outline-none"
                 />
               </div>
             </div>

@@ -6,6 +6,7 @@ import {
   Search, LayoutDashboard, Brain, Activity, ShieldAlert, CheckCircle2, 
   AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface ChatMessage {
   sender: 'user' | 'agent';
@@ -390,23 +391,23 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex bg-background text-foreground font-sans overflow-hidden">
       {/* Sidebar Navigation */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-zinc-950 border-r border-zinc-850 flex flex-col justify-between transform transition-transform duration-200 md:translate-x-0 md:static md:h-screen shrink-0 ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border flex flex-col justify-between transform transition-transform duration-200 md:translate-x-0 md:static md:h-screen shrink-0 ${
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col flex-grow overflow-y-auto">
           {/* Brand header */}
-          <div className="p-5 border-b border-zinc-900 flex items-center justify-between">
+          <div className="p-5 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 bg-blue-500 rounded-full inline-block shadow-[0_0_10px_#3b82f6]"></span>
               <div>
-                <h1 className="text-sm font-bold tracking-tight text-zinc-50 font-heading">Blueberry AI</h1>
-                <span className="text-[10px] text-zinc-500 font-medium block mt-0.5">Retention Radar v1.2</span>
+                <h1 className="text-sm font-bold tracking-tight text-foreground font-heading">Blueberry AI</h1>
+                <span className="text-[10px] text-muted-foreground font-medium block mt-0.5">Retention Radar v1.2</span>
               </div>
             </div>
             {/* Mobile Close Button */}
             <button 
               onClick={() => setIsMobileSidebarOpen(false)}
-              className="md:hidden text-zinc-400 hover:text-zinc-200 cursor-pointer p-1 rounded hover:bg-zinc-900 transition"
+              className="md:hidden text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded hover:bg-card transition"
             >
               <X className="h-4 w-4" />
             </button>
@@ -432,11 +433,11 @@ export default function Dashboard() {
                   }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
                     isActive 
-                      ? 'bg-zinc-900 border border-zinc-800 text-zinc-50 shadow-sm' 
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40 border border-transparent'
+                      ? 'bg-card border border-border text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-card/40 border border-transparent'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-400' : 'text-zinc-500'}`} />
+                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-400' : 'text-muted-foreground'}`} />
                   <span>{item.label}</span>
                 </button>
               );
@@ -445,17 +446,18 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar Footer with system statuses */}
-        <div className="p-4 border-t border-zinc-900 bg-zinc-950 flex flex-col gap-2.5 text-[10px] text-zinc-550">
+        <div className="p-4 border-t border-border bg-background flex flex-col gap-2.5 text-[10px] text-muted-foreground">
           <button
             onClick={handleResetDemoDatabase}
             disabled={resetting}
-            className="w-full py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-350 hover:text-zinc-150 rounded text-[10px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="w-full py-1.5 bg-card hover:bg-muted border border-border hover:border-border text-muted-foreground hover:text-foreground rounded text-[10px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <Database className="h-3 w-3" />
             {resetting ? 'Resetting Demo...' : 'Reset Demo Database'}
           </button>
+          <ThemeToggle />
           
-          <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2">
+          <div className="flex items-center justify-between border-t border-border/60 pt-2 mt-2">
             <span className="font-medium">Elasticsearch</span>
             <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
@@ -483,16 +485,16 @@ export default function Dashboard() {
       {/* Main Content Pane */}
       <div className="flex-grow flex flex-col min-w-0 h-screen overflow-y-auto">
         {/* Top Header Bar */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-850 bg-zinc-950/20 backdrop-blur-md sticky top-0 z-30 min-h-[64px]">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/20 backdrop-blur-md sticky top-0 z-30 min-h-[64px]">
           <div className="flex items-center gap-3">
             {/* Mobile Hamburger menu */}
             <button 
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="md:hidden text-zinc-400 hover:text-zinc-200 cursor-pointer p-1.5 rounded hover:bg-zinc-900 transition"
+              className="md:hidden text-muted-foreground hover:text-foreground cursor-pointer p-1.5 rounded hover:bg-card transition"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider font-heading">
+            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider font-heading">
               {activeView === 'radar' && 'Retention Radar'}
               {activeView === 'pain-points' && 'Product Pain-Point Clusters'}
               {activeView === 'simulator' && 'CSM Ingestion Simulator'}
@@ -504,7 +506,7 @@ export default function Dashboard() {
           {/* Search bar specifically visible in Dashboard View */}
           {activeView === 'radar' && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="inline-flex bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+              <div className="inline-flex bg-card border border-border rounded-lg p-0.5">
                 {(['client', 'keyword', 'vector', 'hybrid'] as const).map(mode => (
                   <button
                     key={mode}
@@ -515,8 +517,8 @@ export default function Dashboard() {
                     }}
                     className={`px-3 py-1 text-[10px] font-semibold transition-all duration-150 cursor-pointer ${
                       searchMode === mode 
-                        ? 'bg-zinc-800 text-zinc-50 border border-zinc-700/50 shadow-sm' 
-                        : 'text-zinc-400 hover:text-zinc-200'
+                        ? 'bg-muted text-foreground border border-zinc-700/50 shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {mode === 'client' && 'Local'}
@@ -528,7 +530,7 @@ export default function Dashboard() {
               </div>
 
               <div className="relative w-full sm:w-[240px]">
-                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder={
@@ -538,7 +540,7 @@ export default function Dashboard() {
                   }
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-8 pr-4 py-1.5 text-xs rounded-md border border-zinc-850 bg-zinc-950/80 text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-zinc-750 transition"
+                  className="w-full pl-8 pr-4 py-1.5 text-xs rounded-md border border-border bg-background/80 text-foreground placeholder-zinc-650 focus:outline-none focus:border-zinc-750 transition"
                 />
               </div>
             </div>
@@ -553,29 +555,29 @@ export default function Dashboard() {
             <div className="flex flex-col gap-6 animate-fade-in">
               {/* KPI Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Total ARR Managed</span>
-                  <span className="text-2xl font-bold text-zinc-50 font-heading">${totalARR.toLocaleString()}</span>
+                <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total ARR Managed</span>
+                  <span className="text-2xl font-bold text-foreground font-heading">${totalARR.toLocaleString()}</span>
                   <span className="text-[11px] text-emerald-400 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
                     {filteredAccounts.length} active customer accounts
                   </span>
                 </div>
 
-                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">At Risk Accounts</span>
-                  <span className="text-2xl font-bold text-zinc-50 font-heading">
-                    {criticalCount} <span className="text-sm font-normal text-zinc-400">critical</span>
+                <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">At Risk Accounts</span>
+                  <span className="text-2xl font-bold text-foreground font-heading">
+                    {criticalCount} <span className="text-sm font-normal text-muted-foreground">critical</span>
                   </span>
-                  <span className="text-[11px] text-zinc-400">
+                  <span className="text-[11px] text-muted-foreground">
                     {warningCount} accounts flagged in warning status
                   </span>
                 </div>
 
-                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Portfolio Health</span>
-                  <span className="text-2xl font-bold text-zinc-50 font-heading">{avgHealth}%</span>
-                  <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden mt-1">
+                <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio Health</span>
+                  <span className="text-2xl font-bold text-foreground font-heading">{avgHealth}%</span>
+                  <div className="w-full bg-card h-1.5 rounded-full overflow-hidden mt-1">
                     <div 
                       className={`h-full rounded-full ${
                         avgHealth > 75 ? 'bg-emerald-500' : avgHealth > 45 ? 'bg-amber-500' : 'bg-red-500'
@@ -590,19 +592,19 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Account list card */}
                 <div className="lg:col-span-8 flex flex-col gap-4">
-                  <h3 className="text-xs font-semibold text-zinc-450 uppercase tracking-wider flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     <span>Account List</span>
-                    <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full font-mono">
+                    <span className="text-[10px] bg-card border border-border text-muted-foreground px-2 py-0.5 rounded-full font-mono">
                       {filteredAccounts.length}
                     </span>
                   </h3>
 
                   {loading ? (
-                    <div className="bg-zinc-950/40 border border-zinc-850 rounded-xl p-12 text-center">
-                      <span className="text-xs text-zinc-400 animate-pulse">Loading accounts from Elasticsearch...</span>
+                    <div className="bg-background/40 border border-border rounded-xl p-12 text-center">
+                      <span className="text-xs text-muted-foreground animate-pulse">Loading accounts from Elasticsearch...</span>
                     </div>
                   ) : filteredAccounts.length === 0 ? (
-                    <div className="bg-zinc-950/40 border border-zinc-850 rounded-xl p-12 text-center text-xs text-zinc-400">
+                    <div className="bg-background/40 border border-border rounded-xl p-12 text-center text-xs text-muted-foreground">
                       No accounts matching "{searchTerm}" found.
                     </div>
                   ) : (
@@ -614,11 +616,11 @@ export default function Dashboard() {
 
                         return (
                           <Link key={acc.account_id} href={`/account/${acc.account_id}`}>
-                            <div className="bg-zinc-950 border border-zinc-850 hover:border-zinc-750 p-4.5 rounded-xl cursor-pointer transition flex flex-col gap-3.5 h-full">
+                            <div className="bg-background border border-border hover:border-border p-4.5 rounded-xl cursor-pointer transition flex flex-col gap-3.5 h-full">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <h4 className="text-sm font-bold text-zinc-100 hover:text-blue-400 transition">{acc.company_name}</h4>
-                                  <span className="text-[11px] text-zinc-500">{acc.account_id} • {acc.industry}</span>
+                                  <h4 className="text-sm font-bold text-foreground hover:text-blue-400 transition">{acc.company_name}</h4>
+                                  <span className="text-[11px] text-muted-foreground">{acc.account_id} • {acc.industry}</span>
                                 </div>
                                 
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
@@ -630,13 +632,13 @@ export default function Dashboard() {
                                 </span>
                               </div>
 
-                              <div className="flex justify-between items-center border-t border-zinc-900/50 pt-2 text-xs mt-auto">
+                              <div className="flex justify-between items-center border-t border-border/50 pt-2 text-xs mt-auto">
                                 <div>
-                                  <span className="text-[10px] text-zinc-500 uppercase block">ARR</span>
-                                  <strong className="text-zinc-200">${acc.arr.toLocaleString()}</strong>
+                                  <span className="text-[10px] text-muted-foreground uppercase block">ARR</span>
+                                  <strong className="text-foreground">${acc.arr.toLocaleString()}</strong>
                                 </div>
                                 <div className="text-right">
-                                  <span className="text-[10px] text-zinc-500 uppercase block">Risk Score</span>
+                                  <span className="text-[10px] text-muted-foreground uppercase block">Risk Score</span>
                                   <strong className={`font-mono ${
                                     isCrit ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-emerald-400'
                                   }`}>{riskPct}%</strong>
@@ -645,7 +647,7 @@ export default function Dashboard() {
 
                               {/* Semantic Match Reason Snippet */}
                               {searchMode !== 'client' && semanticMatches[acc.account_id] && (
-                                <div className="mt-1 p-2.5 rounded bg-zinc-900/60 border border-zinc-800 text-[11px] text-zinc-300 leading-relaxed">
+                                <div className="mt-1 p-2.5 rounded bg-card/60 border border-border text-[11px] text-muted-foreground leading-relaxed">
                                   <span className="font-semibold text-blue-400 flex items-center gap-1.5 mb-1.5">
                                     <Sparkles className="h-3 w-3" />
                                     {searchMode.charAt(0).toUpperCase() + searchMode.slice(1)} Match ({semanticMatches[acc.account_id].relevanceScore}% Relevance)
@@ -663,9 +665,9 @@ export default function Dashboard() {
 
                 {/* Distribution chart panel */}
                 <div className="lg:col-span-4 flex flex-col gap-4">
-                  <h3 className="text-xs font-semibold text-zinc-455 uppercase tracking-wider">Portfolio Analytics</h3>
-                  <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 shadow-sm flex flex-col items-center">
-                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-start mb-4">Portfolio Distribution</span>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio Analytics</h3>
+                  <div className="bg-background border border-border rounded-xl p-6 shadow-sm flex flex-col items-center">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider self-start mb-4">Portfolio Distribution</span>
                     <div className="flex justify-center py-4">
                       <svg width="120" height="120" viewBox="0 0 36 36" className="-rotate-90">
                         <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3" />
@@ -686,26 +688,26 @@ export default function Dashboard() {
                     
                     {/* Legend */}
                     <div className="w-full flex flex-col gap-2.5 mt-4 text-xs">
-                      <div className="flex justify-between items-center pb-2 border-b border-zinc-900/40">
-                        <span className="flex items-center gap-2 text-zinc-400">
+                      <div className="flex justify-between items-center pb-2 border-b border-border/40">
+                        <span className="flex items-center gap-2 text-muted-foreground">
                           <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                           Critical Risk (≥75%)
                         </span>
-                        <strong className="text-zinc-200">{criticalCount}</strong>
+                        <strong className="text-foreground">{criticalCount}</strong>
                       </div>
-                      <div className="flex justify-between items-center pb-2 border-b border-zinc-900/40">
-                        <span className="flex items-center gap-2 text-zinc-400">
+                      <div className="flex justify-between items-center pb-2 border-b border-border/40">
+                        <span className="flex items-center gap-2 text-muted-foreground">
                           <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
                           At Risk (25-74%)
                         </span>
-                        <strong className="text-zinc-200">{warningCount}</strong>
+                        <strong className="text-foreground">{warningCount}</strong>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="flex items-center gap-2 text-zinc-400">
+                        <span className="flex items-center gap-2 text-muted-foreground">
                           <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                           Healthy (&lt;25%)
                         </span>
-                        <strong className="text-zinc-200">{healthyCount}</strong>
+                        <strong className="text-foreground">{healthyCount}</strong>
                       </div>
                     </div>
                   </div>
@@ -717,25 +719,25 @@ export default function Dashboard() {
           {/* VIEW 2: PRODUCT PAIN POINT CLUSTERS */}
           {activeView === 'pain-points' && (
             <div className="max-w-4xl mx-auto w-full flex flex-col gap-6 animate-fade-in">
-              <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4 pb-4 border-b border-zinc-900">
+              <div className="bg-background border border-border rounded-xl p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4 pb-4 border-b border-border">
                   <div>
-                    <h3 className="text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                       <Layers className="h-4 w-4 text-blue-400" />
                       <span>Product Pain-Point Clusters</span>
                     </h3>
-                    <p className="text-xs text-zinc-400 mt-1">Financial impact computed by aggregating support tickets into semantic categories.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Financial impact computed by aggregating support tickets into semantic categories.</p>
                   </div>
                   <button
                     onClick={() => setShowArrAnalysis(true)}
-                    className="text-[10px] bg-blue-600 hover:bg-blue-700 text-zinc-50 border border-blue-500 px-3 py-1.5 rounded font-semibold uppercase self-start sm:self-auto transition cursor-pointer"
+                    className="text-[10px] bg-blue-600 hover:bg-blue-700 text-foreground border border-blue-500 px-3 py-1.5 rounded font-semibold uppercase self-start sm:self-auto transition cursor-pointer"
                   >
                     ARR Impact Analysis
                   </button>
                 </div>
 
                 {painPoints.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-zinc-500">
+                  <div className="py-12 text-center text-xs text-muted-foreground">
                     No active product pain-points clusters found in Elasticsearch.
                   </div>
                 ) : (
@@ -749,31 +751,31 @@ export default function Dashboard() {
                         <div 
                           key={cluster.id} 
                           onClick={() => setSelectedCluster(cluster)}
-                          className="p-5 rounded-xl bg-zinc-900/30 border border-zinc-850 hover:border-zinc-700 flex flex-col gap-4 transition cursor-pointer"
+                          className="p-5 rounded-xl bg-card/30 border border-border hover:border-border flex flex-col gap-4 transition cursor-pointer"
                         >
                           <div className="flex justify-between items-start gap-4">
                             <div>
                               <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
                                 {cluster.count} Open {cluster.count === 1 ? 'ticket' : 'tickets'} • Click to Drill down
                               </span>
-                              <h4 className="text-base font-semibold text-zinc-200 mt-0.5">{cluster.category}</h4>
+                              <h4 className="text-base font-semibold text-foreground mt-0.5">{cluster.category}</h4>
                             </div>
                             <div className="text-right">
-                              <span className="text-[10px] text-zinc-550 uppercase block">ARR-at-Risk</span>
+                              <span className="text-[10px] text-muted-foreground uppercase block">ARR-at-Risk</span>
                               <span className={`font-mono text-base font-bold ${color}`}>${cluster.arrAtRisk.toLocaleString()}</span>
                             </div>
                           </div>
                           
-                          <p className="text-xs text-zinc-350 leading-relaxed">{cluster.description}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{cluster.description}</p>
                           
                           {/* Progress bar */}
                           <div className="flex flex-col gap-1.5">
-                            <div className="w-full bg-zinc-950 border border-zinc-850 h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-background border border-border h-2 rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${Math.min(100, (cluster.arrAtRisk / 750000) * 100)}%` }}></div>
                             </div>
-                            <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                            <div className="flex justify-between items-center text-[10px] text-muted-foreground">
                               <span>Impact rating: {isHigh ? 'Urgent Priority' : 'Standard Priority'}</span>
-                              <span className="font-semibold text-zinc-400">Affected accounts: {cluster.accounts.join(', ') || 'None'}</span>
+                              <span className="font-semibold text-muted-foreground">Affected accounts: {cluster.accounts.join(', ') || 'None'}</span>
                             </div>
                           </div>
                         </div>
@@ -788,19 +790,19 @@ export default function Dashboard() {
           {/* VIEW 3: EVENT SIMULATOR */}
           {activeView === 'simulator' && (
             <div className="max-w-2xl mx-auto w-full animate-fade-in">
-              <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 shadow-sm">
-                <div className="flex justify-between items-center mb-4 pb-4 border-b border-zinc-900">
+              <div className="bg-background border border-border rounded-xl p-6 shadow-sm">
+                <div className="flex justify-between items-center mb-4 pb-4 border-b border-border">
                   <div>
-                    <h3 className="text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                       <RefreshCw className="h-4 w-4 text-blue-400" />
                       <span>CSM Ingestion & Event Simulator</span>
                     </h3>
-                    <p className="text-xs text-zinc-450 mt-1">Simulate real-time support events or CSM updates across the database.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Simulate real-time support events or CSM updates across the database.</p>
                   </div>
                   <button 
                     type="button"
                     onClick={handleAutoFillDemoData}
-                    className="text-[10px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-450 hover:text-zinc-150 px-2.5 py-1.5 rounded font-semibold uppercase transition cursor-pointer"
+                    className="text-[10px] bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded font-semibold uppercase transition cursor-pointer"
                   >
                     Demo Auto-Fill
                   </button>
@@ -809,11 +811,11 @@ export default function Dashboard() {
                 <form onSubmit={handleSimulateEvent} className="flex flex-col gap-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Target Customer Account</label>
+                      <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Target Customer Account</label>
                       <select
                         value={simAccountId}
                         onChange={(e) => setSimAccountId(e.target.value)}
-                        className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/60 text-zinc-200 focus:outline-none"
+                        className="w-full p-2.5 text-xs rounded border border-border bg-card/60 text-foreground focus:outline-none"
                       >
                         {accounts.map(acc => (
                           <option key={acc.account_id} value={acc.account_id}>{acc.company_name}</option>
@@ -822,11 +824,11 @@ export default function Dashboard() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Activity Category</label>
+                      <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Activity Category</label>
                       <select
                         value={simType}
                         onChange={(e) => setSimType(e.target.value as any)}
-                        className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/60 text-zinc-200 focus:outline-none"
+                        className="w-full p-2.5 text-xs rounded border border-border bg-card/60 text-foreground focus:outline-none"
                       >
                         <option value="ticket">Customer Support Ticket</option>
                         <option value="note">CSM Health Note</option>
@@ -836,34 +838,34 @@ export default function Dashboard() {
                   </div>
 
                   {simType === 'ticket' && (
-                    <div className="flex flex-col gap-4 border-t border-zinc-900 pt-4 animate-fade-in">
+                    <div className="flex flex-col gap-4 border-t border-border pt-4 animate-fade-in">
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Ticket Subject</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Ticket Subject</label>
                         <input
                           type="text"
                           placeholder="e.g. SSO Login failures after maintenance release"
                           value={simSubject}
                           onChange={(e) => setSimSubject(e.target.value)}
                           required
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Ticket Description</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Ticket Description</label>
                         <textarea
                           placeholder="Provide error logs, customer complaints, or steps to reproduce..."
                           value={simDesc}
                           onChange={(e) => setSimDesc(e.target.value)}
                           required
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Ticket Priority</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Ticket Priority</label>
                         <select
                           value={simPriority}
                           onChange={(e) => setSimPriority(e.target.value)}
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-200 focus:outline-none"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground focus:outline-none"
                         >
                           <option value="Low">Low Priority</option>
                           <option value="Medium">Medium Priority</option>
@@ -875,59 +877,59 @@ export default function Dashboard() {
                   )}
 
                   {simType === 'note' && (
-                    <div className="flex flex-col gap-4 border-t border-zinc-900 pt-4 animate-fade-in">
+                    <div className="flex flex-col gap-4 border-t border-border pt-4 animate-fade-in">
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Note Content</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Note Content</label>
                         <textarea
                           placeholder="Log updates. Sentiment models flag negative feedback (e.g. 'unhappy', 'threaten to cancel')."
                           value={simNoteText}
                           onChange={(e) => setSimNoteText(e.target.value)}
                           required
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider font-semibold">Author</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider font-semibold">Author</label>
                         <input
                           type="text"
                           value={simAuthor}
                           onChange={(e) => setSimAuthor(e.target.value)}
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-100 focus:outline-none"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground focus:outline-none"
                         />
                       </div>
                     </div>
                   )}
 
                   {simType === 'call' && (
-                    <div className="flex flex-col gap-4 border-t border-zinc-900 pt-4 animate-fade-in">
+                    <div className="flex flex-col gap-4 border-t border-border pt-4 animate-fade-in">
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Phone Transcript</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Phone Transcript</label>
                         <textarea
                           placeholder="Customer: The export timeout crashes..."
                           value={simTranscript}
                           onChange={(e) => setSimTranscript(e.target.value)}
                           required
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Key Takeaway Summary</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Key Takeaway Summary</label>
                         <input
                           type="text"
                           placeholder="e.g. SSO export crashes frequently during reports."
                           value={simSummary}
                           onChange={(e) => setSimSummary(e.target.value)}
                           required
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-zinc-700"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-650 focus:outline-none focus:border-zinc-700"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Duration (Minutes)</label>
+                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Duration (Minutes)</label>
                         <input
                           type="number"
                           value={simDuration}
                           onChange={(e) => setSimDuration(Number(e.target.value))}
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-100 focus:outline-none"
+                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground focus:outline-none"
                         />
                       </div>
                     </div>
@@ -936,7 +938,7 @@ export default function Dashboard() {
                   <button
                     type="submit"
                     disabled={simulating}
-                    className="w-full py-2.5 mt-2 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer transition flex items-center justify-center gap-2"
+                    className="w-full py-2.5 mt-2 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer transition flex items-center justify-center gap-2"
                   >
                     <RefreshCw className={`h-3.5 w-3.5 ${simulating ? 'animate-spin' : ''}`} />
                     {simulating ? 'Ingesting Event Details...' : 'Simulate Event Ingestion'}
@@ -951,14 +953,14 @@ export default function Dashboard() {
                     }`}>
                       <span className="font-semibold text-xs">{simMessage}</span>
                       {lastSubmittedEvent && (
-                        <div className="text-[11px] text-zinc-400 mt-1 border-t border-zinc-900/80 pt-2.5 flex flex-col gap-2">
+                        <div className="text-[11px] text-muted-foreground mt-1 border-t border-border/80 pt-2.5 flex flex-col gap-2">
                           <div className="flex justify-between items-center">
                             <span>Ingested Event:</span>
-                            <strong className="text-zinc-200 font-mono text-[10px] uppercase">{lastSubmittedEvent.type}</strong>
+                            <strong className="text-foreground font-mono text-[10px] uppercase">{lastSubmittedEvent.type}</strong>
                           </div>
                           <div className="flex justify-between items-center">
                             <span>Target Account:</span>
-                            <strong className="text-zinc-200">{lastSubmittedEvent.companyName} ({lastSubmittedEvent.accountId})</strong>
+                            <strong className="text-foreground">{lastSubmittedEvent.companyName} ({lastSubmittedEvent.accountId})</strong>
                           </div>
                           {lastSubmittedEvent.subject && (
                             <div className="flex justify-between items-center">
@@ -986,14 +988,14 @@ export default function Dashboard() {
           {/* VIEW 4: BLUEBERRY COPILOT */}
           {activeView === 'copilot' && (
             <div className="max-w-3xl mx-auto w-full animate-fade-in">
-              <div className="bg-zinc-950 border border-zinc-850 rounded-xl flex flex-col h-[650px] overflow-hidden shadow-sm">
+              <div className="bg-background border border-border rounded-xl flex flex-col h-[650px] overflow-hidden shadow-sm">
                 
                 {/* Chat Header */}
-                <div className="p-4.5 border-b border-zinc-900 flex items-center gap-2.5">
+                <div className="p-4.5 border-b border-border flex items-center gap-2.5">
                   <span className="w-2 h-2 bg-emerald-500 rounded-full inline-block shadow-[0_0_8px_#10b981]"></span>
                   <div>
-                    <h2 className="text-xs font-bold text-zinc-200">Blueberry Copilot Workspace</h2>
-                    <span className="text-[10px] text-zinc-555">Connected to Dialogflow CX Google Cloud Agent</span>
+                    <h2 className="text-xs font-bold text-foreground">Blueberry Copilot Workspace</h2>
+                    <span className="text-[10px] text-muted-foreground">Connected to Dialogflow CX Google Cloud Agent</span>
                   </div>
                 </div>
 
@@ -1008,12 +1010,12 @@ export default function Dashboard() {
                       >
                         <div className={`p-3.5 rounded-xl text-xs leading-relaxed ${
                           isUser 
-                            ? 'bg-blue-600 text-zinc-50 rounded-br-none' 
-                            : 'bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-bl-none'
+                            ? 'bg-blue-600 text-foreground rounded-br-none' 
+                            : 'bg-card border border-border text-foreground rounded-bl-none'
                         }`}>
                           {msg.text}
                         </div>
-                        <span className={`text-[9px] text-zinc-500 mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
+                        <span className={`text-[9px] text-muted-foreground mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
                           {msg.timestamp}
                         </span>
                       </div>
@@ -1021,49 +1023,49 @@ export default function Dashboard() {
                   })}
                   {sending && (
                     <div className="self-start flex flex-col gap-1.5">
-                      <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center gap-1">
+                      <div className="p-2.5 rounded-lg bg-card border border-border flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse"></span>
                         <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-75"></span>
                         <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-150"></span>
                       </div>
-                      <span className="text-[9px] text-zinc-500">Querying Agent...</span>
+                      <span className="text-[9px] text-muted-foreground">Querying Agent...</span>
                     </div>
                   )}
                   <div ref={chatEndRef} />
                 </div>
 
                 {/* Quick Actions Panel */}
-                <div className="p-3 border-t border-zinc-900 bg-zinc-950/60 flex flex-wrap gap-1.5 justify-center">
+                <div className="p-3 border-t border-border bg-background/60 flex flex-wrap gap-1.5 justify-center">
                   <button 
                     onClick={() => handleSendMessage("Which accounts are currently at critical risk?")} 
                     disabled={sending}
-                    className="text-[10px] px-3 py-1 rounded-full border border-zinc-850 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                    className="text-[10px] px-3 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
                   >
                     ⚠️ Risks
                   </button>
                   <button 
                     onClick={() => handleSendMessage("Summarize support ticket issues across the portfolio")} 
                     disabled={sending}
-                    className="text-[10px] px-3 py-1 rounded-full border border-zinc-850 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
+                    className="text-[10px] px-3 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
                   >
                     🎫 Tickets
                   </button>
                 </div>
 
                 {/* Chat Input form */}
-                <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} className="p-4 border-t border-zinc-900 flex gap-2">
+                <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} className="p-4 border-t border-border flex gap-2">
                   <input
                     type="text"
                     placeholder="Ask copilot anything..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     disabled={sending}
-                    className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-755"
+                    className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-border bg-background text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-755"
                   />
                   <button
                     type="submit"
                     disabled={sending || !inputValue.trim()}
-                    className="px-4 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
+                    className="px-4 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
                   >
                     Send
                   </button>
@@ -1074,22 +1076,22 @@ export default function Dashboard() {
 
           {/* VIEW 5: MODEL CONTEXT PROTOCOL */}
           {activeView === 'mcp' && (
-            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 md:p-8 flex flex-col gap-6 animate-fade-in shadow-sm">
+            <div className="bg-background border border-border rounded-xl p-6 md:p-8 flex flex-col gap-6 animate-fade-in shadow-sm">
               <div>
-                <h3 className="text-sm font-bold text-zinc-100 mb-1 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground mb-1 flex items-center gap-2">
                   <span>Model Context Protocol (MCP) Server Hub</span>
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
                 </h3>
-                <p className="text-xs text-zinc-450 max-w-3xl leading-relaxed">
-                  Blueberry AI implements a fully compliant MCP Server at <code className="text-[11px] text-blue-400 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 font-mono">/api/mcp</code>.
+                <p className="text-xs text-muted-foreground max-w-3xl leading-relaxed">
+                  Blueberry AI implements a fully compliant MCP Server at <code className="text-[11px] text-blue-400 bg-card px-1.5 py-0.5 rounded border border-border font-mono">/api/mcp</code>.
                   This interface allows external AI engines (such as Google Cloud Agent Builder) to query database indices, perform semantic lookups, and log customer health notes in real time.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start border-t border-zinc-900 pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start border-t border-border pt-6">
                 {/* Tool list */}
                 <div>
-                  <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Registered MCP Tools</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Registered MCP Tools</h4>
                   <div className="flex flex-col gap-3">
                     {mcpTools.map(tool => (
                       <div
@@ -1115,20 +1117,20 @@ export default function Dashboard() {
                         className={`p-3.5 rounded-lg border transition cursor-pointer ${
                           selectedMcpTool?.name === tool.name 
                             ? 'border-blue-500 bg-blue-950/10' 
-                            : 'border-zinc-850 bg-zinc-950 hover:bg-zinc-900/40'
+                            : 'border-border bg-background hover:bg-card/40'
                         }`}
                       >
                         <div className="flex justify-between items-center mb-1.5">
                           <strong className={`text-xs font-bold ${
-                            selectedMcpTool?.name === tool.name ? 'text-blue-400' : 'text-zinc-200'
+                            selectedMcpTool?.name === tool.name ? 'text-blue-400' : 'text-foreground'
                           }`}>
                             {tool.name}
                           </strong>
-                          <span className="text-[9px] bg-zinc-900 border border-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] bg-card border border-border text-muted-foreground px-1.5 py-0.5 rounded">
                             tool
                           </span>
                         </div>
-                        <p className="text-[11px] text-zinc-450 leading-relaxed">
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
                           {tool.description}
                         </p>
                       </div>
@@ -1138,42 +1140,42 @@ export default function Dashboard() {
 
                 {/* Run Tool Console */}
                 <div>
-                  <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">MCP Execution Console</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">MCP Execution Console</h4>
                   {selectedMcpTool ? (
-                    <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-4">
+                    <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-4">
                       <div>
-                        <span className="text-[10px] text-zinc-550 uppercase">Executing:</span>
+                        <span className="text-[10px] text-muted-foreground uppercase">Executing:</span>
                         <strong className="block text-xs font-bold text-blue-450 mt-0.5">{selectedMcpTool.name}</strong>
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-zinc-550 uppercase block mb-1.5">Arguments JSON:</span>
+                        <span className="text-[10px] text-muted-foreground uppercase block mb-1.5">Arguments JSON:</span>
                         <textarea
                           value={mcpArgs}
                           onChange={(e) => setMcpArgs(e.target.value)}
-                          className="w-full h-24 p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-emerald-450 font-mono text-[11px] outline-none"
+                          className="w-full h-24 p-3 bg-card/60 border border-border rounded-lg text-emerald-450 font-mono text-[11px] outline-none"
                         />
                       </div>
 
                       <button
                         onClick={runMcpTool}
                         disabled={mcpRunning}
-                        className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-zinc-50 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-60 transition"
+                        className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer disabled:opacity-60 transition"
                       >
                         {mcpRunning ? 'Running tool...' : '🔌 Call Tool'}
                       </button>
 
                       {mcpResult && (
                         <div>
-                          <span className="text-[10px] text-zinc-550 uppercase block mb-1.5">Response Content:</span>
-                          <pre className="w-full max-h-56 overflow-auto p-3.5 bg-zinc-900/80 border border-zinc-800 rounded-lg text-zinc-200 font-mono text-[11px] leading-relaxed">
+                          <span className="text-[10px] text-muted-foreground uppercase block mb-1.5">Response Content:</span>
+                          <pre className="w-full max-h-56 overflow-auto p-3.5 bg-card/80 border border-border rounded-lg text-foreground font-mono text-[11px] leading-relaxed">
                             {mcpResult}
                           </pre>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-8 text-center text-xs text-zinc-500">
+                    <div className="bg-background border border-border rounded-xl p-8 text-center text-xs text-muted-foreground">
                       Select a tool from the list to execute in the console.
                     </div>
                   )}
@@ -1187,51 +1189,51 @@ export default function Dashboard() {
       {/* MODAL 1: PAIN-POINT CLUSTER DRILL-DOWN MODAL (Bug 10 / Suggestion 3) */}
       {selectedCluster && (
         <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[999] backdrop-blur-xs">
-          <div className="bg-zinc-950 border border-zinc-850 w-[90%] max-w-[700px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+          <div className="bg-background border border-border w-[90%] max-w-[700px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
+            <div className="flex justify-between items-center border-b border-border pb-3">
               <div>
                 <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Pain-Point Cluster Details</span>
-                <h3 className="text-base font-bold text-zinc-100">{selectedCluster.category}</h3>
+                <h3 className="text-base font-bold text-foreground">{selectedCluster.category}</h3>
               </div>
               <button 
                 onClick={() => setSelectedCluster(null)}
-                className="px-2.5 py-1 text-xs rounded border border-zinc-850 bg-zinc-900 text-zinc-400 hover:text-zinc-250 cursor-pointer transition"
+                className="px-2.5 py-1 text-xs rounded border border-border bg-card text-muted-foreground hover:text-zinc-250 cursor-pointer transition"
               >
                 Close
               </button>
             </div>
 
-            <p className="text-xs text-zinc-400 leading-relaxed">{selectedCluster.description}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{selectedCluster.description}</p>
             
-            <div className="flex justify-between items-center text-xs border-y border-zinc-900/80 py-3 mt-1 bg-zinc-900/20 px-3 rounded-lg">
+            <div className="flex justify-between items-center text-xs border-y border-border/80 py-3 mt-1 bg-card/20 px-3 rounded-lg">
               <div>
-                <span className="text-[10px] text-zinc-500 block uppercase">Total ARR affected</span>
+                <span className="text-[10px] text-muted-foreground block uppercase">Total ARR affected</span>
                 <strong className="text-sm text-red-400 font-bold font-mono">${selectedCluster.arrAtRisk.toLocaleString()}</strong>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-zinc-500 block uppercase">Active Tickets</span>
-                <strong className="text-sm text-zinc-200 font-bold font-mono">{selectedCluster.count} open</strong>
+                <span className="text-[10px] text-muted-foreground block uppercase">Active Tickets</span>
+                <strong className="text-sm text-foreground font-bold font-mono">{selectedCluster.count} open</strong>
               </div>
             </div>
 
             <div className="mt-2">
-              <h4 className="text-xs font-semibold text-zinc-350 uppercase tracking-wider mb-3.5">Associated Support Tickets</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3.5">Associated Support Tickets</h4>
               <div className="flex flex-col gap-3">
                 {selectedCluster.tickets && selectedCluster.tickets.length > 0 ? (
                   selectedCluster.tickets.map((t: any) => (
-                    <div key={t.ticket_id} className="p-3.5 rounded-lg border border-zinc-850 bg-zinc-950 flex flex-col gap-2.5">
+                    <div key={t.ticket_id} className="p-3.5 rounded-lg border border-border bg-background flex flex-col gap-2.5">
                       <div className="flex justify-between items-center">
                         <span className="text-[11px] font-semibold text-zinc-150">
                           {t.ticket_id} • {t.subject}
                         </span>
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                          t.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-zinc-900 border border-zinc-800 text-zinc-450'
+                          t.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-card border border-border text-muted-foreground'
                         }`}>
                           {t.priority}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-zinc-500">
-                        <span>Affected Client: <strong className="text-zinc-350">{t.companyName}</strong></span>
+                      <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                        <span>Affected Client: <strong className="text-muted-foreground">{t.companyName}</strong></span>
                         <Link href={`/account/${t.account_id}`}>
                           <span className="text-blue-400 hover:underline flex items-center gap-1 cursor-pointer">
                             View Account Details
@@ -1242,7 +1244,7 @@ export default function Dashboard() {
                     </div>
                   ))
                 ) : (
-                  <span className="text-xs text-zinc-550 text-center py-4">No open tickets listed.</span>
+                  <span className="text-xs text-muted-foreground text-center py-4">No open tickets listed.</span>
                 )}
               </div>
             </div>
@@ -1253,27 +1255,27 @@ export default function Dashboard() {
       {/* MODAL 2: ARR IMPACT ANALYSIS TABLE MODAL (Bug 9) */}
       {showArrAnalysis && (
         <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[999] backdrop-blur-xs">
-          <div className="bg-zinc-950 border border-zinc-850 w-[90%] max-w-[800px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+          <div className="bg-background border border-border w-[90%] max-w-[800px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
+            <div className="flex justify-between items-center border-b border-border pb-3">
               <div>
                 <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">ARR Impact Analysis</span>
-                <h3 className="text-base font-bold text-zinc-100">Customer Portfolio Risk Table</h3>
+                <h3 className="text-base font-bold text-foreground">Customer Portfolio Risk Table</h3>
               </div>
               <button 
                 onClick={() => setShowArrAnalysis(false)}
-                className="px-2.5 py-1 text-xs rounded border border-zinc-850 bg-zinc-900 text-zinc-400 hover:text-zinc-250 cursor-pointer transition"
+                className="px-2.5 py-1 text-xs rounded border border-border bg-card text-muted-foreground hover:text-zinc-250 cursor-pointer transition"
               >
                 Close
               </button>
             </div>
 
-            <p className="text-xs text-zinc-400 leading-relaxed mb-2">
+            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
               A comprehensive breakdown of all accounts, their revenue, and dynamic risk statuses currently index-locked in Elasticsearch.
             </p>
 
-            <div className="overflow-x-auto border border-zinc-850 rounded-xl">
-              <table className="w-full text-xs text-left text-zinc-300">
-                <thead className="text-[10px] uppercase bg-zinc-950 text-zinc-500 border-b border-zinc-850">
+            <div className="overflow-x-auto border border-border rounded-xl">
+              <table className="w-full text-xs text-left text-muted-foreground">
+                <thead className="text-[10px] uppercase bg-background text-muted-foreground border-b border-border">
                   <tr>
                     <th scope="col" className="px-4 py-3">Account ID</th>
                     <th scope="col" className="px-4 py-3">Company Name</th>
@@ -1288,12 +1290,12 @@ export default function Dashboard() {
                     const isCrit = acc.risk_score >= 0.75;
                     const isWarn = acc.risk_score >= 0.25 && acc.risk_score < 0.75;
                     return (
-                      <tr key={acc.account_id} className="hover:bg-zinc-900/30">
-                        <td className="px-4 py-3.5 font-mono text-zinc-400">{acc.account_id}</td>
-                        <td className="px-4 py-3.5 font-bold text-zinc-200 hover:text-blue-400 transition cursor-pointer">
+                      <tr key={acc.account_id} className="hover:bg-card/30">
+                        <td className="px-4 py-3.5 font-mono text-muted-foreground">{acc.account_id}</td>
+                        <td className="px-4 py-3.5 font-bold text-foreground hover:text-blue-400 transition cursor-pointer">
                           <Link href={`/account/${acc.account_id}`}>{acc.company_name}</Link>
                         </td>
-                        <td className="px-4 py-3.5 text-zinc-450">{acc.industry}</td>
+                        <td className="px-4 py-3.5 text-muted-foreground">{acc.industry}</td>
                         <td className="px-4 py-3.5 text-right font-mono">${acc.arr.toLocaleString()}</td>
                         <td className={`px-4 py-3.5 text-right font-bold font-mono ${isCrit ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-emerald-400'}`}>
                           {Math.round(acc.risk_score * 100)}%
