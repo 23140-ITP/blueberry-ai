@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Search, LayoutDashboard, Brain, Activity, ShieldAlert, CheckCircle2, 
-  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X
+  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -32,6 +32,12 @@ export default function Dashboard() {
   const [activeView, setActiveView] = useState<'radar' | 'pain-points' | 'simulator' | 'copilot' | 'mcp'>('radar');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  // Interactive UI Modal States
+  const [selectedCluster, setSelectedCluster] = useState<any>(null);
+  const [showArrAnalysis, setShowArrAnalysis] = useState(false);
+  const [lastSubmittedEvent, setLastSubmittedEvent] = useState<any>(null);
+  const [resetting, setResetting] = useState(false);
+
   // Chat states
   const [messages, setMessages] = useState<ChatMessage[]>([
     { sender: 'agent', text: "Hello! I am your Blueberry Copilot. Ask me anything about your customer accounts, recent calls, or churn risks.", timestamp: '' }
@@ -48,7 +54,7 @@ export default function Dashboard() {
     setMessages(prev => [
       {
         ...prev[0],
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       }
     ]);
   }, []);
@@ -61,10 +67,11 @@ export default function Dashboard() {
   const handleSendMessage = async (textToSend: string) => {
     if (!textToSend.trim()) return;
 
+    const timestampStr = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     const newMsg: ChatMessage = {
       sender: 'user',
       text: textToSend,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: timestampStr
     };
     setMessages(prev => [...prev, newMsg]);
     setInputValue('');
@@ -87,7 +94,7 @@ export default function Dashboard() {
       const agentMsg: ChatMessage = {
         sender: 'agent',
         text: data.response || "I received your message but could not generate a response.",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, agentMsg]);
     } catch (err) {
@@ -95,7 +102,7 @@ export default function Dashboard() {
       const errorMsg: ChatMessage = {
         sender: 'agent',
         text: "Error: Failed to communicate with Google Cloud Agent. Please verify your credentials and network settings.",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
@@ -145,6 +152,7 @@ export default function Dashboard() {
     e.preventDefault();
     setSimulating(true);
     setSimMessage('');
+    setLastSubmittedEvent(null);
     try {
       let body: any = { type: simType, accountId: simAccountId };
       if (simType === 'ticket') {
@@ -168,13 +176,25 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         setSimMessage(`Success: ${data.message}`);
+        
+        // Cache submission details for user confirmation banner
+        setLastSubmittedEvent({
+          type: simType === 'ticket' ? 'Ticket' : simType === 'note' ? 'CSM Note' : 'Call Transcript',
+          accountId: simAccountId,
+          companyName: data.companyName || simAccountId,
+          subject: simType === 'ticket' ? simSubject : simType === 'note' ? noteTextSummary(simNoteText) : simSummary,
+          newRiskScore: data.healthUpdate?.newRiskScore,
+          newStatus: data.healthUpdate?.newStatus
+        });
+
+        // Clear input fields
         setSimSubject('');
         setSimDesc('');
         setSimNoteText('');
         setSimTranscript('');
         setSimSummary('');
         
-        // Reload all data
+        // Reload accounts and metrics
         const resAcc = await fetch('/api/accounts');
         const dataAcc = await resAcc.json();
         if (dataAcc.accounts) {
@@ -191,7 +211,60 @@ export default function Dashboard() {
       setSimMessage(`Error: ${err.message}`);
     } finally {
       setSimulating(false);
-      setTimeout(() => setSimMessage(''), 5000);
+    }
+  };
+
+  const noteTextSummary = (text: string) => {
+    if (text.length <= 40) return text;
+    return text.slice(0, 40) + '...';
+  };
+
+  const handleAutoFillDemoData = () => {
+    if (simType === 'ticket') {
+      setSimSubject('API Gateway timeout during peak traffic hours');
+      setSimDesc('Our server integration is getting 504 Gateway Timeouts from the reporting endpoint. This is blocking our core nightly sync.');
+      setSimPriority('Urgent');
+      setSimAccountId('ACC-002');
+    } else if (simType === 'note') {
+      setSimNoteText('TechFlow VP David mentioned they are extremely frustrated with the recent report crashes and are actively scheduling a call with a competitor\'s sales team.');
+      setSimAuthor('Sarah (CSM)');
+      setSimAccountId('ACC-002');
+    } else if (simType === 'call') {
+      setSimTranscript('CSM: Hi team, we reviewed the rate limit issue.\nCustomer: We need it raised to 10k requests/min immediately. If this isn\'t approved today we\'ll have to look elsewhere.');
+      setSimSummary('Urgent request for API quota increase. Threatening vendor review if delayed.');
+      setSimDuration(20);
+      setSimAccountId('ACC-002');
+    }
+  };
+
+  const handleResetDemoDatabase = async () => {
+    if (!confirm('Are you sure you want to reset the database back to original seed data? This will clear all simulated tickets, notes, call transcripts, and escalation milestones.')) return;
+    setResetting(true);
+    try {
+      const res = await fetch('/api/tools/reset-demo', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        
+        // Reload all data
+        setLoading(true);
+        const resAcc = await fetch('/api/accounts');
+        const dataAcc = await resAcc.json();
+        if (dataAcc.accounts) {
+          setAccounts(dataAcc.accounts);
+        }
+        if (dataAcc.aggregations) {
+          setAggregations(dataAcc.aggregations);
+        }
+        fetchPainPoints();
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setResetting(false);
+      setLoading(false);
     }
   };
 
@@ -299,17 +372,17 @@ export default function Dashboard() {
     );
   });
 
-  // Compute KPI metrics dynamically
-  const totalARR = accounts.reduce((sum, acc) => sum + acc.arr, 0);
-  const criticalCount = accounts.filter(acc => acc.risk_score >= 0.75).length;
-  const warningCount = accounts.filter(acc => acc.risk_score >= 0.25 && acc.risk_score < 0.75).length;
-  const healthyCount = accounts.filter(acc => acc.risk_score < 0.25).length;
+  // Compute KPI metrics dynamically based on filtered accounts list (Reactive Filters - Bug 7)
+  const totalARR = filteredAccounts.reduce((sum, acc) => sum + acc.arr, 0);
+  const criticalCount = filteredAccounts.filter(acc => acc.risk_score >= 0.75).length;
+  const warningCount = filteredAccounts.filter(acc => acc.risk_score >= 0.25 && acc.risk_score < 0.75).length;
+  const healthyCount = filteredAccounts.filter(acc => acc.risk_score < 0.25).length;
   
-  const avgHealth = accounts.length 
-    ? Math.round(100 - (accounts.reduce((sum, acc) => sum + acc.risk_score, 0) / accounts.length) * 100)
+  const avgHealth = filteredAccounts.length 
+    ? Math.round(100 - (filteredAccounts.reduce((sum, acc) => sum + acc.risk_score, 0) / filteredAccounts.length) * 100)
     : 100;
 
-  const totalCount = accounts.length || 1;
+  const totalCount = filteredAccounts.length || 1;
   const criticalPct = (criticalCount / totalCount) * 100;
   const warningPct = (warningCount / totalCount) * 100;
   const healthyPct = (healthyCount / totalCount) * 100;
@@ -324,10 +397,10 @@ export default function Dashboard() {
           {/* Brand header */}
           <div className="p-5 border-b border-zinc-900 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="w-2 h-2 bg-blue-500 rounded-full inline-block shadow-[0_0_10px_#3b82f6]"></span>
+              <span className="w-2.5 h-2.5 bg-blue-500 rounded-full inline-block shadow-[0_0_10px_#3b82f6]"></span>
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-zinc-50 font-heading">Blueberry AI</h1>
-                <span className="text-[10px] text-zinc-500 font-medium block mt-0.5">Retention Radar v1.1</span>
+                <span className="text-[10px] text-zinc-500 font-medium block mt-0.5">Retention Radar v1.2</span>
               </div>
             </div>
             {/* Mobile Close Button */}
@@ -372,8 +445,17 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar Footer with system statuses */}
-        <div className="p-4 border-t border-zinc-900 bg-zinc-950/80 flex flex-col gap-2.5 text-[10px] text-zinc-500">
-          <div className="flex items-center justify-between">
+        <div className="p-4 border-t border-zinc-900 bg-zinc-950 flex flex-col gap-2.5 text-[10px] text-zinc-550">
+          <button
+            onClick={handleResetDemoDatabase}
+            disabled={resetting}
+            className="w-full py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-350 hover:text-zinc-150 rounded text-[10px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <Database className="h-3 w-3" />
+            {resetting ? 'Resetting Demo...' : 'Reset Demo Database'}
+          </button>
+          
+          <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2">
             <span className="font-medium">Elasticsearch</span>
             <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
@@ -476,7 +558,7 @@ export default function Dashboard() {
                   <span className="text-2xl font-bold text-zinc-50 font-heading">${totalARR.toLocaleString()}</span>
                   <span className="text-[11px] text-emerald-400 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
-                    {accounts.length} active customer accounts
+                    {filteredAccounts.length} active customer accounts
                   </span>
                 </div>
 
@@ -581,13 +663,13 @@ export default function Dashboard() {
 
                 {/* Distribution chart panel */}
                 <div className="lg:col-span-4 flex flex-col gap-4">
-                  <h3 className="text-xs font-semibold text-zinc-450 uppercase tracking-wider">Portfolio Analytics</h3>
+                  <h3 className="text-xs font-semibold text-zinc-455 uppercase tracking-wider">Portfolio Analytics</h3>
                   <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-6 shadow-sm flex flex-col items-center">
                     <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider self-start mb-4">Portfolio Distribution</span>
                     <div className="flex justify-center py-4">
                       <svg width="120" height="120" viewBox="0 0 36 36" className="-rotate-90">
                         <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3" />
-                        {accounts.length > 0 ? (
+                        {filteredAccounts.length > 0 ? (
                           <>
                             <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="3.2" 
                               strokeDasharray={`${criticalPct} ${100 - criticalPct}`} strokeDashoffset="0" />
@@ -644,9 +726,12 @@ export default function Dashboard() {
                     </h3>
                     <p className="text-xs text-zinc-400 mt-1">Financial impact computed by aggregating support tickets into semantic categories.</p>
                   </div>
-                  <span className="text-[10px] bg-red-950/30 text-red-400 border border-red-900/40 px-2.5 py-1 rounded font-semibold uppercase self-start sm:self-auto">
+                  <button
+                    onClick={() => setShowArrAnalysis(true)}
+                    className="text-[10px] bg-blue-600 hover:bg-blue-700 text-zinc-50 border border-blue-500 px-3 py-1.5 rounded font-semibold uppercase self-start sm:self-auto transition cursor-pointer"
+                  >
                     ARR Impact Analysis
-                  </span>
+                  </button>
                 </div>
 
                 {painPoints.length === 0 ? (
@@ -661,11 +746,15 @@ export default function Dashboard() {
                       const progressColor = isHigh ? 'bg-red-500' : 'bg-amber-500';
 
                       return (
-                        <div key={cluster.id} className="p-5 rounded-xl bg-zinc-900/30 border border-zinc-850 flex flex-col gap-4">
+                        <div 
+                          key={cluster.id} 
+                          onClick={() => setSelectedCluster(cluster)}
+                          className="p-5 rounded-xl bg-zinc-900/30 border border-zinc-850 hover:border-zinc-700 flex flex-col gap-4 transition cursor-pointer"
+                        >
                           <div className="flex justify-between items-start gap-4">
                             <div>
                               <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
-                                {cluster.count} Open {cluster.count === 1 ? 'ticket' : 'tickets'}
+                                {cluster.count} Open {cluster.count === 1 ? 'ticket' : 'tickets'} • Click to Drill down
                               </span>
                               <h4 className="text-base font-semibold text-zinc-200 mt-0.5">{cluster.category}</h4>
                             </div>
@@ -708,7 +797,13 @@ export default function Dashboard() {
                     </h3>
                     <p className="text-xs text-zinc-450 mt-1">Simulate real-time support events or CSM updates across the database.</p>
                   </div>
-                  <span className="text-[10px] bg-blue-950/30 text-blue-400 border border-blue-900/40 px-2 py-0.5 rounded font-semibold uppercase">Demo Console</span>
+                  <button 
+                    type="button"
+                    onClick={handleAutoFillDemoData}
+                    className="text-[10px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-450 hover:text-zinc-150 px-2.5 py-1.5 rounded font-semibold uppercase transition cursor-pointer"
+                  >
+                    Demo Auto-Fill
+                  </button>
                 </div>
 
                 <form onSubmit={handleSimulateEvent} className="flex flex-col gap-4">
@@ -718,7 +813,7 @@ export default function Dashboard() {
                       <select
                         value={simAccountId}
                         onChange={(e) => setSimAccountId(e.target.value)}
-                        className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/60 text-zinc-200 focus:outline-none focus:border-zinc-750"
+                        className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/60 text-zinc-200 focus:outline-none"
                       >
                         {accounts.map(acc => (
                           <option key={acc.account_id} value={acc.account_id}>{acc.company_name}</option>
@@ -731,7 +826,7 @@ export default function Dashboard() {
                       <select
                         value={simType}
                         onChange={(e) => setSimType(e.target.value as any)}
-                        className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/60 text-zinc-200 focus:outline-none focus:border-zinc-750"
+                        className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/60 text-zinc-200 focus:outline-none"
                       >
                         <option value="ticket">Customer Support Ticket</option>
                         <option value="note">CSM Health Note</option>
@@ -768,7 +863,7 @@ export default function Dashboard() {
                         <select
                           value={simPriority}
                           onChange={(e) => setSimPriority(e.target.value)}
-                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-200 focus:outline-none focus:border-zinc-700"
+                          className="w-full p-2.5 text-xs rounded border border-zinc-800 bg-zinc-900/40 text-zinc-200 focus:outline-none"
                         >
                           <option value="Low">Low Priority</option>
                           <option value="Medium">Medium Priority</option>
@@ -806,9 +901,9 @@ export default function Dashboard() {
                   {simType === 'call' && (
                     <div className="flex flex-col gap-4 border-t border-zinc-900 pt-4 animate-fade-in">
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Call Transcript Summary</label>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Phone Transcript</label>
                         <textarea
-                          placeholder="Summarize the transcription contents..."
+                          placeholder="Customer: The export timeout crashes..."
                           value={simTranscript}
                           onChange={(e) => setSimTranscript(e.target.value)}
                           required
@@ -816,7 +911,7 @@ export default function Dashboard() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Key Takeaway</label>
+                        <label className="text-[10px] text-zinc-500 uppercase block mb-1.5 font-bold tracking-wider">Key Takeaway Summary</label>
                         <input
                           type="text"
                           placeholder="e.g. SSO export crashes frequently during reports."
@@ -847,13 +942,40 @@ export default function Dashboard() {
                     {simulating ? 'Ingesting Event Details...' : 'Simulate Event Ingestion'}
                   </button>
 
+                  {/* Submission Confirmation Banner (Bug 8 / Suggestion 5) */}
                   {simMessage && (
-                    <div className={`p-3 rounded text-center text-xs border ${
+                    <div className={`p-3.5 rounded-xl border flex flex-col gap-2.5 ${
                       simMessage.startsWith('Success') 
-                        ? 'bg-emerald-950/30 text-emerald-400 border-emerald-900/40' 
-                        : 'bg-red-950/30 text-red-400 border-red-900/40'
+                        ? 'bg-emerald-950/20 text-emerald-350 border-emerald-900/40' 
+                        : 'bg-red-950/20 text-red-350 border-red-900/40'
                     }`}>
-                      {simMessage}
+                      <span className="font-semibold text-xs">{simMessage}</span>
+                      {lastSubmittedEvent && (
+                        <div className="text-[11px] text-zinc-400 mt-1 border-t border-zinc-900/80 pt-2.5 flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span>Ingested Event:</span>
+                            <strong className="text-zinc-200 font-mono text-[10px] uppercase">{lastSubmittedEvent.type}</strong>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Target Account:</span>
+                            <strong className="text-zinc-200">{lastSubmittedEvent.companyName} ({lastSubmittedEvent.accountId})</strong>
+                          </div>
+                          {lastSubmittedEvent.subject && (
+                            <div className="flex justify-between items-center">
+                              <span>Detail Summary:</span>
+                              <strong className="text-zinc-250 truncate max-w-[70%]">{lastSubmittedEvent.subject}</strong>
+                            </div>
+                          )}
+                          {lastSubmittedEvent.newRiskScore !== null && (
+                            <div className="flex justify-between items-center">
+                              <span>Recalculated Score:</span>
+                              <strong className="text-blue-400 font-mono">
+                                {Math.round(lastSubmittedEvent.newRiskScore * 100)}% ({lastSubmittedEvent.newStatus})
+                              </strong>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </form>
@@ -871,7 +993,7 @@ export default function Dashboard() {
                   <span className="w-2 h-2 bg-emerald-500 rounded-full inline-block shadow-[0_0_8px_#10b981]"></span>
                   <div>
                     <h2 className="text-xs font-bold text-zinc-200">Blueberry Copilot Workspace</h2>
-                    <span className="text-[10px] text-zinc-500">Connected to Dialogflow CX Google Cloud Agent</span>
+                    <span className="text-[10px] text-zinc-555">Connected to Dialogflow CX Google Cloud Agent</span>
                   </div>
                 </div>
 
@@ -936,7 +1058,7 @@ export default function Dashboard() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     disabled={sending}
-                    className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-750"
+                    className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-755"
                   />
                   <button
                     type="submit"
@@ -1006,7 +1128,7 @@ export default function Dashboard() {
                             tool
                           </span>
                         </div>
-                        <p className="text-[11px] text-zinc-455 leading-relaxed">
+                        <p className="text-[11px] text-zinc-450 leading-relaxed">
                           {tool.description}
                         </p>
                       </div>
@@ -1061,6 +1183,139 @@ export default function Dashboard() {
           )}
         </main>
       </div>
+
+      {/* MODAL 1: PAIN-POINT CLUSTER DRILL-DOWN MODAL (Bug 10 / Suggestion 3) */}
+      {selectedCluster && (
+        <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[999] backdrop-blur-xs">
+          <div className="bg-zinc-950 border border-zinc-850 w-[90%] max-w-[700px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+              <div>
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Pain-Point Cluster Details</span>
+                <h3 className="text-base font-bold text-zinc-100">{selectedCluster.category}</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedCluster(null)}
+                className="px-2.5 py-1 text-xs rounded border border-zinc-850 bg-zinc-900 text-zinc-400 hover:text-zinc-250 cursor-pointer transition"
+              >
+                Close
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-400 leading-relaxed">{selectedCluster.description}</p>
+            
+            <div className="flex justify-between items-center text-xs border-y border-zinc-900/80 py-3 mt-1 bg-zinc-900/20 px-3 rounded-lg">
+              <div>
+                <span className="text-[10px] text-zinc-500 block uppercase">Total ARR affected</span>
+                <strong className="text-sm text-red-400 font-bold font-mono">${selectedCluster.arrAtRisk.toLocaleString()}</strong>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-zinc-500 block uppercase">Active Tickets</span>
+                <strong className="text-sm text-zinc-200 font-bold font-mono">{selectedCluster.count} open</strong>
+              </div>
+            </div>
+
+            <div className="mt-2">
+              <h4 className="text-xs font-semibold text-zinc-350 uppercase tracking-wider mb-3.5">Associated Support Tickets</h4>
+              <div className="flex flex-col gap-3">
+                {selectedCluster.tickets && selectedCluster.tickets.length > 0 ? (
+                  selectedCluster.tickets.map((t: any) => (
+                    <div key={t.ticket_id} className="p-3.5 rounded-lg border border-zinc-850 bg-zinc-950 flex flex-col gap-2.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-semibold text-zinc-150">
+                          {t.ticket_id} • {t.subject}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                          t.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-zinc-900 border border-zinc-800 text-zinc-450'
+                        }`}>
+                          {t.priority}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] text-zinc-500">
+                        <span>Affected Client: <strong className="text-zinc-350">{t.companyName}</strong></span>
+                        <Link href={`/account/${t.account_id}`}>
+                          <span className="text-blue-400 hover:underline flex items-center gap-1 cursor-pointer">
+                            View Account Details
+                            <ArrowRight className="h-3 w-3" />
+                          </span>
+                        </Link>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-xs text-zinc-550 text-center py-4">No open tickets listed.</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: ARR IMPACT ANALYSIS TABLE MODAL (Bug 9) */}
+      {showArrAnalysis && (
+        <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[999] backdrop-blur-xs">
+          <div className="bg-zinc-950 border border-zinc-850 w-[90%] max-w-[800px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+              <div>
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">ARR Impact Analysis</span>
+                <h3 className="text-base font-bold text-zinc-100">Customer Portfolio Risk Table</h3>
+              </div>
+              <button 
+                onClick={() => setShowArrAnalysis(false)}
+                className="px-2.5 py-1 text-xs rounded border border-zinc-850 bg-zinc-900 text-zinc-400 hover:text-zinc-250 cursor-pointer transition"
+              >
+                Close
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-400 leading-relaxed mb-2">
+              A comprehensive breakdown of all accounts, their revenue, and dynamic risk statuses currently index-locked in Elasticsearch.
+            </p>
+
+            <div className="overflow-x-auto border border-zinc-850 rounded-xl">
+              <table className="w-full text-xs text-left text-zinc-300">
+                <thead className="text-[10px] uppercase bg-zinc-950 text-zinc-500 border-b border-zinc-850">
+                  <tr>
+                    <th scope="col" className="px-4 py-3">Account ID</th>
+                    <th scope="col" className="px-4 py-3">Company Name</th>
+                    <th scope="col" className="px-4 py-3">Industry</th>
+                    <th scope="col" className="px-4 py-3 text-right">ARR</th>
+                    <th scope="col" className="px-4 py-3 text-right">Risk Score</th>
+                    <th scope="col" className="px-4 py-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-900">
+                  {accounts.map(acc => {
+                    const isCrit = acc.risk_score >= 0.75;
+                    const isWarn = acc.risk_score >= 0.25 && acc.risk_score < 0.75;
+                    return (
+                      <tr key={acc.account_id} className="hover:bg-zinc-900/30">
+                        <td className="px-4 py-3.5 font-mono text-zinc-400">{acc.account_id}</td>
+                        <td className="px-4 py-3.5 font-bold text-zinc-200 hover:text-blue-400 transition cursor-pointer">
+                          <Link href={`/account/${acc.account_id}`}>{acc.company_name}</Link>
+                        </td>
+                        <td className="px-4 py-3.5 text-zinc-450">{acc.industry}</td>
+                        <td className="px-4 py-3.5 text-right font-mono">${acc.arr.toLocaleString()}</td>
+                        <td className={`px-4 py-3.5 text-right font-bold font-mono ${isCrit ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {Math.round(acc.risk_score * 100)}%
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            isCrit ? 'bg-red-950/30 text-red-400 border border-red-900/50' :
+                            isWarn ? 'bg-amber-950/30 text-amber-400 border border-amber-900/50' :
+                            'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50'
+                          }`}>
+                            {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

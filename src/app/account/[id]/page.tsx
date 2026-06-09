@@ -69,7 +69,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
     setMessages(prev => [
       {
         ...prev[0],
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       }
     ]);
   }, []);
@@ -189,7 +189,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
         }
       }
 
-      // 5. Fetch Dynamic Risk Score Breakdown
+      // 5. Fetch Dynamic Risk Score Breakdown (ephemeral read-only, doesn't update Elasticsearch)
       const riskRes = await fetch(`/api/tools/dynamic-risk?accountId=${accountId}`);
       if (riskRes.ok) {
         const riskData = await riskRes.json();
@@ -233,19 +233,22 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
     fetchData();
   }, [accountId]);
 
-  // Send message to agent
+  // Send message to agent (Context Injection included)
   const handleSendMessage = async (textToSend: string) => {
     if (!textToSend.trim()) return;
 
-    // Add user message to UI
+    const timestampStr = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     const newMsg: ChatMessage = {
       sender: 'user',
       text: textToSend,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: timestampStr
     };
     setMessages(prev => [...prev, newMsg]);
     setInputValue('');
     setSending(true);
+
+    // Auto-inject account context prefix for Dialogflow CX query context
+    const messageWithContext = `[Account: ${account?.company_name || accountId} (${accountId})] ${textToSend}`;
 
     try {
       const res = await fetch('/api/agent', {
@@ -254,7 +257,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: textToSend,
+          message: messageWithContext,
           sessionId,
           accountId,
           companyName: account?.company_name
@@ -263,17 +266,16 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
       const data = await res.json();
       
-      // Add agent message to UI
       const agentMsg: ChatMessage = {
         sender: 'agent',
         text: data.response || "I received your message but could not generate a response.",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, agentMsg]);
 
       // If the agent updated any notes, reload timeline to show it instantly!
       if (textToSend.toLowerCase().includes('log') || textToSend.toLowerCase().includes('note') || textToSend.toLowerCase().includes('escalat')) {
-        setTimeout(fetchData, 2000); // give Elasticsearch a small window to refresh indices
+        setTimeout(fetchData, 2000); 
       }
 
     } catch (err) {
@@ -281,7 +283,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       const errorMsg: ChatMessage = {
         sender: 'agent',
         text: "Error: Failed to communicate with Google Cloud Agent. Please verify your credentials and network settings.",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
@@ -299,11 +301,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
     <div className="max-w-[1500px] mx-auto px-4 py-8 md:px-8 min-h-screen flex flex-col">
       {/* Back Button */}
       <div className="mb-6">
-        <Link href="/">
-          <span className="cursor-pointer text-zinc-400 hover:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 self-start transition">
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to Retention Radar
-          </span>
+        <Link 
+          href="/" 
+          className="cursor-pointer text-zinc-400 hover:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 self-start transition"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to Retention Radar
         </Link>
       </div>
 
@@ -377,40 +380,50 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Dynamic ES|QL Risk Factors Breakdown */}
-            {dynamicRiskData && dynamicRiskData.factors && (
-              <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3">
-                <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
-                  <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                    <Activity className="h-3.5 w-3.5 text-blue-450" />
-                    <span>Dynamic Risk Analysis</span>
-                  </h2>
+            <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3">
+              <div className="flex justify-between items-center pb-2 border-b border-zinc-900">
+                <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                  <Activity className="h-3.5 w-3.5 text-blue-450" />
+                  <span>Dynamic Risk Analysis</span>
+                </h2>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      setLoading(true);
+                      await fetch(`/api/tools/dynamic-risk?accountId=${accountId}&save=true`);
+                      await fetchData();
+                    }}
+                    className="text-[10px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-zinc-200 px-2 py-0.5 rounded font-semibold transition cursor-pointer"
+                  >
+                    Recalculate & Sync
+                  </button>
                   <span className="text-xs text-zinc-400">
-                    Status: <strong style={{ color: healthColor }}>{dynamicRiskData.status}</strong>
+                    Status: <strong style={{ color: healthColor }}>{dynamicRiskData?.status || account?.status}</strong>
                   </span>
                 </div>
-                
-                <div className="flex flex-col gap-3">
-                  {dynamicRiskData.factors.length === 0 ? (
-                    <span className="text-xs text-zinc-500 py-2">Baseline risk environment. No high-threat risk factors active.</span>
-                  ) : (
-                    dynamicRiskData.factors.map((factor: any) => {
-                      const isAdded = factor.riskAdded > 0;
-                      const sign = isAdded ? '+' : '';
-                      const colorClass = isAdded ? 'text-red-400' : 'text-emerald-400';
-                      return (
-                        <div key={factor.name} className="flex justify-between items-center text-xs pb-2.5 border-b border-zinc-900 last:border-b-0 last:pb-0">
-                          <div>
-                            <strong className="text-zinc-200 font-semibold">{factor.name}</strong>
-                            <span className="block text-[10px] text-zinc-500 mt-0.5">{factor.value}</span>
-                          </div>
-                          <span className={`font-mono font-bold ${colorClass}`}>{sign}{factor.riskAdded}%</span>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
               </div>
-            )}
+              
+              <div className="flex flex-col gap-3">
+                {!dynamicRiskData || !dynamicRiskData.factors || dynamicRiskData.factors.length === 0 ? (
+                  <span className="text-xs text-zinc-500 py-2">Baseline risk environment. No high-threat risk factors active.</span>
+                ) : (
+                  dynamicRiskData.factors.map((factor: any) => {
+                    const isAdded = factor.riskAdded > 0;
+                    const sign = isAdded ? '+' : '';
+                    const colorClass = isAdded ? 'text-red-400' : 'text-emerald-400';
+                    return (
+                      <div key={factor.name} className="flex justify-between items-center text-xs pb-2.5 border-b border-zinc-900 last:border-b-0 last:pb-0">
+                        <div>
+                          <strong className="text-zinc-200 font-semibold">{factor.name}</strong>
+                          <span className="block text-[10px] text-zinc-500 mt-0.5">{factor.value}</span>
+                        </div>
+                        <span className={`font-mono font-bold ${colorClass}`}>{sign}{factor.riskAdded}%</span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
 
             {/* Support Runbook Recommender */}
             <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-5 flex flex-col gap-3.5">
@@ -450,7 +463,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                     </div>
                   ) : (
-                    <span className="text-xs text-zinc-500">No runbook found matching this ticket's issues.</span>
+                    <span className="text-xs text-zinc-550">No runbook found matching this ticket's issues.</span>
                   )}
                 </div>
               )}
@@ -473,7 +486,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
               {/* Memory List */}
               {memories.length === 0 ? (
-                <div className="py-4 text-center text-zinc-550 text-xs border border-dashed border-zinc-850 rounded-lg">
+                <div className="py-4 text-center text-zinc-555 text-xs border border-dashed border-zinc-850 rounded-lg">
                   No memories cached for this account. Teach the agent via chat, or log a memory below!
                 </div>
               ) : (
@@ -532,7 +545,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Customer Journey Timeline</h2>
               
               {timeline.length === 0 ? (
-                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-12 text-center text-xs text-zinc-500">
+                <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-12 text-center text-xs text-zinc-555">
                   No activity logs registered.
                 </div>
               ) : (
@@ -599,7 +612,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                             </span>
                           )}
                           {item.type === 'call' && (
-                            <span className="text-[10px] text-zinc-555 font-mono bg-zinc-900 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] text-zinc-500 font-mono bg-zinc-900 px-1.5 py-0.5 rounded">
                               ⏱ {item.duration} mins
                             </span>
                           )}
@@ -662,30 +675,30 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                       <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-75"></span>
                       <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-150"></span>
                     </div>
-                    <span className="text-[9px] text-zinc-500">Calling tools...</span>
+                    <span className="text-[9px] text-zinc-550">Calling tools...</span>
                   </div>
                 )}
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Quick Actions Panel */}
+              {/* Quick Actions Panel (Contextually Updated) */}
               <div className="p-3 border-t border-zinc-900 bg-zinc-950 flex flex-wrap gap-1.5">
                 <button 
-                  onClick={() => handleSendMessage("Why is this account at risk?")} 
+                  onClick={() => handleSendMessage(`Why is this account (${account?.company_name}) at risk?`)} 
                   disabled={sending}
                   className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
                 >
                   ❓ Why at risk?
                 </button>
                 <button 
-                  onClick={() => handleSendMessage("Search for support issues in this account")} 
+                  onClick={() => handleSendMessage(`Search for open support tickets in this account`)} 
                   disabled={sending}
                   className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
                 >
                   🔍 Search tickets
                 </button>
                 <button 
-                  onClick={() => handleSendMessage(`Log a new health note: 'Reviewed ${account?.company_name || 'customer'} support tickets and assigned an escalation owner to patch issues.'`)} 
+                  onClick={() => handleSendMessage(`Log a new negative sentiment health note: 'Customer David is extremely frustrated about the data export timeouts and requested a competitor evaluation.'`)} 
                   disabled={sending}
                   className="text-[10px] px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 cursor-pointer transition"
                 >
@@ -741,7 +754,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               {/* Copyable Email Draft */}
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-[10px] text-zinc-550 uppercase tracking-wider flex items-center gap-1.5">
                     <FileText className="h-3 w-3" />
                     Email Draft (Markdown)
                   </span>
@@ -764,7 +777,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
               {/* Slack Card Layout preview */}
               <div className="flex flex-col gap-2">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-[10px] text-zinc-550 uppercase tracking-wider flex items-center gap-1.5">
                   <Terminal className="h-3 w-3" />
                   Slack Layout (JSON Block Kit)
                 </span>

@@ -1,8 +1,29 @@
 import { NextResponse } from 'next/server';
+import { 
+  getAccountContextService, 
+  searchIssuesService, 
+  writeHealthNoteService, 
+  getAgentMemoryService, 
+  writeAgentMemoryService, 
+  getDynamicRiskScoreService, 
+  recommendRunbookService, 
+  escalateAccountService, 
+  simulateEventService,
+  resetDemoDatabaseService,
+  getPortfolioSummaryService
+} from '@/lib/tool-services';
 
 export const dynamic = 'force-dynamic';
 
 const TOOLS = [
+  {
+    name: 'getPortfolioSummary',
+    description: 'Retrieve a portfolio-wide summary of customer accounts, total ARR, portfolio health distribution, and lists of critical/warning/healthy companies.',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
+  },
   {
     name: 'getAccountContext',
     description: 'Get support tickets, call transcripts, and CSM notes for a specific customer account to assess churn risk.',
@@ -116,6 +137,14 @@ const TOOLS = [
       },
       required: ['type', 'accountId']
     }
+  },
+  {
+    name: 'resetDemoDatabase',
+    description: 'Reset all customer accounts, simulated support tickets, CSM notes, call transcripts, and agent memory back to original seed data.',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
   }
 ];
 
@@ -128,7 +157,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { method, params } = body;
 
-    // Handle standard MCP tools/list and tools/call
     const reqMethod = method || body.method;
     
     if (reqMethod === 'tools/list') {
@@ -142,58 +170,31 @@ export async function POST(request: Request) {
     if (reqMethod === 'tools/call' || body.name) {
       const name = params?.name || body.name;
       const args = params?.arguments || body.arguments || {};
-
-      const origin = new URL(request.url).origin;
       let responseData: any = null;
 
-      if (name === 'getAccountContext') {
-        const res = await fetch(`${origin}/api/tools/account-context?accountId=${args.accountId}`);
-        responseData = await res.json();
+      if (name === 'getPortfolioSummary') {
+        responseData = await getPortfolioSummaryService();
+      } else if (name === 'getAccountContext') {
+        responseData = await getAccountContextService(args.accountId);
       } else if (name === 'searchIssues') {
-        const accountFilter = args.accountId ? `&accountId=${args.accountId}` : '';
-        const res = await fetch(`${origin}/api/tools/search-issues?query=${encodeURIComponent(args.query)}${accountFilter}`);
-        responseData = await res.json();
+        responseData = await searchIssuesService(args.query, args.accountId);
       } else if (name === 'writeHealthNote') {
-        const res = await fetch(`${origin}/api/tools/write-note`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(args)
-        });
-        responseData = await res.json();
+        responseData = await writeHealthNoteService(args.accountId, args.noteText, args.sentiment, args.author);
       } else if (name === 'getAgentMemory') {
-        const queryFilter = args.query ? `&query=${encodeURIComponent(args.query)}` : '';
-        const res = await fetch(`${origin}/api/tools/agent-memory?accountId=${args.accountId}${queryFilter}`);
-        responseData = await res.json();
+        responseData = await getAgentMemoryService(args.accountId, args.query);
       } else if (name === 'writeAgentMemory') {
-        const res = await fetch(`${origin}/api/tools/agent-memory`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(args)
-        });
-        responseData = await res.json();
+        responseData = await writeAgentMemoryService(args.accountId, args.content, args.category);
       } else if (name === 'getDynamicRiskScore') {
-        const res = await fetch(`${origin}/api/tools/dynamic-risk?accountId=${args.accountId}`);
-        responseData = await res.json();
+        // Run standard risk score calculation and update DB
+        responseData = await getDynamicRiskScoreService(args.accountId, true);
       } else if (name === 'recommendRunbook') {
-        const ticketParam = args.ticketId ? `ticketId=${args.ticketId}` : '';
-        const queryParam = args.query ? `query=${encodeURIComponent(args.query)}` : '';
-        const delim = ticketParam && queryParam ? '&' : '';
-        const res = await fetch(`${origin}/api/tools/recommend-runbook?${ticketParam}${delim}${queryParam}`);
-        responseData = await res.json();
+        responseData = await recommendRunbookService(args.ticketId, args.query);
       } else if (name === 'escalateAccount') {
-        const res = await fetch(`${origin}/api/tools/escalate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(args)
-        });
-        responseData = await res.json();
+        responseData = await escalateAccountService(args.accountId);
       } else if (name === 'simulateEvent') {
-        const res = await fetch(`${origin}/api/tools/simulate-event`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(args)
-        });
-        responseData = await res.json();
+        responseData = await simulateEventService(args);
+      } else if (name === 'resetDemoDatabase') {
+        responseData = await resetDemoDatabaseService();
       } else {
         return NextResponse.json({
           jsonrpc: '2.0',
@@ -216,7 +217,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Default REST fallback if not strict JSON-RPC
     return NextResponse.json({
       error: "Invalid MCP request. Expected 'tools/list' or 'tools/call' JSON-RPC method."
     }, { status: 400 });
