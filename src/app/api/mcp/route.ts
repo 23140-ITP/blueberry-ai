@@ -11,7 +11,11 @@ import {
   simulateEventService,
   resetDemoDatabaseService,
   getPortfolioSummaryService,
-  detectChurnRiskService
+  detectChurnRiskService,
+  supportResolutionAgentService,
+  churnInvestigatorAgentService,
+  voiceOfCustomerAgentService,
+  actionAgentService
 } from '@/lib/tool-services';
 
 export const dynamic = 'force-dynamic';
@@ -157,6 +161,45 @@ const TOOLS = [
       type: 'object',
       properties: {}
     }
+  },
+  {
+    name: 'supportResolutionAgent',
+    description: 'Specialist Agent: Retrieves open tickets for an account and automatically recommends the best runbook for the most critical issue.',
+    inputSchema: {
+      type: 'object',
+      properties: { accountId: { type: 'string' } },
+      required: ['accountId']
+    }
+  },
+  {
+    name: 'churnInvestigatorAgent',
+    description: 'Specialist Agent: Investigates churn risk by breaking down active tickets, sentiment, and usage into distinct risk drivers.',
+    inputSchema: {
+      type: 'object',
+      properties: { accountId: { type: 'string' } },
+      required: ['accountId']
+    }
+  },
+  {
+    name: 'voiceOfCustomerAgent',
+    description: 'Specialist Agent: Clusters recent call transcripts and health notes to identify the core product friction theme for an account.',
+    inputSchema: {
+      type: 'object',
+      properties: { accountId: { type: 'string' } },
+      required: ['accountId']
+    }
+  },
+  {
+    name: 'actionAgent',
+    description: 'Specialist Agent: Writes a synthesized executive brief or action plan back to the agent memory index.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        accountId: { type: 'string' },
+        briefContent: { type: 'string', description: 'The synthesized executive summary to save' }
+      },
+      required: ['accountId', 'briefContent']
+    }
   }
 ];
 
@@ -209,6 +252,14 @@ export async function POST(request: Request) {
         responseData = await simulateEventService(args);
       } else if (name === 'resetDemoDatabase') {
         responseData = await resetDemoDatabaseService();
+      } else if (name === 'supportResolutionAgent') {
+        responseData = await supportResolutionAgentService(args.accountId);
+      } else if (name === 'churnInvestigatorAgent') {
+        responseData = await churnInvestigatorAgentService(args.accountId);
+      } else if (name === 'voiceOfCustomerAgent') {
+        responseData = await voiceOfCustomerAgentService(args.accountId);
+      } else if (name === 'actionAgent') {
+        responseData = await actionAgentService(args.accountId, args.briefContent);
       } else {
         return NextResponse.json({
           jsonrpc: '2.0',

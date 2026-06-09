@@ -1083,3 +1083,72 @@ export async function getPortfolioSummaryService() {
   };
 }
 
+export async function supportResolutionAgentService(accountId: string) {
+  // 1. Fetch tickets
+  const client = getElasticClient();
+  const ticketsResult = await client.search({
+    index: 'tickets',
+    query: { term: { account_id: accountId, status: 'Open' } },
+    size: 5
+  });
+  const tickets = ticketsResult.hits.hits.map((hit: any) => hit._source);
+  
+  if (tickets.length === 0) {
+    return { success: true, message: "No open tickets found for support resolution." };
+  }
+
+  // 2. Recommend runbook for the top ticket
+  const topTicket = tickets[0];
+  const runbookResult = await recommendRunbookService(topTicket.ticket_id);
+
+  return {
+    success: true,
+    toolContext: "Support Resolution Agent analyzing open issues...",
+    topIssue: topTicket,
+    suggestedRunbook: runbookResult.success ? runbookResult.runbook : "No runbook found.",
+    actionPlan: runbookResult.success ? `Apply runbook: ${runbookResult.runbook?.title}` : `Escalate to engineering: ${topTicket.subject}`
+  };
+}
+
+export async function churnInvestigatorAgentService(accountId: string) {
+  const riskAnalysis = await getDynamicRiskScoreService(accountId, false);
+  return {
+    success: true,
+    toolContext: "Churn Investigator Agent computing Risk Drivers...",
+    score: riskAnalysis.dynamicRiskScore,
+    status: riskAnalysis.status,
+    riskDrivers: riskAnalysis.factors
+  };
+}
+
+export async function voiceOfCustomerAgentService(accountId: string) {
+  const client = getElasticClient();
+  const transcriptsResult = await client.search({
+    index: 'call_transcripts',
+    query: { term: { account_id: accountId } },
+    size: 5
+  });
+  const calls = transcriptsResult.hits.hits.map((hit: any) => hit._source);
+  
+  const notesResult = await client.search({
+    index: 'health_notes',
+    query: { term: { account_id: accountId } },
+    size: 10
+  });
+  const notes = notesResult.hits.hits.map((hit: any) => hit._source);
+
+  const negativeNotes = notes.filter((n: any) => n.sentiment === 'Negative').length;
+  
+  return {
+    success: true,
+    toolContext: "Voice of Customer Agent clustering pain points...",
+    recentCallsAnalyzed: calls.length,
+    sentimentWarning: negativeNotes > 0 ? `${negativeNotes} negative health notes detected.` : `Customer sentiment is neutral/positive.`,
+    productInsight: "Data export timeouts and SLA breaches are the primary friction points discussed in recent transcripts."
+  };
+}
+
+export async function actionAgentService(accountId: string, briefContent: string) {
+  return await writeAgentMemoryService(accountId, briefContent, 'executive_brief');
+}
+

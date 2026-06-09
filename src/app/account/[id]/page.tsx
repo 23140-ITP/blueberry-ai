@@ -4,7 +4,7 @@ import { use, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, Brain, ShieldAlert, Activity, Play, Layers, BadgeAlert, 
-  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText
+  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles
 } from 'lucide-react';
 
 interface TimelineItem {
@@ -330,7 +330,10 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* Account Info Header */}
-            <div className="bg-background border border-border rounded-xl p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+            <div className="bg-background border border-border rounded-xl p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-blue-600/10 text-blue-500 text-[10px] font-bold px-3 py-1 uppercase tracking-widest rounded-bl-lg border-b border-l border-blue-500/20">
+                Customer War Room
+              </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground tracking-tight mb-1">{account.company_name}</h1>
                 <span className="text-xs text-muted-foreground block">
@@ -379,12 +382,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {/* Dynamic ES|QL Risk Factors Breakdown */}
+            {/* Reasoned Risk Breakdown & Simulator */}
             <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-3">
               <div className="flex justify-between items-center pb-2 border-b border-border">
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <Activity className="h-3.5 w-3.5 text-blue-450" />
-                  <span>Dynamic Risk Analysis</span>
+                  <span>Reasoned Risk Breakdown</span>
                 </h2>
                 <div className="flex items-center gap-3">
                   <button
@@ -423,6 +426,21 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   })
                 )}
               </div>
+
+              {/* What-If Simulator */}
+              {dynamicRiskData?.factors?.some((f: any) => f.name.includes('Ticket')) && (
+                <div className="mt-2 p-3 bg-blue-950/10 border border-blue-900/20 rounded-lg flex items-start gap-3">
+                  <div className="bg-blue-500/20 p-1.5 rounded-full mt-0.5">
+                    <Activity className="h-3 w-3 text-blue-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Counterfactual Simulator</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      If we apply the suggested runbook and resolve the open tickets today, risk drops from <strong className="text-foreground">{riskScore}%</strong> to <strong className="text-emerald-400 font-mono">{(riskScore - (dynamicRiskData.factors.find((f: any) => f.name.includes('Ticket'))?.riskAdded || 0)).toFixed(0)}%</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Support Runbook Recommender */}
@@ -682,28 +700,38 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               {/* Quick Actions Panel (Contextually Updated) */}
-              <div className="p-3 border-t border-border bg-background flex flex-wrap gap-1.5">
+              <div className="p-3 border-t border-border bg-background flex flex-col gap-2">
                 <button 
-                  onClick={() => handleSendMessage(`Why is this account (${account?.company_name}) at risk?`)} 
+                  onClick={() => handleSendMessage(`Act as the Supervisor Agent. Run a full account review on ${account?.company_name}. Call the supportResolutionAgent, churnInvestigatorAgent, and voiceOfCustomerAgent. Then, use the actionAgent to save a unified Executive Brief to memory.`)} 
                   disabled={sending}
-                  className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
+                  className="w-full text-xs font-semibold py-2 rounded border border-blue-500 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.2)]"
                 >
-                  ❓ Why at risk?
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Run Full Account Review
                 </button>
-                <button 
-                  onClick={() => handleSendMessage(`Search for open support tickets in this account`)} 
-                  disabled={sending}
-                  className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
-                >
-                  🔍 Search tickets
-                </button>
-                <button 
-                  onClick={() => handleSendMessage(`Log a new negative sentiment health note: 'Customer David is extremely frustrated about the data export timeouts and requested a competitor evaluation.'`)} 
-                  disabled={sending}
-                  className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
-                >
-                  ✍ Log CSM note
-                </button>
+                <div className="flex flex-wrap gap-1.5">
+                  <button 
+                    onClick={() => handleSendMessage(`Why is this account (${account?.company_name}) at risk?`)} 
+                    disabled={sending}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition flex-grow text-center"
+                  >
+                    ❓ Why at risk?
+                  </button>
+                  <button 
+                    onClick={() => handleSendMessage(`Search for open support tickets in this account`)} 
+                    disabled={sending}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition flex-grow text-center"
+                  >
+                    🔍 Search tickets
+                  </button>
+                  <button 
+                    onClick={() => handleSendMessage(`Log a new negative sentiment health note: 'Customer David is extremely frustrated about the data export timeouts and requested a competitor evaluation.'`)} 
+                    disabled={sending}
+                    className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition flex-grow text-center"
+                  >
+                    ✍ Log CSM note
+                  </button>
+                </div>
               </div>
 
               {/* Chat Input form */}
