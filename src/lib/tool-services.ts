@@ -481,6 +481,22 @@ export async function getDynamicRiskScoreService(accountId: string, saveToDb: bo
   };
 }
 
+export async function detectChurnRiskService(accountId: string) {
+  // Leverage the existing ES|QL risk scoring logic but format it specifically for agent analysis
+  const riskAnalysis = await getDynamicRiskScoreService(accountId, false);
+  
+  return {
+    success: true,
+    toolContext: "This is a dedicated ES|QL churn risk analysis tool.",
+    analysis: riskAnalysis,
+    recommendation: riskAnalysis.dynamicRiskScore >= 0.75 
+      ? `CRITICAL RISK. Immediate escalation required for ${riskAnalysis.companyName}.`
+      : riskAnalysis.dynamicRiskScore >= 0.25
+      ? `AT RISK. Monitor closely and schedule a check-in with ${riskAnalysis.companyName}.`
+      : `HEALTHY. ${riskAnalysis.companyName} is currently at low risk of churn.`
+  };
+}
+
 export async function recommendRunbookService(ticketId?: string, query?: string) {
   const client = getElasticClient();
   let queryText = '';

@@ -10,7 +10,8 @@ import {
   escalateAccountService, 
   simulateEventService,
   resetDemoDatabaseService,
-  getPortfolioSummaryService
+  getPortfolioSummaryService,
+  detectChurnRiskService
 } from '@/lib/tool-services';
 
 export const dynamic = 'force-dynamic';
@@ -88,6 +89,17 @@ const TOOLS = [
   {
     name: 'getDynamicRiskScore',
     description: 'Calculate and update a customer account risk score dynamically using ES|QL queries on live tickets and sentiment indicators.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        accountId: { type: 'string', description: 'The unique ID of the account (e.g. ACC-002)' }
+      },
+      required: ['accountId']
+    }
+  },
+  {
+    name: 'detectChurnRisk',
+    description: 'Calculate a dedicated churn risk analysis dynamically using ES|QL queries on live tickets and sentiment indicators.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -187,6 +199,8 @@ export async function POST(request: Request) {
       } else if (name === 'getDynamicRiskScore') {
         // Run standard risk score calculation and update DB
         responseData = await getDynamicRiskScoreService(args.accountId, true);
+      } else if (name === 'detectChurnRisk') {
+        responseData = await detectChurnRiskService(args.accountId);
       } else if (name === 'recommendRunbook') {
         responseData = await recommendRunbookService(args.ticketId, args.query);
       } else if (name === 'escalateAccount') {

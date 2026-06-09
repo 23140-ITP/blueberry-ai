@@ -92,16 +92,17 @@ npm run seed
 ### 3. Google Cloud Credentials
 Download a service account JSON key from Google Cloud Console with the **Dialogflow API Admin** role. Rename it to `gcp-key.json` and place it in the root folder of this project.
 
-### 4. Local Run & Tunneling
+### 4. Local Run & Cloud Run Connection
 Start the development server:
 ```bash
 npm run dev
 ```
-In a separate terminal, expose the server so GCP can reach your API tools:
-```bash
-npx localtunnel --port 3000
-```
-Update your Dialogflow tool definition server URL with the generated localtunnel public URL.
+
+**MCP Server Connection:**
+Since the app is already deployed to Google Cloud Run, your Agent Builder should be configured to connect directly to the live MCP endpoint:
+`https://blueberry-ai-<hash>.run.app/api/mcp`
+
+Configure this URL in the Dialogflow CX / Agent Builder Tool settings.
 
 ---
 
