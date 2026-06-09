@@ -84,6 +84,10 @@ export default function Dashboard() {
     }
   };
 
+  const [semanticMode, setSemanticMode] = useState(false);
+  const [semanticMatches, setSemanticMatches] = useState<Record<string, { relevanceScore: number; matchReason: string; matchType: string }>>({});
+  const [aggregations, setAggregations] = useState<any[]>([]);
+
   useEffect(() => {
     async function fetchAccounts() {
       try {
@@ -91,6 +95,9 @@ export default function Dashboard() {
         const data = await res.json();
         if (data.accounts) {
           setAccounts(data.accounts);
+        }
+        if (data.aggregations) {
+          setAggregations(data.aggregations);
         }
       } catch (err) {
         console.error('Failed to load accounts:', err);
@@ -101,11 +108,37 @@ export default function Dashboard() {
     fetchAccounts();
   }, []);
 
-  const filteredAccounts = accounts.filter(acc =>
-    acc.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    acc.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    acc.account_id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    if (!semanticMode || !searchTerm.trim()) {
+      setSemanticMatches({});
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(searchTerm)}`);
+        const data = await res.json();
+        if (data.matches) {
+          setSemanticMatches(data.matches);
+        }
+      } catch (err) {
+        console.error('Failed to run semantic search:', err);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, semanticMode]);
+
+  const filteredAccounts = accounts.filter(acc => {
+    if (semanticMode && searchTerm.trim() !== '') {
+      return !!semanticMatches[acc.account_id];
+    }
+    return (
+      acc.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      acc.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      acc.account_id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   // Compute KPI metrics dynamically
   const totalARR = accounts.reduce((sum, acc) => sum + acc.arr, 0);
@@ -152,10 +185,36 @@ export default function Dashboard() {
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Customer Retention Radar • Google Cloud Agent Builder + Elastic</p>
         </div>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Semantic Mode Toggle */}
+          <button
+            onClick={() => {
+              setSemanticMode(!semanticMode);
+              setSearchTerm('');
+              setSemanticMatches({});
+            }}
+            style={{
+              padding: '0.75rem 1.25rem',
+              borderRadius: '12px',
+              border: semanticMode ? '1px solid #3b82f6' : '1px solid var(--border-color)',
+              background: semanticMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+              color: semanticMode ? '#60a5fa' : 'var(--text-secondary)',
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: semanticMode ? '0 0 15px rgba(59, 130, 246, 0.2)' : 'none'
+            }}
+          >
+            <span>⚡</span> {semanticMode ? 'Elastic Semantic Search' : 'Standard Search'}
+          </button>
           <input
             type="text"
-            placeholder="Search accounts or industries..."
+            placeholder={semanticMode ? "Semantic query (e.g. 'threatened to churn')..." : "Search accounts or industries..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -166,7 +225,7 @@ export default function Dashboard() {
               color: 'var(--text-primary)',
               fontFamily: 'var(--font-body)',
               outline: 'none',
-              width: '300px',
+              width: '320px',
               transition: 'all 0.2s'
             }}
             onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
@@ -288,6 +347,26 @@ export default function Dashboard() {
                       <div style={{ color: 'var(--text-muted)', textAlign: 'right' }}>
                         →
                       </div>
+
+                      {/* Semantic Match Reason Snippet */}
+                      {semanticMode && semanticMatches[acc.account_id] && (
+                        <div style={{
+                          gridColumn: '1 / -1',
+                          marginTop: '0.75rem',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '8px',
+                          background: 'rgba(59, 130, 246, 0.05)',
+                          border: '1px solid rgba(59, 130, 246, 0.15)',
+                          fontSize: '0.8rem',
+                          color: 'var(--text-secondary)',
+                          lineHeight: '1.4'
+                        }}>
+                          <span style={{ fontWeight: 700, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                            ⚡ Elastic Semantic Match • {semanticMatches[acc.account_id].relevanceScore}% Relevance
+                          </span>
+                          <p dangerouslySetInnerHTML={{ __html: semanticMatches[acc.account_id].matchReason }} style={{ margin: 0 }} />
+                        </div>
+                      )}
                     </div>
                   </Link>
                 );
@@ -364,6 +443,125 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+
+          {/* Prioritization Quadrant Card */}
+          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>CSM Prioritization Quadrant</h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Action map of ARR vs Churn Risk. Click points to inspect.</span>
+
+            <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <svg width="100%" height="220" viewBox="0 0 320 220" style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                {/* Quadrant backgrounds */}
+                <rect x="40" y="20" width="120" height="70" fill="rgba(52, 211, 153, 0.02)" /> {/* Top Left: Safe High ARR */}
+                <rect x="160" y="20" width="120" height="70" fill="rgba(239, 68, 68, 0.04)" />  {/* Top Right: Critical Churn */}
+                <rect x="40" y="90" width="120" height="70" fill="rgba(255, 255, 255, 0.01)" /> {/* Bottom Left: Low Risk */}
+                <rect x="160" y="90" width="120" height="70" fill="rgba(245, 158, 11, 0.02)" />  {/* Bottom Right: Low ARR Risk */}
+
+                {/* Grid Axes */}
+                <line x1="40" y1="160" x2="280" y2="160" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+                <line x1="40" y1="20" x2="40" y2="160" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+
+                {/* Quadrant Divider Gridlines */}
+                <line x1="160" y1="20" x2="160" y2="160" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                <line x1="40" y1="90" x2="280" y2="90" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+
+                {/* Grid Labels */}
+                <text x="160" y="180" textAnchor="middle" fill="var(--text-muted)" fontSize="8">Risk Score (%)</text>
+                <text x="10" y="90" textAnchor="middle" fill="var(--text-muted)" fontSize="8" transform="rotate(-90 10 90)">ARR ($k)</text>
+
+                {/* Grid ticks */}
+                <text x="40" y="170" textAnchor="middle" fill="var(--text-muted)" fontSize="7">0%</text>
+                <text x="160" y="170" textAnchor="middle" fill="var(--text-muted)" fontSize="7">50%</text>
+                <text x="280" y="170" textAnchor="middle" fill="var(--text-muted)" fontSize="7">100%</text>
+
+                <text x="35" y="160" textAnchor="end" fill="var(--text-muted)" fontSize="7" dominantBaseline="middle">$0</text>
+                <text x="35" y="90" textAnchor="end" fill="var(--text-muted)" fontSize="7" dominantBaseline="middle">$300k</text>
+                <text x="35" y="20" textAnchor="end" fill="var(--text-muted)" fontSize="7" dominantBaseline="middle">$600k</text>
+
+                {/* Quadrant Name Overlays */}
+                <text x="100" y="30" textAnchor="middle" fill="rgba(52, 211, 153, 0.4)" fontSize="6" fontWeight="bold">SAFE KEY</text>
+                <text x="220" y="30" textAnchor="middle" fill="rgba(239, 68, 68, 0.7)" fontSize="6" fontWeight="bold" className="animate-pulse">CRITICAL ACTION 🔥</text>
+                <text x="100" y="100" textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="6" fontWeight="bold">HEALTHY</text>
+                <text x="220" y="100" textAnchor="middle" fill="rgba(245, 158, 11, 0.4)" fontSize="6" fontWeight="bold">WATCHLIST</text>
+
+                {/* Plot Data points */}
+                {accounts.map(acc => {
+                  const x = 40 + (acc.risk_score * 240);
+                  const y = 160 - (Math.min(acc.arr, 600000) / 600000) * 140;
+                  const color = acc.risk_score >= 0.75 ? 'var(--danger)' : acc.risk_score >= 0.25 ? 'var(--warning)' : 'var(--success)';
+                  const glowColor = acc.risk_score >= 0.75 ? 'rgba(239, 68, 68, 0.8)' : acc.risk_score >= 0.25 ? 'rgba(245, 158, 11, 0.6)' : 'rgba(52, 211, 153, 0.6)';
+
+                  return (
+                    <a key={acc.account_id} href={`/account/${acc.account_id}`} style={{ cursor: 'pointer' }}>
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r="6"
+                        fill={color}
+                        stroke="#fff"
+                        strokeWidth="1.5"
+                        style={{
+                          filter: `drop-shadow(0 0 6px ${glowColor})`,
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.setAttribute('r', '9'); }}
+                        onMouseOut={(e) => { e.currentTarget.setAttribute('r', '6'); }}
+                      />
+                      {/* Label next to circle */}
+                      <text x={x} y={y - 10} textAnchor="middle" fill="var(--text-primary)" fontSize="7" fontWeight="bold" style={{ pointerEvents: 'none' }}>
+                        {acc.company_name}
+                      </text>
+                    </a>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+
+          {/* Industry Breakdown Card (Elastic Aggregations) */}
+          {aggregations.length > 0 && (
+            <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: '1rem', color: 'var(--text-secondary)', margin: 0 }}>Industry Health Profile</h3>
+                <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Elastic Aggs</span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Dynamic terms and average metric aggregates computed directly inside Elasticsearch.</p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {aggregations.map(agg => {
+                  const riskPct = Math.round(agg.avgRisk * 100);
+                  const isHigh = riskPct >= 75;
+                  const isWarn = riskPct >= 25 && riskPct < 75;
+                  const riskColor = isHigh ? 'var(--danger)' : isWarn ? 'var(--warning)' : 'var(--success)';
+
+                  return (
+                    <div key={agg.industry} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{agg.industry}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: riskColor }}>
+                          {riskPct}% Avg Risk
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        <span>{agg.count} {agg.count === 1 ? 'account' : 'accounts'} active</span>
+                        <span>Total ARR: ${agg.totalArr.toLocaleString()}</span>
+                      </div>
+
+                      {/* Small aggregation visual bar */}
+                      <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '2px', overflow: 'hidden', marginTop: '6px' }}>
+                        <div style={{
+                          width: `${riskPct}%`,
+                          height: '100%',
+                          backgroundColor: riskColor
+                        }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Alert Center */}
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
