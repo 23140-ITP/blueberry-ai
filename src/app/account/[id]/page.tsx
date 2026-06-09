@@ -30,6 +30,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Agent Memory Bank states
+  const [memories, setMemories] = useState<any[]>([]);
+  const [newMemoryText, setNewMemoryText] = useState('');
+  const [newMemoryCategory, setNewMemoryCategory] = useState('preference');
+  const [addingMemory, setAddingMemory] = useState(false);
+
   // Chat states
   const [messages, setMessages] = useState<ChatMessage[]>([
     { sender: 'agent', text: "Hello! I am your Blueberry Copilot. How can I help you manage this account's retention status today?", timestamp: '' }
@@ -120,11 +126,45 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       unifiedTimeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setTimeline(unifiedTimeline);
 
+      // 4. Fetch Agent Memories
+      const memoryRes = await fetch(`/api/tools/agent-memory?accountId=${accountId}`);
+      if (memoryRes.ok) {
+        const memoryData = await memoryRes.json();
+        if (memoryData.memories) {
+          setMemories(memoryData.memories);
+        }
+      }
+
     } catch (err: any) {
       console.error(err);
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveMemory = async () => {
+    if (!newMemoryText.trim()) return;
+    setAddingMemory(true);
+    try {
+      const res = await fetch('/api/tools/agent-memory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId,
+          content: newMemoryText,
+          category: newMemoryCategory
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMemories(prev => [data.memory, ...prev]);
+        setNewMemoryText('');
+      }
+    } catch (err) {
+      console.error('Failed to save agent memory:', err);
+    } finally {
+      setAddingMemory(false);
     }
   };
 
@@ -257,6 +297,114 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   <span style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'var(--font-title)', color: healthColor }}>{riskScore}%</span>
                   <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Risk</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Agent Memory Bank */}
+            <div className="glass-panel animate-fade-in" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <span>🧠 Agent Memory Bank</span>
+                  <span style={{ fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Elastic Managed Memory</span>
+                </h2>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{memories.length} facts remembered</span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                Long-term facts, preferences, and context cached by the copilot in the <code style={{ color: '#60a5fa' }}>agent_memory</code> index.
+              </p>
+
+              {/* Memory List */}
+              {memories.length === 0 ? (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                  No memories cached for this account. Teach the agent via chat, or log a memory below!
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {memories.map((mem) => (
+                    <div key={mem.memory_id || mem.created_at} style={{
+                      padding: '0.75rem 1rem',
+                      borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.01)',
+                      border: '1px solid rgba(255,255,255,0.03)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          color: mem.category === 'preference' ? '#fbbf24' : mem.category === 'escalation' ? '#f87171' : '#60a5fa'
+                        }}>
+                          {mem.category}
+                        </span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                          {new Date(mem.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+                        {mem.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add Memory Form */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                <select
+                  value={newMemoryCategory}
+                  onChange={(e) => setNewMemoryCategory(e.target.value)}
+                  style={{
+                    padding: '0.5rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'rgba(255,255,255,0.02)',
+                    color: 'var(--text-secondary)',
+                    fontFamily: 'var(--font-body)',
+                    outline: 'none',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  <option value="preference">Preference</option>
+                  <option value="escalation">Escalation</option>
+                  <option value="milestone">Milestone</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Remember a new customer fact or preference..."
+                  value={newMemoryText}
+                  onChange={(e) => setNewMemoryText(e.target.value)}
+                  style={{
+                    flexGrow: 1,
+                    padding: '0.5rem 1rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'rgba(255,255,255,0.02)',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-body)',
+                    outline: 'none',
+                    fontSize: '0.8rem'
+                  }}
+                />
+                <button
+                  onClick={handleSaveMemory}
+                  disabled={addingMemory || !newMemoryText.trim()}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    background: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    opacity: (addingMemory || !newMemoryText.trim()) ? 0.5 : 1
+                  }}
+                >
+                  {addingMemory ? 'Saving...' : 'Remember'}
+                </button>
               </div>
             </div>
 

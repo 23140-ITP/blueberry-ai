@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q');
+    const mode = searchParams.get('mode') || 'hybrid';
 
     if (!q || !q.trim()) {
       return NextResponse.json({ matches: {} });
@@ -14,10 +15,11 @@ export async function GET(request: Request) {
 
     const client = getElasticClient();
 
-    // Query across all three transactional indices containing customer signals
-    const searchResult = await client.search({
-      index: ['tickets', 'health_notes', 'call_transcripts'],
-      query: {
+    // Build query based on selected mode
+    let queryObj: any = {};
+
+    if (mode === 'keyword') {
+      queryObj = {
         bool: {
           should: [
             { match: { subject: { query: q } } },
@@ -27,21 +29,89 @@ export async function GET(request: Request) {
             { match: { summary: { query: q } } }
           ]
         }
-      },
-      // Highlight exact matches to visually demonstrate the search engine output in the UI
-      highlight: {
-        fields: {
-          subject: {},
-          description: {},
-          note_text: {},
-          transcript: {},
-          summary: {}
+      };
+    } else if (mode === 'vector') {
+      queryObj = {
+        bool: {
+          should: [
+            { semantic: { field: 'subject', query: q } },
+            { semantic: { field: 'description', query: q } },
+            { semantic: { field: 'note_text', query: q } },
+            { semantic: { field: 'transcript', query: q } },
+            { semantic: { field: 'summary', query: q } }
+          ]
+        }
+      };
+    } else {
+      // Hybrid mode combining BM25 keyword matching and dense vector semantic matches
+      queryObj = {
+        bool: {
+          should: [
+            // Keyword matches
+            { match: { subject: { query: q, boost: 0.5 } } },
+            { match: { description: { query: q, boost: 0.5 } } },
+            { match: { note_text: { query: q, boost: 0.5 } } },
+            { match: { transcript: { query: q, boost: 0.5 } } },
+            { match: { summary: { query: q, boost: 0.5 } } },
+            // Vector/Semantic matches
+            { semantic: { field: 'subject', query: q, boost: 1.5 } },
+            { semantic: { field: 'description', query: q, boost: 1.5 } },
+            { semantic: { field: 'note_text', query: q, boost: 1.5 } },
+            { semantic: { field: 'transcript', query: q, boost: 1.5 } },
+            { semantic: { field: 'summary', query: q, boost: 1.5 } }
+          ]
+        }
+      };
+    }
+
+    let searchResult: any = null;
+    try {
+      searchResult = await client.search({
+        index: ['tickets', 'health_notes', 'call_transcripts'],
+        query: queryObj,
+        highlight: {
+          fields: {
+            subject: {},
+            description: {},
+            note_text: {},
+            transcript: {},
+            summary: {}
+          },
+          pre_tags: ['<mark style="background: rgba(59,130,246,0.35); color: #60a5fa; padding: 2px 4px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(59,130,246,0.5);">'],
+          post_tags: ['</mark>']
         },
-        pre_tags: ['<mark style="background: rgba(59,130,246,0.35); color: #60a5fa; padding: 2px 4px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(59,130,246,0.5);">'],
-        post_tags: ['</mark>']
-      },
-      size: 50
-    });
+        size: 50
+      });
+    } catch (searchErr) {
+      console.log(`Failed query with mode ${mode}, falling back to keyword search:`, searchErr);
+      const fallbackQuery = {
+        bool: {
+          should: [
+            { match: { subject: { query: q } } },
+            { match: { description: { query: q } } },
+            { match: { note_text: { query: q } } },
+            { match: { transcript: { query: q } } },
+            { match: { summary: { query: q } } }
+          ]
+        }
+      };
+      searchResult = await client.search({
+        index: ['tickets', 'health_notes', 'call_transcripts'],
+        query: fallbackQuery,
+        highlight: {
+          fields: {
+            subject: {},
+            description: {},
+            note_text: {},
+            transcript: {},
+            summary: {}
+          },
+          pre_tags: ['<mark style="background: rgba(59,130,246,0.35); color: #60a5fa; padding: 2px 4px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(59,130,246,0.5);">'],
+          post_tags: ['</mark>']
+        },
+        size: 50
+      });
+    }
 
     // Group matching records by account_id to filter the main radar dashboard
     const matches: Record<string, {

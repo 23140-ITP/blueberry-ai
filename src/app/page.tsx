@@ -95,7 +95,13 @@ export default function Dashboard() {
     }
   };
 
-  const [semanticMode, setSemanticMode] = useState(false);
+  const [searchMode, setSearchMode] = useState<'client' | 'keyword' | 'vector' | 'hybrid'>('client');
+  const [activeTab, setActiveTab] = useState<'radar' | 'mcp'>('radar');
+  const [mcpTools, setMcpTools] = useState<any[]>([]);
+  const [selectedMcpTool, setSelectedMcpTool] = useState<any>(null);
+  const [mcpArgs, setMcpArgs] = useState<string>('{}');
+  const [mcpResult, setMcpResult] = useState<string>('');
+  const [mcpRunning, setMcpRunning] = useState<boolean>(false);
   const [semanticMatches, setSemanticMatches] = useState<Record<string, { relevanceScore: number; matchReason: string; matchType: string }>>({});
   const [aggregations, setAggregations] = useState<any[]>([]);
 
@@ -120,14 +126,65 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!semanticMode || !searchTerm.trim()) {
+    async function fetchMcpTools() {
+      try {
+        const res = await fetch('/api/mcp');
+        const data = await res.json();
+        if (data.tools) {
+          setMcpTools(data.tools);
+          setSelectedMcpTool(data.tools[0]);
+          setMcpArgs(JSON.stringify({ accountId: 'ACC-002' }, null, 2));
+        }
+      } catch (err) {
+        console.error('Failed to fetch MCP tools:', err);
+      }
+    }
+    fetchMcpTools();
+  }, []);
+
+  const runMcpTool = async () => {
+    if (!selectedMcpTool) return;
+    setMcpRunning(true);
+    setMcpResult('');
+    try {
+      let parsedArgs = {};
+      try {
+        parsedArgs = JSON.parse(mcpArgs);
+      } catch (e) {
+        setMcpResult(`Error: Invalid arguments JSON: ${(e as Error).message}`);
+        setMcpRunning(false);
+        return;
+      }
+
+      const res = await fetch('/api/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          method: 'tools/call',
+          params: {
+            name: selectedMcpTool.name,
+            arguments: parsedArgs
+          }
+        })
+      });
+      const data = await res.json();
+      setMcpResult(JSON.stringify(data, null, 2));
+    } catch (err) {
+      setMcpResult(`Error running tool: ${(err as Error).message}`);
+    } finally {
+      setMcpRunning(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchMode === 'client' || !searchTerm.trim()) {
       setSemanticMatches({});
       return;
     }
 
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(searchTerm)}`);
+        const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(searchTerm)}&mode=${searchMode}`);
         const data = await res.json();
         if (data.matches) {
           setSemanticMatches(data.matches);
@@ -138,10 +195,10 @@ export default function Dashboard() {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, semanticMode]);
+  }, [searchTerm, searchMode]);
 
   const filteredAccounts = accounts.filter(acc => {
-    if (semanticMode && searchTerm.trim() !== '') {
+    if (searchMode !== 'client' && searchTerm.trim() !== '') {
       return !!semanticMatches[acc.account_id];
     }
     return (
@@ -197,35 +254,43 @@ export default function Dashboard() {
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Customer Retention Radar • Google Cloud Agent Builder + Elastic</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Semantic Mode Toggle */}
-          <button
-            onClick={() => {
-              setSemanticMode(!semanticMode);
-              setSearchTerm('');
-              setSemanticMatches({});
-            }}
-            style={{
-              padding: '0.75rem 1.25rem',
-              borderRadius: '12px',
-              border: semanticMode ? '1px solid #3b82f6' : '1px solid var(--border-color)',
-              background: semanticMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-              color: semanticMode ? '#60a5fa' : 'var(--text-secondary)',
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: semanticMode ? '0 0 15px rgba(59, 130, 246, 0.2)' : 'none'
-            }}
-          >
-            <span>⚡</span> {semanticMode ? 'Elastic Semantic Search' : 'Standard Search'}
-          </button>
+          <div className="glass-panel" style={{ display: 'flex', padding: '3px', borderRadius: '10px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)' }}>
+            {(['client', 'keyword', 'vector', 'hybrid'] as const).map(mode => (
+              <button
+                key={mode}
+                onClick={() => {
+                  setSearchMode(mode);
+                  setSearchTerm('');
+                  setSemanticMatches({});
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: searchMode === mode ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                  color: searchMode === mode ? '#60a5fa' : 'var(--text-secondary)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontFamily: 'var(--font-body)',
+                  boxShadow: searchMode === mode ? '0 0 10px rgba(59, 130, 246, 0.1)' : 'none'
+                }}
+              >
+                {mode === 'client' && '📱 Local'}
+                {mode === 'keyword' && '🔍 BM25'}
+                {mode === 'vector' && '⚡ Vector'}
+                {mode === 'hybrid' && '🧬 Hybrid'}
+              </button>
+            ))}
+          </div>
           <input
             type="text"
-            placeholder={semanticMode ? "Semantic query (e.g. 'threatened to churn')..." : "Search accounts or industries..."}
+            placeholder={
+              searchMode === 'client' ? "Filter list locally..." :
+              searchMode === 'keyword' ? "Elastic keyword search..." :
+              searchMode === 'vector' ? "Elastic semantic search..." : "Elastic hybrid search..."
+            }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -245,7 +310,50 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* KPI Cards Grid */}
+      {/* Tabs Navigation */}
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2.5rem', paddingBottom: '0.5rem' }}>
+        <button
+          onClick={() => setActiveTab('radar')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: activeTab === 'radar' ? '#60a5fa' : 'var(--text-secondary)',
+            fontSize: '1rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            padding: '0.5rem 1.25rem',
+            borderBottom: activeTab === 'radar' ? '2px solid #3b82f6' : 'none',
+            transition: 'all 0.2s',
+            fontFamily: 'var(--font-body)'
+          }}
+        >
+          📊 Retention Radar
+        </button>
+        <button
+          onClick={() => setActiveTab('mcp')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: activeTab === 'mcp' ? '#60a5fa' : 'var(--text-secondary)',
+            fontSize: '1rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            padding: '0.5rem 1.25rem',
+            borderBottom: activeTab === 'mcp' ? '2px solid #3b82f6' : 'none',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontFamily: 'var(--font-body)'
+          }}
+        >
+          ⚡ Elastic MCP Hub
+        </button>
+      </div>
+
+      {activeTab === 'radar' && (
+        <>
+          {/* KPI Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total ARR Managed</span>
@@ -360,7 +468,7 @@ export default function Dashboard() {
                       </div>
 
                       {/* Semantic Match Reason Snippet */}
-                      {semanticMode && semanticMatches[acc.account_id] && (
+                      {searchMode !== 'client' && semanticMatches[acc.account_id] && (
                         <div style={{
                           gridColumn: '1 / -1',
                           marginTop: '0.75rem',
@@ -373,7 +481,7 @@ export default function Dashboard() {
                           lineHeight: '1.4'
                         }}>
                           <span style={{ fontWeight: 700, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-                            ⚡ Elastic Semantic Match • {semanticMatches[acc.account_id].relevanceScore}% Relevance
+                            ⚡ Elastic {searchMode.charAt(0).toUpperCase() + searchMode.slice(1)} Match • {semanticMatches[acc.account_id].relevanceScore}% Relevance
                           </span>
                           <p dangerouslySetInnerHTML={{ __html: semanticMatches[acc.account_id].matchReason }} style={{ margin: 0 }} />
                         </div>
@@ -744,6 +852,147 @@ export default function Dashboard() {
           </form>
         </div>
       </div>
+      </>
+      )}
+
+      {activeTab === 'mcp' && (
+        <div className="glass-panel animate-fade-in" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Model Context Protocol (MCP) Server Hub</span>
+              <span className="pulse-dot healthy"></span>
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '800px', lineHeight: '1.6' }}>
+              Blueberry AI implements a fully compliant MCP Server at <code style={{ color: '#60a5fa', background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: '4px' }}>/api/mcp</code>.
+              This interface allows external AI engines (such as Google Cloud Agent Builder) to query database indices, perform semantic lookups, and log customer health notes in real time.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '2.5rem' }}>
+            {/* Tool list */}
+            <div>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Registered MCP Tools</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {mcpTools.map(tool => (
+                  <div
+                    key={tool.name}
+                    onClick={() => {
+                      setSelectedMcpTool(tool);
+                      if (tool.name === 'getAccountContext' || tool.name === 'getAgentMemory') {
+                        setMcpArgs(JSON.stringify({ accountId: 'ACC-002' }, null, 2));
+                      } else if (tool.name === 'writeHealthNote') {
+                        setMcpArgs(JSON.stringify({ accountId: 'ACC-002', noteText: 'CSM scheduled a follow-up review for Friday.', sentiment: 'Neutral' }, null, 2));
+                      } else if (tool.name === 'searchIssues') {
+                        setMcpArgs(JSON.stringify({ query: 'export crash', accountId: 'ACC-002' }, null, 2));
+                      } else if (tool.name === 'writeAgentMemory') {
+                        setMcpArgs(JSON.stringify({ accountId: 'ACC-002', content: 'Customer prefers morning calls.', category: 'preference' }, null, 2));
+                      } else {
+                        setMcpArgs('{}');
+                      }
+                    }}
+                    style={{
+                      padding: '1.25rem',
+                      borderRadius: '12px',
+                      border: selectedMcpTool?.name === tool.name ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)',
+                      background: selectedMcpTool?.name === tool.name ? 'rgba(59, 130, 246, 0.03)' : 'rgba(255,255,255,0.01)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: '1rem', color: selectedMcpTool?.name === tool.name ? '#60a5fa' : 'var(--text-primary)' }}>
+                        {tool.name}
+                      </strong>
+                      <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '4px' }}>
+                        tool
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+                      {tool.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Run Tool Console */}
+            <div>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>MCP Execution Console</h3>
+              {selectedMcpTool ? (
+                <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Executing:</span>
+                    <strong style={{ display: 'block', fontSize: '1.1rem', color: '#60a5fa', marginTop: '2px' }}>{selectedMcpTool.name}</strong>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Arguments JSON:</span>
+                    <textarea
+                      value={mcpArgs}
+                      onChange={(e) => setMcpArgs(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '110px',
+                        background: 'rgba(0,0,0,0.2)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        color: '#34d399',
+                        fontFamily: 'Courier New, monospace',
+                        fontSize: '0.85rem',
+                        padding: '10px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={runMcpTool}
+                    disabled={mcpRunning}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      opacity: mcpRunning ? 0.6 : 1
+                    }}
+                  >
+                    {mcpRunning ? 'Running tool...' : '🔌 Call Tool'}
+                  </button>
+
+                  {mcpResult && (
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Response Content:</span>
+                      <pre style={{
+                        width: '100%',
+                        maxHeight: '220px',
+                        overflow: 'auto',
+                        background: 'rgba(0,0,0,0.3)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        color: '#f8fafc',
+                        fontFamily: 'Courier New, monospace',
+                        fontSize: '0.8rem',
+                        padding: '12px',
+                        margin: 0
+                      }}>
+                        {mcpResult}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  Select a tool from the left list to execute.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

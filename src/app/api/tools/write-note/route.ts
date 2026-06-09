@@ -8,8 +8,56 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { accountId, noteText, sentiment, author = 'Blueberry Copilot' } = body;
 
-    if (!accountId || !noteText || !sentiment) {
-      return NextResponse.json({ error: 'accountId, noteText, and sentiment are required' }, { status: 400 });
+    if (!accountId || !noteText) {
+      return NextResponse.json({ error: 'accountId and noteText are required' }, { status: 400 });
+    }
+
+    const client = getElasticClient();
+
+    // Determine sentiment using Elastic Inference Service (EIS) or fallback logic
+    let detectedSentiment = sentiment;
+    if (!detectedSentiment) {
+      try {
+        // Attempt to call Elastic Inference Service (EIS) sentiment-analysis-model
+        const eisResponse: any = await client.transport.request({
+          method: 'POST',
+          path: '/_inference/text_classification/sentiment-analysis-model',
+          body: {
+            input: noteText
+          }
+        });
+        if (eisResponse && eisResponse.results && eisResponse.results[0]) {
+          detectedSentiment = eisResponse.results[0].predicted_value;
+        }
+      } catch (err) {
+        console.log("Elastic Inference Service (EIS) model not deployed. Falling back to local NLP heuristics...");
+        const textLower = noteText.toLowerCase();
+        if (
+          textLower.includes('angry') || 
+          textLower.includes('furious') || 
+          textLower.includes('churn') || 
+          textLower.includes('crash') || 
+          textLower.includes('fail') || 
+          textLower.includes('bad') || 
+          textLower.includes('terrible') || 
+          textLower.includes('leave') ||
+          textLower.includes('frustrated')
+        ) {
+          detectedSentiment = 'Negative';
+        } else if (
+          textLower.includes('happy') || 
+          textLower.includes('love') || 
+          textLower.includes('great') || 
+          textLower.includes('good') || 
+          textLower.includes('awesome') || 
+          textLower.includes('success') ||
+          textLower.includes('excellent')
+        ) {
+          detectedSentiment = 'Positive';
+        } else {
+          detectedSentiment = 'Neutral';
+        }
+      }
     }
 
     const noteId = `N-${Date.now()}`;
@@ -20,11 +68,9 @@ export async function POST(request: Request) {
       account_id: accountId,
       author,
       note_text: noteText,
-      sentiment,
+      sentiment: detectedSentiment || 'Neutral',
       created_at: createdAt
     };
-
-    const client = getElasticClient();
 
     const response = await client.index({
       index: 'health_notes',

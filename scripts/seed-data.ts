@@ -23,7 +23,7 @@ async function main() {
   }
 
   // Define our indices
-  const indices = ['accounts', 'tickets', 'health_notes', 'call_transcripts'];
+  const indices = ['accounts', 'tickets', 'health_notes', 'call_transcripts', 'agent_memory'];
   
   // Delete existing indices if they exist (for clean restart during testing)
   for (const index of indices) {
@@ -105,6 +105,20 @@ async function main() {
     }
   });
 
+  // Agent memory mapping using semantic_text for semantic memory lookup
+  await client.indices.create({
+    index: 'agent_memory',
+    mappings: {
+      properties: {
+        memory_id: { type: 'keyword' },
+        account_id: { type: 'keyword' },
+        content: { type: 'semantic_text' },
+        category: { type: 'keyword' }, // preference, milestone, escalation
+        created_at: { type: 'date' }
+      }
+    }
+  });
+
   console.log('Indices created successfully.');
 
   console.log('Seeding Demo Data...');
@@ -164,6 +178,20 @@ async function main() {
       index: 'call_transcripts',
       id: call.call_id,
       document: call
+    });
+  }
+
+  // Mock Agent Memories
+  const memories = [
+    { memory_id: 'MEM-01', account_id: 'ACC-002', category: 'preference', content: 'David (TechFlow VP) is very sensitive to system downtime and prefers escalation updates sent directly via email rather than Slack.', created_at: '2026-06-08T16:00:00Z' },
+    { memory_id: 'MEM-02', account_id: 'ACC-002', category: 'escalation', content: 'Primary engineering owner assigned to TechFlow is Alex from the Platform team. Daily updates are scheduled.', created_at: '2026-06-09T09:00:00Z' }
+  ];
+
+  for (const memory of memories) {
+    await client.index({
+      index: 'agent_memory',
+      id: memory.memory_id,
+      document: memory
     });
   }
 
