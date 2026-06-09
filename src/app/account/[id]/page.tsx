@@ -144,7 +144,8 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
         body: JSON.stringify({
           message: textToSend,
           sessionId,
-          accountId
+          accountId,
+          companyName: account?.company_name
         })
       });
 
@@ -449,7 +450,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 🔍 Search tickets
               </button>
               <button 
-                onClick={() => handleSendMessage(`Log a new health note: 'Reviewed TechFlows support tickets and assigned an escalation owner to patch the SSO crashes.'`)} 
+                onClick={() => handleSendMessage(`Log a new health note: 'Reviewed ${account?.company_name || 'customer'} support tickets and assigned an escalation owner to patch issues.'`)} 
                 disabled={sending}
                 style={{
                   fontSize: '0.75rem',

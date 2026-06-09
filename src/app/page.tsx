@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+
+interface ChatMessage {
+  sender: 'user' | 'agent';
+  text: string;
+  timestamp: string;
+}
 
 interface Account {
   account_id: string;
@@ -17,6 +23,66 @@ export default function Dashboard() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Chat states
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. Ask me anything about your customer accounts, recent calls, or churn risks.", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sessionId] = useState(`session-${Date.now()}`);
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sending]);
+
+  const handleSendMessage = async (textToSend: string) => {
+    if (!textToSend.trim()) return;
+
+    const newMsg: ChatMessage = {
+      sender: 'user',
+      text: textToSend,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, newMsg]);
+    setInputValue('');
+    setSending(true);
+
+    try {
+      const res = await fetch('/api/agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: textToSend,
+          sessionId
+        })
+      });
+
+      const data = await res.json();
+      
+      const agentMsg: ChatMessage = {
+        sender: 'agent',
+        text: data.response || "I received your message but could not generate a response.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, agentMsg]);
+    } catch (err) {
+      console.error(err);
+      const errorMsg: ChatMessage = {
+        sender: 'agent',
+        text: "Error: Failed to communicate with Google Cloud Agent. Please verify your credentials and network settings.",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchAccounts() {
@@ -51,6 +117,11 @@ export default function Dashboard() {
     ? Math.round(100 - (accounts.reduce((sum, acc) => sum + acc.risk_score, 0) / accounts.length) * 100)
     : 100;
 
+  const totalCount = accounts.length || 1;
+  const criticalPct = (criticalCount / totalCount) * 100;
+  const warningPct = (warningCount / totalCount) * 100;
+  const healthyPct = (healthyCount / totalCount) * 100;
+
   function getRiskClass(score: number) {
     if (score >= 0.75) return 'critical';
     if (score >= 0.25) return 'at-risk';
@@ -64,7 +135,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="dashboard-container" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+    <div className="dashboard-container" style={{ padding: '2rem', maxWidth: '1650px', margin: '0 auto', width: '100%' }}>
       {/* Header */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
         <div>
@@ -142,8 +213,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Grid: Accounts List (Left) & Risk Stats (Right) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+      {/* Main Grid: Accounts List, Analytics, and Copilot Chat */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.1fr', gap: '2rem' }}>
         {/* Account List Column */}
         <div>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -238,17 +309,23 @@ export default function Dashboard() {
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="3" />
                 
                 {/* Dynamically drawing donut parts based on counts */}
-                {/* Critical section (TechFlow: 1 of 3 = 33.3%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--danger)" strokeWidth="3" 
-                  strokeDasharray="33.3 66.7" strokeDashoffset="0" />
-                  
-                {/* Warning section (Global Industries: 1 of 3 = 33.3%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--warning)" strokeWidth="3" 
-                  strokeDasharray="33.3 66.7" strokeDashoffset="-33.3" />
-                  
-                {/* Healthy section (Acme Corp: 1 of 3 = 33.3%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--success)" strokeWidth="3" 
-                  strokeDasharray="33.3 66.7" strokeDashoffset="-66.6" />
+                {accounts.length > 0 ? (
+                  <>
+                    {/* Critical section */}
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--danger)" strokeWidth="3" 
+                      strokeDasharray={`${criticalPct} ${100 - criticalPct}`} strokeDashoffset="0" />
+                      
+                    {/* Warning section */}
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--warning)" strokeWidth="3" 
+                      strokeDasharray={`${warningPct} ${100 - warningPct}`} strokeDashoffset={`-${criticalPct}`} />
+                      
+                    {/* Healthy section */}
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--success)" strokeWidth="3" 
+                      strokeDasharray={`${healthyPct} ${100 - healthyPct}`} strokeDashoffset={`-${criticalPct + warningPct}`} />
+                  </>
+                ) : (
+                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                )}
                   
                 {/* Text overlay */}
                 <g style={{ transform: 'rotate(90deg) translate(0px, -36px)' }}>
@@ -309,6 +386,153 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Blueberry Copilot Column */}
+        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 240px)', position: 'sticky', top: '2rem', overflow: 'hidden' }}>
+          {/* Chat Header */}
+          <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className="pulse-dot healthy"></span>
+            <div>
+              <h2 style={{ fontSize: '1.1rem' }}>Blueberry Copilot</h2>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Connected to GCP Agent Builder</span>
+            </div>
+          </div>
+
+          {/* Chat messages list */}
+          <div style={{ flexGrow: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {messages.map((msg, idx) => {
+              const isUser = msg.sender === 'user';
+              return (
+                <div key={idx} style={{
+                  alignSelf: isUser ? 'flex-end' : 'flex-start',
+                  maxWidth: '85%',
+                  animation: 'fadeIn 0.2s ease forwards'
+                }}>
+                  <div style={{
+                    padding: '0.85rem 1.1rem',
+                    borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                    background: isUser ? '#3b82f6' : 'rgba(255,255,255,0.04)',
+                    border: isUser ? 'none' : '1px solid var(--border-color)',
+                    color: '#f8fafc',
+                    fontSize: '0.9rem',
+                    lineHeight: '1.45',
+                    whiteSpace: 'pre-line',
+                    boxShadow: isUser ? '0 4px 15px rgba(59, 130, 246, 0.15)' : 'none'
+                  }}>
+                    {msg.text}
+                  </div>
+                  <span style={{
+                    fontSize: '0.7rem',
+                    color: 'var(--text-muted)',
+                    display: 'block',
+                    marginTop: '4px',
+                    textAlign: isUser ? 'right' : 'left'
+                  }}>
+                    {msg.timestamp}
+                  </span>
+                </div>
+              );
+            })}
+
+            {sending && (
+              <div style={{ alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{
+                  padding: '0.75rem 1.25rem',
+                  borderRadius: '16px 16px 16px 2px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid var(--border-color)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%' }}></span>
+                  <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animationDelay: '0.2s' }}></span>
+                  <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: 'var(--text-muted)', borderRadius: '50%', animationDelay: '0.4s' }}></span>
+                </div>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Calling tools...</span>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Quick Actions Panel */}
+          <div style={{ padding: '0.75rem 1.25rem', borderTop: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.1)', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <button 
+              onClick={() => handleSendMessage("Which accounts are currently at critical risk?")} 
+              disabled={sending}
+              style={{
+                fontSize: '0.75rem',
+                padding: '6px 12px',
+                borderRadius: '99px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6', e.currentTarget.style.color = 'white')}
+              onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)', e.currentTarget.style.color = 'var(--text-secondary)')}
+            >
+              ⚠️ Churn Risks
+            </button>
+            <button 
+              onClick={() => handleSendMessage("Summarize support ticket issues across the portfolio")} 
+              disabled={sending}
+              style={{
+                fontSize: '0.75rem',
+                padding: '6px 12px',
+                borderRadius: '99px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.borderColor = '#3b82f6', e.currentTarget.style.color = 'white')}
+              onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)', e.currentTarget.style.color = 'var(--text-secondary)')}
+            >
+              🎫 Ticket Summary
+            </button>
+          </div>
+
+          {/* Chat Input form */}
+          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} style={{ padding: '1rem 1.5rem', display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="Ask copilot anything..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              disabled={sending}
+              style={{
+                flexGrow: 1,
+                padding: '0.75rem 1.25rem',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-body)',
+                outline: 'none',
+                fontSize: '0.9rem'
+              }}
+            />
+            <button
+              type="submit"
+              disabled={sending || !inputValue.trim()}
+              style={{
+                padding: '0.75rem 1.25rem',
+                background: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                opacity: (sending || !inputValue.trim()) ? 0.5 : 1
+              }}
+            >
+              Send
+            </button>
+          </form>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { message, sessionId = `session-${Date.now()}`, accountId } = body;
+    const { message, sessionId = `session-${Date.now()}`, accountId, companyName } = body;
 
     if (!message) {
       return NextResponse.json({ error: 'message is required' }, { status: 400 });
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const queryResult = await sendMessageToAgent(sessionId, message, accountId);
+    const queryResult = await sendMessageToAgent(sessionId, message, accountId, companyName);
 
     // Extract text responses from responseMessages
     const textResponses = queryResult.responseMessages

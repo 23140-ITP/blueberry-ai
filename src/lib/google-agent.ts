@@ -31,7 +31,7 @@ export function getSessionClient() {
   return sessionClient;
 }
 
-export async function sendMessageToAgent(sessionId: string, text: string, accountId?: string) {
+export async function sendMessageToAgent(sessionId: string, text: string, accountId?: string, companyName?: string) {
   const client = getSessionClient();
   if (!projectId || !agentId) {
     throw new Error('GCP_PROJECT_ID and GCP_AGENT_ID are missing');
@@ -54,11 +54,19 @@ export async function sendMessageToAgent(sessionId: string, text: string, accoun
     },
   };
 
+  const params: any = {};
   if (accountId) {
+    params.accountId = accountId;
+    params.account_id = accountId;
+  }
+  if (companyName) {
+    params.companyName = companyName;
+    params.company_name = companyName;
+  }
+
+  if (Object.keys(params).length > 0) {
     request.queryParams = {
-      parameters: {
-        accountId
-      }
+      parameters: params
     };
   }
 
