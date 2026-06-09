@@ -1,124 +1,106 @@
-# Blueberry AI — Customer Retention Copilot
+# Blueberry AI
 
-Blueberry AI is a premium generative customer retention dashboard designed to turn scattered customer signals into faster, coordinated action. It is built for the **Google Cloud Rapid Agent Hackathon (Elastic Track)**.
+**B2B Customer Success Teams struggle to detect churn risks early because customer signals (support tickets, CSM notes, and call transcripts) are fragmented across different tools.**
+Blueberry AI solves this by aggregating these signals into a unified timeline and proactively surfacing churn risk using advanced ES|QL and an autonomous agent that acts on your behalf.
+**Architecture:** Google Cloud Agent Builder + Elastic Agent Builder MCP server + Elasticsearch Serverless.
 
-The system orchestrates a **Google Cloud Agent Builder (Dialogflow CX)** generative agent as the brain, connected to **Elasticsearch Serverless** via custom API tools, serving a gorgeous client-facing Next.js dashboard.
+---
+
+## 🟢 Live Demo & Submission Details
+
+- **Live Hosted App:** [https://blueberry-ai.run.app](https://blueberry-ai.run.app) *(Replace with actual hash URL)*
+- **Demo Video (3 Min):** [Watch the Demo Flow on YouTube](https://youtube.com) *(Replace with actual video link)*
+- **Hackathon Track:** Elastic
+- **Demo Flow:** The agent retrieves a portfolio summary, runs an advanced ES|QL churn risk analysis on a specific account, and executes a multi-step escalation by drafting a Slack payload and writing the event back into Elasticsearch.
 
 ---
 
 ## 🏗️ System Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  BLUEBERRY AI DASHBOARD              │
-│               (Next.js App Router + CSS)            │
-│                                                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐ │
-│  │ Account View │  │ Risk Radar   │  │ Agent Chat  │ │
-│  │ (Detail)     │  │ (Overview)   │  │ (Actions)   │ │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬──────┘ │
-└─────────┼─────────────────┼─────────────────┼────────┘
-          │                 │                 │
-          ▼                 ▼                 ▼
-┌─────────────────────────────────────────────────────┐
-│              BACKEND API (Next.js API Routes)        │
-│                                                     │
-│  ┌─────────────────────────────────────────────────┐ │
-│  │      Google Cloud Agent Builder Integration      │ │
-│  │     (Communicates via Dialogflow CX SDK)        │ │
-│  └─────────────────────┬───────────────────────────┘ │
-└─────────────────────────┼────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│        GOOGLE CLOUD AGENT BUILDER (The Brain)        │
-│                                                     │
-│  Tools configured in Agent Builder:                   │
-│  • getAccountContext (via OpenAPI spec)              │
-│  • searchIssues (via OpenAPI spec)                   │
-│  • writeHealthNote (via OpenAPI spec)                │
-└─────────────────────────┬────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│          ELASTIC CLOUD SERVERLESS                    │
-│                                                     │
-│  Indices:                                             │
-│  • accounts          • tickets (semantic_text)       │
-│  • call_transcripts  • health_notes (semantic_text)  │
-└─────────────────────────────────────────────────────┘
-```
+![Architecture Diagram](./docs/architecture_diagram.png)
+
+*Note: Google Cloud Agent Builder is configured to connect directly against the Elastic Agent Builder MCP endpoint. Our Next.js `/api/mcp` acts as a custom MCP bridge extending this functionality, empowering the agent with highly customized ES|QL retrieval and Elasticsearch write-back tools.*
 
 ---
 
-## ✨ Key Features
+## 🖼️ Application Views
 
-1. **Retention Radar Overview**: Live analysis of your customer portfolio health metrics: Total ARR under management, at-risk accounts, and average health score.
-2. **Unified Chronological Customer Journey**: Merges support tickets, CSM check-ins, and call transcripts from separate Elasticsearch indices into a single, cohesive timeline sorted by date.
-3. **Blueberry Copilot (GenAI Agent)**: A sidebar chat widget that lets you talk directly to the GCP Agent. The agent queries your database semantically (using Elasticsearch `semantic_text` match queries) and summarizes recent complaints or VP phone calls.
-4. **Actionable Operations**: Write escalation logs and notes back to Elasticsearch indices in real-time, automatically updating the CRM timeline.
+### Risk Radar
+![Risk Radar](./docs/risk_radar_ui.png)
+
+### Chronological Account Timeline
+![Account Timeline](./docs/account_timeline_ui.png)
+
+### Agent Orchestration (Multi-step Action)
+![Copilot Action](./docs/copilot_action_ui.png)
 
 ---
 
-## 🛠️ Technology Stack
+## 🏆 How this meets Hackathon Requirements
 
-* **Frontend:** Next.js (App Router, React 19, TypeScript)
-* **Styling:** Vanilla CSS (curated deep slate glassmorphism theme, custom SVG graphs, and micro-animations)
-* **Database:** Elasticsearch Serverless (with `semantic_text` mapping for AI-driven semantic queries)
-* **AI Orchestrator:** Google Cloud Agent Builder / Dialogflow CX
-* **Deployment:** Docker, Google Cloud Run
+- **Uses Google Cloud Agent Builder:** Acts as the cognitive brain of the application, natively executing tools and reasoning over customer contexts.
+- **Uses Elastic MCP Server:** Integrates through the Model Context Protocol to seamlessly provide tools to the Google Agent.
+- **Performs Multi-Step Tasks:** Moves beyond simple chat by retrieving contexts, computing ES|QL mathematical risk scores, and generating escalation payloads in a single user command.
+- **Hosted Publicly:** Continuously deployed on Google Cloud Run.
+- **Open-Source Licensed:** Released under the MIT License.
+
+---
+
+## 🔍 Why Elastic?
+
+- **Contextual Retrieval:** Aggregates and semantically searches fragmented customer data (tickets, call transcripts, CSM health notes) using `semantic_text` capabilities.
+- **ES|QL Analytical Tools:** Provides instantaneous mathematical churn-risk logic by piping ticket volumes, priorities, and sentiment analysis directly through ES|QL.
+- **Memory Write-Back:** The agent isn't read-only; it natively writes escalation events and milestone memories back into Elasticsearch to persist state across sessions.
+
+---
+
+## 🗺️ Multi-step Mission
+
+Blueberry AI executes the following autonomous flow without manual intervention:
+1. **Retrieve Account Context:** Gathers support tickets, transcripts, and notes.
+2. **Search Similar Issues:** Performs semantic matching against the knowledge base and historical ticket patterns.
+3. **Compute Churn Risk:** Leverages the `detectChurnRisk` MCP tool powered by ES|QL to correlate raw metrics into a risk score.
+4. **Draft Escalation & Write Note:** Generates a structured Slack/Email payload and writes the escalation event directly back into Elasticsearch.
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Prerequisite Environment Variables
-Create a `.env` file in the root of the project with the following:
-```env
-ELASTIC_URL="https://your-elasticsearch-endpoint"
-ELASTIC_API_KEY="your-elastic-api-key"
-GCP_PROJECT_ID="your-gcp-project-id"
-GCP_AGENT_ID="your-agent-id"
-GCP_LOCATION="us-central1" # or 'global'
+### 1. Environment Setup
+Copy the `.env.example` file to create your own local configuration:
+```bash
+cp .env.example .env
 ```
+Fill in your Elasticsearch Serverless and Google Cloud credentials.
 
 ### 2. Database Seeding
 Index the mockup customer accounts, call logs, tickets, and health notes into Elasticsearch:
 ```bash
 npm run seed
 ```
-*(This deletes old indices, creates mappings with `semantic_text` fields, and inserts mock accounts like TechFlow ACC-002, Acme Corp ACC-001).*
 
-### 3. Google Cloud Credentials
-Download a service account JSON key from Google Cloud Console with the **Dialogflow API Admin** role. Rename it to `gcp-key.json` and place it in the root folder of this project.
-
-### 4. Local Run & Cloud Run Connection
+### 3. Local Run & Cloud Run Connection
 Start the development server:
 ```bash
 npm run dev
 ```
 
 **MCP Server Connection:**
-Since the app is already deployed to Google Cloud Run, your Agent Builder should be configured to connect directly to the live MCP endpoint:
+Since the app is deployed to Google Cloud Run, your Google Agent Builder must be configured to connect directly to the live MCP endpoint:
 `https://blueberry-ai-<hash>.run.app/api/mcp`
-
-Configure this URL in the Dialogflow CX / Agent Builder Tool settings.
 
 ---
 
 ## 🐳 Docker & Cloud Run Deployment
 
-To deploy this application to Google Cloud Run, build and deploy the container directly from source:
-
+To deploy this application to Google Cloud Run natively from source:
 ```bash
 gcloud run deploy blueberry-ai \
   --source . \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars ELASTIC_URL="your-url",ELASTIC_API_KEY="your-key",GCP_PROJECT_ID="your-project",GCP_AGENT_ID="your-agent",GCP_LOCATION="us-central1"
+  --env-vars-file .env.yaml
 ```
-
-*Note: When deployed on Google Cloud Run, the application uses the Cloud Run Service Account credentials automatically, meaning `gcp-key.json` is not required in production.*
 
 ---
 
