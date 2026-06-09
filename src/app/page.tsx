@@ -656,10 +656,10 @@ export default function Dashboard() {
                                   <span className="text-[11px] text-muted-foreground">{acc.account_id} • {acc.industry}</span>
                                 </div>
                                 
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                  isCrit ? 'bg-red-950/30 text-red-400 border border-red-900/50' :
-                                  isWarn ? 'bg-amber-950/30 text-amber-400 border border-amber-900/50' :
-                                  'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50'
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                  isCrit ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50' :
+                                  isWarn ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50' :
+                                  'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50'
                                 }`}>
                                   {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
                                 </span>
@@ -673,7 +673,7 @@ export default function Dashboard() {
                                 <div className="text-right">
                                   <span className="text-[10px] text-muted-foreground uppercase block">Risk Score</span>
                                   <strong className={`font-mono ${
-                                    isCrit ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-emerald-400'
+                                    isCrit ? 'text-red-600 dark:text-red-400' : isWarn ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
                                   }`}>{riskPct}%</strong>
                                 </div>
                               </div>
@@ -981,8 +981,8 @@ export default function Dashboard() {
                   {simMessage && (
                     <div className={`p-3.5 rounded-xl border flex flex-col gap-2.5 relative ${
                       simMessage.startsWith('Success') 
-                        ? 'bg-emerald-950/20 text-emerald-350 border-emerald-900/40' 
-                        : 'bg-red-950/20 text-red-350 border-red-900/40'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40' 
+                        : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40'
                     }`}>
                       <button 
                         type="button" 

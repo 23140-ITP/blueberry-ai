@@ -394,8 +394,8 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   disabled={escalating || account?.status === 'Critical'}
                   className={`mt-5 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                     account?.status === 'Critical' 
-                      ? 'bg-red-950/20 text-red-400 border border-red-900/40 cursor-default' 
-                      : 'bg-red-600 hover:bg-red-700 text-foreground border border-red-500 shadow-sm'
+                      ? 'bg-red-50 text-red-600 border border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40 cursor-default' 
+                      : 'bg-red-600 hover:bg-red-700 text-white border border-red-500 shadow-sm'
                   }`}
                 >
                   <ShieldAlert className="h-3.5 w-3.5" />
@@ -465,12 +465,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
               {/* What-If Simulator */}
               {dynamicRiskData?.factors?.some((f: any) => f.name.includes('Ticket')) && (
-                <div className="mt-2 p-3 bg-blue-950/10 border border-blue-900/20 rounded-lg flex items-start gap-3">
-                  <div className="bg-blue-500/20 p-1.5 rounded-full mt-0.5">
-                    <Activity className="h-3 w-3 text-blue-400" />
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 dark:bg-blue-950/10 dark:border-blue-900/20 rounded-lg flex items-start gap-3">
+                  <div className="bg-blue-100 dark:bg-blue-500/20 p-1.5 rounded-full mt-0.5">
+                    <Activity className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Counterfactual Simulator</h4>
+                    <h4 className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Counterfactual Simulator</h4>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       If we apply the suggested runbook and resolve the open tickets today, risk drops from <strong className="text-foreground">{riskScore}%</strong> to <strong className="text-emerald-400 font-mono">{(riskScore - (dynamicRiskData.factors.find((f: any) => f.name.includes('Ticket'))?.riskAdded || 0)).toFixed(0)}%</strong>.
                     </p>
