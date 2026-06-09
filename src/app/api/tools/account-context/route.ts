@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       }
     });
 
-    if (accountResult.hits.total === 0 || !accountResult.hits.hits[0]) {
+    if (accountResult.hits.hits.length === 0 || !accountResult.hits.hits[0]) {
       return NextResponse.json({ error: `Account with ID ${accountId} not found` }, { status: 404 });
     }
 

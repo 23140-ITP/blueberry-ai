@@ -26,13 +26,24 @@ export default function Dashboard() {
 
   // Chat states
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. Ask me anything about your customer accounts, recent calls, or churn risks.", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. Ask me anything about your customer accounts, recent calls, or churn risks.", timestamp: '' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [sending, setSending] = useState(false);
-  const [sessionId] = useState(`session-${Date.now()}`);
+  const [sessionId, setSessionId] = useState('');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize session ID and timestamp on mount to prevent SSR hydration mismatch
+  useEffect(() => {
+    setSessionId(`session-${Date.now()}`);
+    setMessages(prev => [
+      {
+        ...prev[0],
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
+  }, []);
 
   // Auto-scroll chat to bottom
   useEffect(() => {
