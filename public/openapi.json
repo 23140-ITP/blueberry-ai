@@ -209,8 +209,7 @@
                 "type": "object",
                 "required": [
                   "accountId",
-                  "noteText",
-                  "sentiment"
+                  "noteText"
                 ],
                 "properties": {
                   "accountId": {
@@ -251,6 +250,124 @@
                     "success": { "type": "boolean" },
                     "message": { "type": "string" },
                     "note": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/tools/agent-memory": {
+      "get": {
+        "summary": "Get Agent Memory",
+        "description": "Retrieves the long-term agent memories and notes remembered about a specific account.",
+        "operationId": "getAgentMemory",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "description": "The unique identifier of the customer account (e.g. ACC-002)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Optional semantic query to retrieve specific memories matching a topic",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved agent memories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "memories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "_score": { "type": "number" },
+                          "memory_id": { "type": "string" },
+                          "account_id": { "type": "string" },
+                          "content": { "type": "string" },
+                          "category": { "type": "string" },
+                          "created_at": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Write Agent Memory",
+        "description": "Saves a key fact, preference, or escalation milestone to the long-term agent memory index.",
+        "operationId": "writeAgentMemory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "accountId",
+                  "content"
+                ],
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "description": "The unique identifier of the customer account"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "The fact or preference to remember"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Category of memory (preference, escalation, milestone)",
+                    "default": "milestone"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully saved agent memory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "memory": { "type": "object" }
                   }
                 }
               }
