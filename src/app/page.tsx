@@ -445,6 +445,25 @@ export default function Dashboard() {
               );
             })}
           </nav>
+
+          {/* New Features - War Rooms */}
+          <div className="mt-4 mb-2 px-6">
+            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="h-3 w-3 text-blue-400" />
+              New Features
+            </h3>
+          </div>
+          <nav className="px-4 pb-4 flex flex-col gap-1.5">
+            <Link href="/account/ACC-002">
+              <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-card/40 border border-transparent transition-all cursor-pointer">
+                <ShieldAlert className="h-4 w-4 shrink-0 text-red-400" />
+                <div className="flex flex-col items-start text-left">
+                  <span className="text-foreground">TechNova War Room</span>
+                  <span className="text-[9px] font-normal text-muted-foreground mt-0.5">Risk Simulator & Memory</span>
+                </div>
+              </button>
+            </Link>
+          </nav>
         </div>
 
         {/* Sidebar Footer with system statuses */}
