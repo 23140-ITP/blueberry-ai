@@ -43,7 +43,7 @@ async function main() {
 
   console.log('Creating mappings...');
 
-  // Accounts mapping (semantic_text not strictly needed here unless we search it semantically, but good for keyword and risk filtering)
+  // Accounts mapping
   await client.indices.create({
     index: 'accounts',
     mappings: {
@@ -52,21 +52,21 @@ async function main() {
         company_name: { type: 'text' },
         industry: { type: 'keyword' },
         arr: { type: 'float' },
-        risk_score: { type: 'float' }, // 0.0 to 1.0
+        risk_score: { type: 'float' },
         status: { type: 'keyword' },
         last_contact_date: { type: 'date' }
       }
     }
   });
 
-  // Tickets mapping using semantic_text for semantic search!
+  // Tickets mapping using semantic_text
   await client.indices.create({
     index: 'tickets',
     mappings: {
       properties: {
         ticket_id: { type: 'keyword' },
         account_id: { type: 'keyword' },
-        subject: { type: 'semantic_text' }, // Requires ES 8.15+ Serverless default!
+        subject: { type: 'semantic_text' },
         description: { type: 'semantic_text' },
         status: { type: 'keyword' },
         priority: { type: 'keyword' },
@@ -105,7 +105,7 @@ async function main() {
     }
   });
 
-  // Agent memory mapping using semantic_text for semantic memory lookup
+  // Agent memory mapping
   await client.indices.create({
     index: 'agent_memory',
     mappings: {
@@ -113,13 +113,13 @@ async function main() {
         memory_id: { type: 'keyword' },
         account_id: { type: 'keyword' },
         content: { type: 'semantic_text' },
-        category: { type: 'keyword' }, // preference, milestone, escalation
+        category: { type: 'keyword' },
         created_at: { type: 'date' }
       }
     }
   });
 
-  // Knowledge base mapping using semantic_text for semantic runbook matching
+  // Knowledge base mapping
   await client.indices.create({
     index: 'knowledge_base',
     mappings: {
@@ -133,22 +133,26 @@ async function main() {
   });
 
   console.log('Indices created successfully.');
+  console.log('Seeding Comprehensive Demo Data...');
 
-  console.log('Seeding Demo Data...');
-
-  // Mock Accounts
+  // Mock Accounts (12 Clients)
   const accounts = [
     { account_id: 'ACC-001', company_name: 'Acme Corp', industry: 'Retail', arr: 150000, risk_score: 0.1, status: 'Active', last_contact_date: '2026-06-01T10:00:00Z' },
     { account_id: 'ACC-002', company_name: 'TechFlow', industry: 'SaaS', arr: 500000, risk_score: 0.85, status: 'At Risk', last_contact_date: '2026-06-08T14:30:00Z' },
     { account_id: 'ACC-003', company_name: 'Global Industries', industry: 'Manufacturing', arr: 250000, risk_score: 0.3, status: 'Active', last_contact_date: '2026-05-15T09:00:00Z' },
+    { account_id: 'ACC-004', company_name: 'Zenith Media', industry: 'Media', arr: 85000, risk_score: 0.05, status: 'Active', last_contact_date: '2026-06-05T11:00:00Z' },
+    { account_id: 'ACC-005', company_name: 'Pinnacle Finance', industry: 'Finance', arr: 1200000, risk_score: 0.45, status: 'At Risk', last_contact_date: '2026-05-20T10:00:00Z' },
+    { account_id: 'ACC-006', company_name: 'Vertex Logistics', industry: 'Logistics', arr: 310000, risk_score: 0.15, status: 'Active', last_contact_date: '2026-06-02T16:00:00Z' },
+    { account_id: 'ACC-007', company_name: 'Quantum Health', industry: 'Healthcare', arr: 750000, risk_score: 0.92, status: 'Critical', last_contact_date: '2026-06-07T14:00:00Z' },
+    { account_id: 'ACC-008', company_name: 'Nexus Education', industry: 'Education', arr: 95000, risk_score: 0.2, status: 'Active', last_contact_date: '2026-05-28T13:00:00Z' },
+    { account_id: 'ACC-009', company_name: 'Horizon Energy', industry: 'Energy', arr: 2200000, risk_score: 0.6, status: 'At Risk', last_contact_date: '2026-06-04T09:30:00Z' },
+    { account_id: 'ACC-010', company_name: 'Alpha Tech', industry: 'SaaS', arr: 420000, risk_score: 0.08, status: 'Active', last_contact_date: '2026-06-06T15:00:00Z' },
+    { account_id: 'ACC-011', company_name: 'Omega Services', industry: 'Consulting', arr: 180000, risk_score: 0.35, status: 'Active', last_contact_date: '2026-05-22T10:00:00Z' },
+    { account_id: 'ACC-012', company_name: 'Delta Data', industry: 'Data Analytics', arr: 650000, risk_score: 0.78, status: 'Critical', last_contact_date: '2026-06-01T11:30:00Z' }
   ];
 
   for (const account of accounts) {
-    await client.index({
-      index: 'accounts',
-      id: account.account_id,
-      document: account
-    });
+    await client.index({ index: 'accounts', id: account.account_id, document: account });
   }
 
   // Mock Tickets
@@ -157,55 +161,59 @@ async function main() {
     { ticket_id: 'TKT-101', account_id: 'ACC-002', subject: 'Data export failing constantly', description: 'Every time we try to export the monthly report, it times out and crashes. This is critical for our board meeting next week. We are considering leaving if this is not fixed.', status: 'Open', priority: 'Urgent', created_at: '2026-06-08T10:00:00Z' },
     { ticket_id: 'TKT-102', account_id: 'ACC-002', subject: 'API Rate limit too low', description: 'We keep hitting the rate limit on the reporting API. Can we increase this?', status: 'Open', priority: 'Medium', created_at: '2026-06-05T13:00:00Z' },
     { ticket_id: 'TKT-103', account_id: 'ACC-003', subject: 'How to add new user', description: 'Where is the button to invite a new team member?', status: 'Closed', priority: 'Low', created_at: '2026-05-10T15:00:00Z' },
+    { ticket_id: 'TKT-104', account_id: 'ACC-007', subject: 'HIPAA Compliance Report Missing', description: 'Our compliance auditors cannot generate the HIPAA access report. The module is completely grayed out.', status: 'Open', priority: 'Urgent', created_at: '2026-06-06T09:00:00Z' },
+    { ticket_id: 'TKT-105', account_id: 'ACC-007', subject: 'Data sync taking 24 hours', description: 'The daily sync with our EMR system is taking over 24 hours to complete, meaning our dashboards are always a day behind.', status: 'Open', priority: 'High', created_at: '2026-06-07T11:00:00Z' },
+    { ticket_id: 'TKT-106', account_id: 'ACC-005', subject: 'Billing reconciliation error', description: 'Our invoice for Q2 shows an overcharge of $15,000 for seats we never provisioned. Please refund.', status: 'Open', priority: 'High', created_at: '2026-05-19T14:00:00Z' },
+    { ticket_id: 'TKT-107', account_id: 'ACC-009', subject: 'Sensor telemetry dropping', description: 'We are losing IoT telemetry data from our wind turbines. The ingestion endpoint is rejecting payloads with a 502 error.', status: 'Open', priority: 'Urgent', created_at: '2026-06-03T08:00:00Z' },
+    { ticket_id: 'TKT-108', account_id: 'ACC-012', subject: 'Machine learning model drift', description: 'Our predictive analytics module is outputting garbage predictions since the last platform update.', status: 'Open', priority: 'Urgent', created_at: '2026-05-30T10:00:00Z' },
+    { ticket_id: 'TKT-109', account_id: 'ACC-010', subject: 'Change branding colors', description: 'We updated our company logo, how do we change the primary color in the portal?', status: 'Closed', priority: 'Low', created_at: '2026-06-01T10:00:00Z' },
+    { ticket_id: 'TKT-110', account_id: 'ACC-006', subject: 'Driver app crashing on iOS 18', description: 'Several of our drivers reported the mobile app crashes on startup after updating their iPhones.', status: 'Closed', priority: 'High', created_at: '2026-05-25T14:00:00Z' }
   ];
 
   for (const ticket of tickets) {
-    await client.index({
-      index: 'tickets',
-      id: ticket.ticket_id,
-      document: ticket
-    });
+    await client.index({ index: 'tickets', id: ticket.ticket_id, document: ticket });
   }
 
   // Mock Health Notes
   const notes = [
     { note_id: 'N-01', account_id: 'ACC-002', author: 'Sarah (CSM)', note_text: 'Had a tough call with TechFlow. The engineering VP is furious about the report timeout bug. They are evaluating a competitor next week. Need engineering to patch this ASAP.', sentiment: 'Negative', created_at: '2026-06-08T15:00:00Z' },
-    { note_id: 'N-02', account_id: 'ACC-001', author: 'John (CSM)', note_text: 'Check-in went great. Acme loves the new dashboard update.', sentiment: 'Positive', created_at: '2026-06-01T11:00:00Z' }
+    { note_id: 'N-02', account_id: 'ACC-001', author: 'John (CSM)', note_text: 'Check-in went great. Acme loves the new dashboard update.', sentiment: 'Positive', created_at: '2026-06-01T11:00:00Z' },
+    { note_id: 'N-03', account_id: 'ACC-007', author: 'Sarah (CSM)', note_text: 'Quantum Health is highly frustrated. Compliance issues are a dealbreaker for them. If we don\'t fix the HIPAA report by end of month, they will legally have to churn.', sentiment: 'Negative', created_at: '2026-06-07T16:00:00Z' },
+    { note_id: 'N-04', account_id: 'ACC-005', author: 'Mark (CSM)', note_text: 'Pinnacle Finance CFO is upset about the billing error. We are issuing a credit, but trust is damaged. Needs executive sponsorship.', sentiment: 'Negative', created_at: '2026-05-20T11:00:00Z' },
+    { note_id: 'N-05', account_id: 'ACC-009', author: 'Lisa (CSM)', note_text: 'Horizon Energy operations team is panicked about data loss. I escalated to engineering tier 3. They are calm for now but waiting on RCA.', sentiment: 'Neutral', created_at: '2026-06-04T10:00:00Z' },
+    { note_id: 'N-06', account_id: 'ACC-012', author: 'John (CSM)', note_text: 'Delta Data data science team is very unhappy with the model drift. They feel our recent update broke their workflows. Risk is high.', sentiment: 'Negative', created_at: '2026-06-01T12:00:00Z' },
+    { note_id: 'N-07', account_id: 'ACC-004', author: 'Lisa (CSM)', note_text: 'Zenith Media QBR went perfectly. They are interested in upgrading to the enterprise tier.', sentiment: 'Positive', created_at: '2026-06-05T12:00:00Z' },
+    { note_id: 'N-08', account_id: 'ACC-010', author: 'Mark (CSM)', note_text: 'Alpha Tech is happy. No major issues, just standard feature requests.', sentiment: 'Positive', created_at: '2026-06-06T16:00:00Z' }
   ];
 
   for (const note of notes) {
-    await client.index({
-      index: 'health_notes',
-      id: note.note_id,
-      document: note
-    });
+    await client.index({ index: 'health_notes', id: note.note_id, document: note });
   }
 
   // Mock Call Transcripts
   const calls = [
-    { call_id: 'C-99', account_id: 'ACC-002', transcript: 'CSM: Hi David, how are things?\nDavid: Terrible. The system crashed again during export. We are losing patience. If this isn\'t fixed by Friday, we are terminating the contract.', summary: 'Customer is extremely frustrated about export bugs. Threatened churn if not fixed by Friday.', duration_minutes: 15, date: '2026-06-08T14:30:00Z' }
+    { call_id: 'C-99', account_id: 'ACC-002', transcript: 'CSM: Hi David, how are things?\nDavid: Terrible. The system crashed again during export. We are losing patience. If this isn\'t fixed by Friday, we are terminating the contract.', summary: 'Customer is extremely frustrated about export bugs. Threatened churn if not fixed by Friday.', duration_minutes: 15, date: '2026-06-08T14:30:00Z' },
+    { call_id: 'C-100', account_id: 'ACC-007', transcript: 'CSM: Hello Dr. Smith. I saw the ticket regarding the HIPAA report.\nSmith: Yes, this is unacceptable. Our auditors are here today. If the system cannot generate this compliance report, we are in violation of federal law and we will drop your software immediately.', summary: 'Customer threatened immediate churn due to missing compliance report. Extremely high risk.', duration_minutes: 22, date: '2026-06-07T14:00:00Z' },
+    { call_id: 'C-101', account_id: 'ACC-005', transcript: 'CSM: Let\'s review the Q2 invoice.\nCFO: I\'m looking at it, and there is a $15k overcharge. We didn\'t authorize those seats. We expect a full refund, and frankly, this makes us question your entire billing system.', summary: 'CFO is upset over billing errors and demands a refund. Trust is shaky.', duration_minutes: 30, date: '2026-05-19T15:00:00Z' },
+    { call_id: 'C-102', account_id: 'ACC-009', transcript: 'CSM: We are investigating the telemetry drops.\nEngineer: We have 500 turbines offline in your dashboard. We need a root cause analysis today, otherwise we\'ll switch back to our old on-prem system.', summary: 'Engineering team is demanding an RCA for dropped IoT telemetry. At risk of reverting to legacy system.', duration_minutes: 45, date: '2026-06-03T10:00:00Z' },
+    { call_id: 'C-103', account_id: 'ACC-004', transcript: 'CSM: How did the recent campaign go?\nMarketing Lead: It was amazing. The new audience segmentation feature you rolled out helped us double our engagement rate. We love it.', summary: 'Customer is highly satisfied with new segmentation feature and seeing great ROI.', duration_minutes: 20, date: '2026-06-05T10:00:00Z' }
   ];
 
   for (const call of calls) {
-    await client.index({
-      index: 'call_transcripts',
-      id: call.call_id,
-      document: call
-    });
+    await client.index({ index: 'call_transcripts', id: call.call_id, document: call });
   }
 
   // Mock Agent Memories
   const memories = [
     { memory_id: 'MEM-01', account_id: 'ACC-002', category: 'preference', content: 'David (TechFlow VP) is very sensitive to system downtime and prefers escalation updates sent directly via email rather than Slack.', created_at: '2026-06-08T16:00:00Z' },
-    { memory_id: 'MEM-02', account_id: 'ACC-002', category: 'escalation', content: 'Primary engineering owner assigned to TechFlow is Alex from the Platform team. Daily updates are scheduled.', created_at: '2026-06-09T09:00:00Z' }
+    { memory_id: 'MEM-02', account_id: 'ACC-002', category: 'escalation', content: 'Primary engineering owner assigned to TechFlow is Alex from the Platform team. Daily updates are scheduled.', created_at: '2026-06-09T09:00:00Z' },
+    { memory_id: 'MEM-03', account_id: 'ACC-007', category: 'milestone', content: 'Quantum Health requires HIPAA compliance audit logs to be retained for 7 years.', created_at: '2026-05-01T08:00:00Z' },
+    { memory_id: 'MEM-04', account_id: 'ACC-005', category: 'preference', content: 'Pinnacle Finance CFO requires all billing changes to be approved manually via DocuSign.', created_at: '2026-04-10T09:00:00Z' },
+    { memory_id: 'MEM-05', account_id: 'ACC-009', category: 'escalation', content: 'Tier 3 network engineering is currently investigating the 502 errors on the IoT ingestion gateway.', created_at: '2026-06-04T08:00:00Z' }
   ];
 
   for (const memory of memories) {
-    await client.index({
-      index: 'agent_memory',
-      id: memory.memory_id,
-      document: memory
-    });
+    await client.index({ index: 'agent_memory', id: memory.memory_id, document: memory });
   }
 
   // Mock Runbooks
@@ -227,18 +235,26 @@ async function main() {
       category: 'Rate Limits',
       title: 'Increasing API Rate Limits for Customers',
       content: 'Standard operating procedure for API quota increases:\n1. Review the customer account tier. Enterprise accounts are entitled to up to 10,000 requests/minute.\n2. Check if the usage pattern is malicious or anomalous. If it is standard batch sync, proceed.\n3. Update the rate limiter Redis/Env config for the specific account ID by raising the limit threshold.\n4. Notify the account CSM once the deployment updates are completed.'
+    },
+    {
+      runbook_id: 'RB-04',
+      category: 'Compliance',
+      title: 'Restoring Missing HIPAA Compliance Reports',
+      content: 'Steps to restore the HIPAA reporting module if grayed out:\n1. Verify the customer has signed the updated BAA (Business Associate Agreement) for the current year.\n2. Check the feature flag `enable_hipaa_reporting` in LaunchDarkly for the specific account ID.\n3. If the BAA is signed but the flag is false, manually toggle the flag to true and invalidate the user session cache.'
+    },
+    {
+      runbook_id: 'RB-05',
+      category: 'Data Sync',
+      title: 'Troubleshooting Slow EMR Data Syncs',
+      content: 'If data syncs take longer than 6 hours:\n1. Check the RabbitMQ queue for backpressure or dead-letter exchanges.\n2. Verify that the external EMR API is not rate-limiting our ingest workers.\n3. Horizontally scale the `sync-worker` pods in Kubernetes to process the backlog.'
     }
   ];
 
   for (const rb of runbooks) {
-    await client.index({
-      index: 'knowledge_base',
-      id: rb.runbook_id,
-      document: rb
-    });
+    await client.index({ index: 'knowledge_base', id: rb.runbook_id, document: rb });
   }
 
-  console.log('Data seeded successfully!');
+  console.log('Comprehensive Data seeded successfully!');
 }
 
 main().catch(console.error);
