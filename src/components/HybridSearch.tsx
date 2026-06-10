@@ -39,7 +39,7 @@ export function HybridSearch() {
             Keyword (BM25) <span className="text-[10px] font-normal text-muted-foreground">Lexical</span>
           </h4>
           {query ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 min-h-[120px]">
               <div className="p-2 border border-border rounded bg-background text-[11px] text-muted-foreground">
                 <strong className="text-foreground">TKT-892</strong>: Canceling because of missing SSO features.
               </div>
@@ -48,7 +48,9 @@ export function HybridSearch() {
               </div>
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground text-center py-4">Enter a query to see BM25 results.</div>
+            <div className="text-xs text-muted-foreground text-center py-4 min-h-[120px] flex items-center justify-center border border-dashed border-border/50 rounded bg-background/50">
+              Enter a query to see BM25 results.
+            </div>
           )}
         </div>
 
@@ -57,7 +59,7 @@ export function HybridSearch() {
             Semantic (kNN) <span className="text-[10px] font-normal text-muted-foreground">Vector</span>
           </h4>
           {query ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 min-h-[120px]">
               <div className="p-2 border border-border rounded bg-background text-[11px] text-muted-foreground">
                 <strong className="text-foreground">TKT-441</strong>: Customer is churning as we lack functionality they need.
               </div>
@@ -66,7 +68,9 @@ export function HybridSearch() {
               </div>
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground text-center py-4">Enter a query to see kNN results.</div>
+            <div className="text-xs text-muted-foreground text-center py-4 min-h-[120px] flex items-center justify-center border border-dashed border-border/50 rounded bg-background/50">
+              Enter a query to see kNN results.
+            </div>
           )}
         </div>
 
@@ -76,7 +80,7 @@ export function HybridSearch() {
             Hybrid (RRF) <span className="text-[10px] font-normal text-muted-foreground">Combined</span>
           </h4>
           {query ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 min-h-[120px]">
               <div className="p-2 border border-purple-500/20 rounded bg-background text-[11px] text-foreground shadow-sm">
                 <strong>TKT-892</strong>: Canceling because of missing SSO features. <span className="text-[9px] text-purple-400 ml-1">(Rank 1 + Rank 2 = Winner)</span>
               </div>
@@ -85,7 +89,9 @@ export function HybridSearch() {
               </div>
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground text-center py-4">Enter a query to see optimal results.</div>
+            <div className="text-xs text-muted-foreground text-center py-4 min-h-[120px] flex items-center justify-center border border-dashed border-purple-500/30 rounded bg-purple-950/10 text-purple-400/70">
+              Enter a query to see optimal results.
+            </div>
           )}
         </div>
       </div>

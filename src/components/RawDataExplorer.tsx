@@ -30,7 +30,8 @@ export function RawDataExplorer() {
     { id: 'health_notes', name: 'CSM Health Notes' },
     { id: 'call_transcripts', name: 'Call Transcripts' },
     { id: 'agent_memory', name: 'Agent Memory Bank' },
-    { id: 'accounts', name: 'Accounts Data' }
+    { id: 'accounts', name: 'Accounts Data' },
+    { id: 'knowledge_base', name: 'Knowledge Base (Runbooks)' }
   ];
 
   const fetchData = async () => {
@@ -85,8 +86,10 @@ export function RawDataExplorer() {
         </div>
 
         <div className="flex flex-wrap gap-4 mb-6 items-center">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <Filter className="h-3 w-3" /> Select Index
+            </label>
             <select
               value={index}
               onChange={(e) => setIndex(e.target.value)}
@@ -98,7 +101,8 @@ export function RawDataExplorer() {
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Filter by Account</label>
             <select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
@@ -110,15 +114,18 @@ export function RawDataExplorer() {
             </select>
           </div>
 
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search JSON output..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:border-blue-500"
-            />
+          <div className="relative flex-grow flex flex-col gap-1.5 mt-auto">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Search Content</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search JSON output..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-none focus:border-blue-500"
+              />
+            </div>
           </div>
         </div>
 
@@ -135,7 +142,7 @@ export function RawDataExplorer() {
                 Executing query...
               </div>
             ) : filteredData.length > 0 ? (
-              <pre className="text-[11px] font-mono text-blue-300 leading-relaxed">
+              <pre className="text-[11px] font-mono text-blue-300 leading-relaxed whitespace-pre-wrap break-words">
                 {JSON.stringify(filteredData, null, 2)}
               </pre>
             ) : (

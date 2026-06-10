@@ -4,7 +4,7 @@ import { use, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, Brain, ShieldAlert, Activity, Play, Layers, BadgeAlert, 
-  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles, Inbox, BrainCircuit, ChevronDown, Info
+  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles, Inbox, BrainCircuit, ChevronDown, ChevronRight, Info, Search, Edit3
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -57,6 +57,10 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
   const [sessionId, setSessionId] = useState('');
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  // Collapsible States
+  const [isMemoryBankOpen, setIsMemoryBankOpen] = useState(true);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(true);
 
   // Initialize session ID and timestamp on mount to prevent SSR hydration mismatch
   useEffect(() => {
@@ -301,15 +305,22 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-[1500px] mx-auto px-4 py-8 md:px-8 min-h-screen flex flex-col">
-      {/* Navigation Buttons */}
+      {/* Navigation Breadcrumbs & Buttons */}
       <div className="mb-6 flex justify-between items-center">
-        <Link 
-          href="/" 
-          className="cursor-pointer text-muted-foreground hover:text-foreground text-xs font-semibold flex items-center gap-1.5 transition"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Retention Radar
-        </Link>
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition flex items-center gap-1">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Retention Radar
+          </Link>
+          <span>/</span>
+          {loading ? (
+            <span className="text-zinc-600 animate-pulse w-24 h-4 bg-muted rounded"></span>
+          ) : (
+            <span className="text-foreground">{account?.company_name || accountId}</span>
+          )}
+          <span>/</span>
+          <span className="text-blue-400">Customer War Room</span>
+        </div>
         <Link 
           href="/?view=copilot" 
           className="cursor-pointer text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition"
@@ -338,6 +349,19 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           {/* Left Column: Details & Timeline */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             
+            {/* Account Escalated Banner */}
+            {account?.status === 'Critical' && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 rounded-full">
+                  <ShieldAlert className="h-6 w-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-red-500 font-bold text-sm">Account Escalated</h3>
+                  <p className="text-red-400/80 text-xs">This account requires immediate intervention. The CSM team has been notified.</p>
+                </div>
+              </div>
+            )}
+
             {/* Account Info Header */}
             <div className="bg-background border border-border rounded-xl p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-blue-600/10 text-blue-500 text-[10px] font-bold px-3 py-1 uppercase tracking-widest rounded-bl-lg border-b border-l border-blue-500/20">
@@ -394,18 +418,20 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               {/* Glowing circular health meter */}
-              <div className="relative w-24 h-24 flex justify-center items-center self-start sm:self-auto">
-                <svg width="90" height="90" viewBox="0 0 36 36" className="-rotate-90">
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3.2" />
-                  <circle cx="18" cy="18" r="15.915" fill="none" stroke={healthColor} strokeWidth="3.2" 
-                    strokeDasharray={`${riskScore} ${100 - riskScore}`} strokeDashoffset="0"
-                    style={{ transition: 'stroke-dasharray 0.5s ease', transformOrigin: 'center' }} />
-                </svg>
-                <div className="absolute flex flex-col items-center">
-                  <span className="text-xl font-bold font-mono tracking-tight" style={{ color: healthColor }}>{riskScore}%</span>
-                  <span className="text-[9px] text-muted-foreground uppercase">Risk</span>
+              <Tooltip content={isCritical ? "Critical: Risk score is 75% or higher." : isWarning ? "At Risk: Risk score is between 25% and 74%." : "Healthy: Risk score is below 25%."} position="left">
+                <div className="relative w-24 h-24 flex justify-center items-center self-start sm:self-auto">
+                  <svg width="90" height="90" viewBox="0 0 36 36" className="-rotate-90">
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3.2" />
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke={healthColor} strokeWidth="3.2" 
+                      strokeDasharray={`${riskScore} ${100 - riskScore}`} strokeDashoffset="0"
+                      style={{ transition: 'stroke-dasharray 0.5s ease', transformOrigin: 'center' }} />
+                  </svg>
+                  <div className="absolute flex flex-col items-center">
+                    <span className="text-xl font-bold font-mono tracking-tight" style={{ color: healthColor }}>{riskScore}%</span>
+                    <span className="text-[9px] text-muted-foreground uppercase">Risk</span>
+                  </div>
                 </div>
-              </div>
+              </Tooltip>
             </div>
 
             {/* Reasoned Risk Breakdown & Simulator */}
@@ -520,8 +546,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
 
             {/* Agent Memory Bank */}
             <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-3.5">
-              <div className="flex justify-between items-center pb-2 border-b border-border">
+              <div 
+                className="flex justify-between items-center pb-2 border-b border-border cursor-pointer hover:bg-card/50 transition px-2 -mx-2 rounded"
+                onClick={() => setIsMemoryBankOpen(!isMemoryBankOpen)}
+              >
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  {isMemoryBankOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   <Brain className="h-3.5 w-3.5 text-blue-450" />
                   <span>Agent Memory Bank</span>
                 </h2>
@@ -529,6 +559,9 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   {memories.length} facts cached
                 </span>
               </div>
+              
+              {isMemoryBankOpen && (
+                <div className="flex flex-col gap-3.5 animate-fade-in mt-1">
               <p className="text-[11px] text-muted-foreground">
                 Long-term preferences and escalation triggers cached in the <code className="text-[10px] text-blue-400 bg-card px-1 py-0.5 rounded">agent_memory</code> index.
               </p>
@@ -587,16 +620,38 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 >
                   {addingMemory ? 'Saving...' : 'Remember'}
                 </button>
-              </div>
+                </div>
+                </div>
+              )}
             </div>
 
             {/* Timeline */}
-            <AccountTimeline 
-              timeline={timeline}
-              selectedTicketId={selectedTicketId}
-              setSelectedTicketId={setSelectedTicketId}
-              fetchRunbook={fetchRunbook}
-            />
+            <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-3.5">
+              <div 
+                className="flex justify-between items-center pb-2 border-b border-border cursor-pointer hover:bg-card/50 transition px-2 -mx-2 rounded"
+                onClick={() => setIsTimelineOpen(!isTimelineOpen)}
+              >
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  {isTimelineOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <FileText className="h-3.5 w-3.5 text-blue-450" />
+                  <span>Customer Event Timeline</span>
+                </h2>
+                <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded font-mono">
+                  {timeline.length} events
+                </span>
+              </div>
+              
+              {isTimelineOpen && (
+                <div className="mt-2 animate-fade-in">
+                  <AccountTimeline 
+                    timeline={timeline}
+                    selectedTicketId={selectedTicketId}
+                    setSelectedTicketId={setSelectedTicketId}
+                    fetchRunbook={fetchRunbook}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right Column: Chat panel */}
@@ -623,7 +678,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                       key={idx} 
                       className={`max-w-[85%] ${isUser ? 'self-end' : 'self-start'} animate-fade-in`}
                     >
-                      <div className={`p-4 rounded-xl text-sm leading-relaxed prose prose-invert max-w-none ${
+                      <div className={`p-5 rounded-xl text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-li:leading-relaxed ${
                         isUser 
                           ? 'bg-blue-600 text-foreground rounded-br-none prose-p:text-white prose-strong:text-white' 
                           : 'bg-card border border-border text-foreground rounded-bl-none prose-p:text-foreground prose-strong:text-foreground'
@@ -666,23 +721,23 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   <button 
                     onClick={() => handleSendMessage(`Why is this account (${account?.company_name}) at risk?`)} 
                     disabled={sending}
-                    className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition flex-grow text-center"
+                    className="text-[10px] px-2.5 py-1.5 rounded-full border border-border bg-card hover:border-zinc-500 text-muted-foreground hover:text-foreground cursor-pointer transition flex flex-grow items-center justify-center gap-1.5"
                   >
-                    ❓ Why at risk?
+                    <HelpCircle className="h-3 w-3" /> Why at risk?
                   </button>
                   <button 
                     onClick={() => handleSendMessage(`Search for open support tickets in this account`)} 
                     disabled={sending}
-                    className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition flex-grow text-center"
+                    className="text-[10px] px-2.5 py-1.5 rounded-full border border-border bg-card hover:border-zinc-500 text-muted-foreground hover:text-foreground cursor-pointer transition flex flex-grow items-center justify-center gap-1.5"
                   >
-                    🔍 Search tickets
+                    <Search className="h-3 w-3" /> Search tickets
                   </button>
                   <button 
-                    onClick={() => handleSendMessage(`Log a new negative sentiment health note: 'Customer David is extremely frustrated about the data export timeouts and requested a competitor evaluation.'`)} 
+                    onClick={() => handleSendMessage(`Log a CSM note: Reached out to ${account?.company_name} engineering team to schedule a technical review regarding the ongoing open issues.`)} 
                     disabled={sending}
-                    className="text-[10px] px-2.5 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition flex-grow text-center"
+                    className="text-[10px] px-2.5 py-1.5 rounded-full border border-border bg-card hover:border-zinc-500 text-muted-foreground hover:text-foreground cursor-pointer transition flex flex-grow items-center justify-center gap-1.5"
                   >
-                    ✍ Log CSM note
+                    <Edit3 className="h-3 w-3" /> Log CSM note
                   </button>
                 </div>
               </div>

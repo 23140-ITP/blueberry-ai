@@ -42,6 +42,8 @@ export default function Dashboard() {
   // Layout View State
   const [activeView, setActiveView] = useState<'radar' | 'pain-points' | 'simulator' | 'copilot' | 'mcp' | 'elser-search' | 'apm-dashboard' | 'anomaly-detection' | 'hybrid-search' | 'emerging-trends' | 'agent-logs' | 'dls-simulator' | 'ilm-tiering' | 'vector-search' | 'cross-cluster' | 'raw-data'>('radar');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isElasticGroupOpen, setIsElasticGroupOpen] = useState(false);
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
 
   // Interactive UI Modal States
   const [selectedCluster, setSelectedCluster] = useState<any>(null);
@@ -92,7 +94,7 @@ export default function Dashboard() {
   };
 
   const handleResetDemoDatabase = async () => {
-    if (!confirm('Are you sure you want to reset the database back to original seed data? This will clear all simulated tickets, notes, call transcripts, and escalation milestones.')) return;
+    if (!window.confirm("Are you sure you want to reset the demo database? This will revert all modified records to their default seed state.")) return;
     setResetting(true);
     try {
       const res = await fetch('/api/tools/reset-demo', { method: 'POST' });
@@ -252,87 +254,161 @@ export default function Dashboard() {
           </div>
 
           {/* Navigation Options */}
-          <nav className="p-4 flex flex-col gap-1.5">
-            {[
-              { id: 'radar', label: 'Retention Radar', icon: LayoutDashboard, desc: 'Overview of your portfolio risk, calculated via support sentiment and recent events.' },
-              { id: 'pain-points', label: 'Pain-Point Clusters', icon: Layers, desc: 'Common issues grouped dynamically using kNN semantic search vectors.' },
-              { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: accounts.length > 0 ? `/account/${accounts[0].account_id}` : '/account/ACC-002', desc: 'Deep dive into the highest-risk customer with What-If simulations and action planning.' },
-              { id: 'simulator', label: 'Event Simulator', icon: RefreshCw, desc: 'Trigger mock CSM touchpoints or support tickets to see real-time risk updates.' },
-              { id: 'copilot', label: 'Blueberry Copilot', icon: Brain, desc: 'AI assistant powered by GCP Agent Builder to summarize context and recommend runbooks.' },
-              { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal, desc: 'Model Context Protocol console to directly interact with Elasticsearch indices.' },
-              { id: 'elser-search', label: 'ELSER Semantic Search', icon: Sparkles, desc: 'Perform semantic search using Elastic Learned Sparse EncodeR models.' },
-              { id: 'apm-dashboard', label: 'Elastic APM Tracing', icon: Gauge, desc: 'Monitor end-to-end API latency and distributed traces.' },
-              { id: 'anomaly-detection', label: 'Anomaly Detection', icon: TrendingDown, desc: 'Unsupervised ML jobs alerting on unusual ticket volume or sentiment drops.' },
-              { id: 'hybrid-search', label: 'Hybrid Search (RRF)', icon: GitMerge, desc: 'Combine keyword and vector search using Reciprocal Rank Fusion.' },
-              { id: 'emerging-trends', label: 'Emerging Trends', icon: TrendingUp, desc: 'Discover unknown churn drivers via Significant Terms aggregation.' },
-              { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare, desc: 'Live stream of thought logs from GCP agents executing MCP tools.' },
-              { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock, desc: 'Simulate Document-Level Security filtering by user region.' },
-              { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database, desc: 'Visualize Index Lifecycle Management (Hot, Warm, Cold nodes).' },
-              { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon, desc: 'Generate dense vectors and find nearest neighbors via kNN.' },
-              { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe, desc: 'Run federated searches across North America and Europe clusters.' },
-              { id: 'raw-data', label: 'Raw Data Explorer', icon: Database, desc: 'Direct view into the Elasticsearch indices powering the Blueberry AI features.' }
-            ].map(item => {
-              const Icon = item.icon;
-              const isActive = activeView === item.id;
-              
-              const buttonContent = (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    if (!item.href) {
-                      setActiveView(item.id as any);
-                      setIsMobileSidebarOpen(false);
-                    }
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    isActive 
-                      ? 'bg-card border border-border text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-card/40 border border-transparent'
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-400' : 'text-muted-foreground'}`} />
-                  <span className="flex-grow text-left">{item.label}</span>
-                </button>
-              );
+          <nav className="p-4 flex flex-col gap-4 overflow-y-auto pb-20">
+            <div>
+              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">Core CRM Features</h3>
+              <div className="flex flex-col gap-1">
+                {[
+                  { id: 'radar', label: 'Retention Radar', icon: LayoutDashboard, desc: 'Overview of your portfolio risk, calculated via support sentiment and recent events.' },
+                  { id: 'pain-points', label: 'Pain-Point Clusters', icon: Layers, desc: 'Common issues grouped dynamically using kNN semantic search vectors.' },
+                  { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: accounts.length > 0 ? `/account/${accounts[0].account_id}` : '/account/ACC-002', desc: 'Deep dive into the highest-risk customer with What-If simulations and action planning.' },
+                  { id: 'simulator', label: 'Event Simulator', icon: RefreshCw, desc: 'Trigger mock CSM touchpoints or support tickets to see real-time risk updates.' },
+                  { id: 'copilot', label: 'Blueberry Copilot', icon: Brain, desc: 'AI assistant powered by GCP Agent Builder to summarize context and recommend runbooks.' },
+                ].map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeView === item.id;
+                  
+                  const buttonContent = (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        if (!item.href) {
+                          setActiveView(item.id as any);
+                          setIsMobileSidebarOpen(false);
+                        }
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                        isActive 
+                          ? 'bg-blue-500/10 border-l-4 border-l-blue-500 border-t border-b border-r border-t-transparent border-b-transparent border-r-transparent text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground hover:bg-card/40 border-l-4 border-l-transparent border-t border-b border-r border-t-transparent border-b-transparent border-r-transparent'
+                      }`}
+                    >
+                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                      <span className="flex-grow text-left">{item.label}</span>
+                    </button>
+                  );
 
-              return (
-                <Tooltip key={item.id} content={item.desc} position="right" className="w-full">
-                  {item.href ? (
-                    <Link href={item.href}>
-                      {buttonContent}
-                    </Link>
-                  ) : buttonContent}
-                </Tooltip>
-              );
-            })}
+                  return (
+                    <Tooltip key={item.id} content={item.desc} position="right" className="w-full">
+                      {item.href ? (
+                        <Link href={item.href}>
+                          {buttonContent}
+                        </Link>
+                      ) : buttonContent}
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <button 
+                onClick={() => setIsElasticGroupOpen(!isElasticGroupOpen)}
+                className="w-full flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2 hover:text-foreground cursor-pointer"
+              >
+                <span>Elasticsearch Integrations</span>
+                <span className="text-[8px]">{isElasticGroupOpen ? '▼' : '▶'}</span>
+              </button>
+              
+              {isElasticGroupOpen && (
+                <div className="flex flex-col gap-1 pl-1 border-l border-border/50 ml-3">
+                  {[
+                    { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal, desc: 'Model Context Protocol console to directly interact with Elasticsearch indices.' },
+                    { id: 'elser-search', label: 'ELSER Semantic Search', icon: Sparkles, desc: 'Perform semantic search using Elastic Learned Sparse EncodeR models.' },
+                    { id: 'apm-dashboard', label: 'Elastic APM Tracing', icon: Gauge, desc: 'Monitor end-to-end API latency and distributed traces.' },
+                    { id: 'anomaly-detection', label: 'Anomaly Detection', icon: TrendingDown, desc: 'Unsupervised ML jobs alerting on unusual ticket volume or sentiment drops.' },
+                    { id: 'hybrid-search', label: 'Hybrid Search (RRF)', icon: GitMerge, desc: 'Combine keyword and vector search using Reciprocal Rank Fusion.' },
+                    { id: 'emerging-trends', label: 'Emerging Trends', icon: TrendingUp, desc: 'Discover unknown churn drivers via Significant Terms aggregation.' },
+                    { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare, desc: 'Live stream of thought logs from GCP agents executing MCP tools.' },
+                    { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock, desc: 'Simulate Document-Level Security filtering by user region.' },
+                    { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database, desc: 'Visualize Index Lifecycle Management (Hot, Warm, Cold nodes).' },
+                    { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon, desc: 'Generate dense vectors and find nearest neighbors via kNN.' },
+                    { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe, desc: 'Run federated searches across North America and Europe clusters.' },
+                    { id: 'raw-data', label: 'Raw Data Explorer', icon: Database, desc: 'Direct view into the Elasticsearch indices powering the Blueberry AI features.' }
+                  ].map(item => {
+                    const Icon = item.icon;
+                    const isActive = activeView === item.id;
+                    
+                    const buttonContent = (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          if (!(item as any).href) {
+                            setActiveView(item.id as any);
+                            setIsMobileSidebarOpen(false);
+                          }
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded text-xs transition-all duration-150 cursor-pointer ${
+                          isActive 
+                            ? 'bg-blue-500/10 text-foreground font-semibold shadow-sm' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-card/40'
+                        }`}
+                      >
+                        <Icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                        <span className="flex-grow text-left">{item.label}</span>
+                      </button>
+                    );
+
+                    return (
+                      <Tooltip key={item.id} content={item.desc} position="right" className="w-full">
+                        {(item as any).href ? (
+                          <Link href={(item as any).href}>
+                            {buttonContent}
+                          </Link>
+                        ) : buttonContent}
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
         </div>
 
         {/* Sidebar Footer with system statuses */}
-        <div className="p-4 border-t border-border bg-background flex flex-col gap-2.5 text-[10px] text-muted-foreground">
-          <button
-            onClick={handleResetDemoDatabase}
-            disabled={resetting}
-            className="w-full py-1.5 bg-card hover:bg-muted border border-border hover:border-border text-muted-foreground hover:text-foreground rounded text-[10px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Database className="h-3 w-3" />
-            {resetting ? 'Resetting Demo...' : 'Reset Demo Database'}
-          </button>
-          <ThemeToggle />
-          
-          <div className="flex items-center justify-between border-t border-border/60 pt-2 mt-2">
-            <span className="font-medium">Elasticsearch</span>
-            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
-              v9.5.0
-            </span>
+        <div className="p-4 border-t border-border bg-background flex flex-col gap-3">
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={handleResetDemoDatabase}
+              disabled={resetting}
+              className="flex-grow py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded text-[10px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <Database className="h-3 w-3" />
+              {resetting ? 'Resetting...' : 'Reset Demo'}
+            </button>
+            <div className="shrink-0">
+              <ThemeToggle />
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Dialogflow CX</span>
-            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
-              Connected
-            </span>
+          
+          <div className="border border-border rounded-lg overflow-hidden bg-card/50">
+            <button 
+              onClick={() => setIsStatusOpen(!isStatusOpen)}
+              className="w-full flex items-center justify-between p-2 text-[10px] font-semibold text-muted-foreground hover:bg-muted/50 cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block animate-pulse"></span>
+                System Status
+              </span>
+              <span className="text-[8px]">{isStatusOpen ? '▼' : '▶'}</span>
+            </button>
+            
+            {isStatusOpen && (
+              <div className="p-2 border-t border-border flex flex-col gap-2 text-[9px] text-muted-foreground bg-background">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Elasticsearch</span>
+                  <span className="text-emerald-400 font-mono">v9.5.0</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Dialogflow CX</span>
+                  <span className="text-emerald-400 font-mono">Connected</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">GCP Agent Builder</span>
+                  <span className="text-emerald-400 font-mono">Ready</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -365,49 +441,6 @@ export default function Dashboard() {
               {activeView === 'mcp' && 'Model Context Protocol'}
             </h2>
           </div>
-
-          {/* Search bar specifically visible in Dashboard View */}
-          {activeView === 'radar' && (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="inline-flex bg-card border border-border rounded-lg p-0.5">
-                {(['client', 'keyword', 'vector', 'hybrid'] as const).map(mode => (
-                  <button
-                    key={mode}
-                    onClick={() => {
-                      setSearchMode(mode);
-                      setSearchTerm('');
-                      setSemanticMatches({});
-                    }}
-                    className={`px-3 py-1 text-[10px] font-semibold transition-all duration-150 cursor-pointer ${
-                      searchMode === mode 
-                        ? 'bg-muted text-foreground border border-zinc-700/50 shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {mode === 'client' && 'Local'}
-                    {mode === 'keyword' && 'BM25'}
-                    {mode === 'vector' && 'Vector'}
-                    {mode === 'hybrid' && 'Hybrid'}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative w-full sm:w-[240px]">
-                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder={
-                    searchMode === 'client' ? "Filter list locally..." :
-                    searchMode === 'keyword' ? "Elastic keyword search..." :
-                    searchMode === 'vector' ? "Elastic semantic search..." : "Elastic hybrid search..."
-                  }
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-8 pr-4 py-1.5 text-xs rounded-md border border-border bg-background/80 text-foreground placeholder-zinc-650 focus:outline-none focus:border-zinc-750 transition"
-                />
-              </div>
-            </div>
-          )}
         </header>
 
         {/* View Layout Panels */}
@@ -421,6 +454,9 @@ export default function Dashboard() {
               searchTerm={searchTerm}
               searchMode={searchMode}
               semanticMatches={semanticMatches}
+              setSearchTerm={setSearchTerm}
+              setSearchMode={setSearchMode}
+              setSemanticMatches={setSemanticMatches}
             />
           )}
 
@@ -445,15 +481,18 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={() => setShowArrAnalysis(true)}
-                    className="text-[10px] bg-blue-600 hover:bg-blue-700 text-foreground border border-blue-500 px-3 py-1.5 rounded font-semibold uppercase self-start sm:self-auto transition cursor-pointer"
+                    className="text-[10px] bg-blue-600 hover:bg-blue-700 text-foreground border border-blue-500 px-4 py-2 rounded-full font-bold uppercase self-start sm:self-auto transition cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(37,99,235,0.3)]"
                   >
+                    <Activity className="h-3.5 w-3.5" />
                     ARR Impact Analysis
                   </button>
                 </div>
 
                 {painPoints.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-muted-foreground">
-                    No active product pain-points clusters found in Elasticsearch.
+                  <div className="py-16 text-center flex flex-col items-center justify-center border border-dashed border-border rounded-xl bg-card/20 text-muted-foreground">
+                    <CheckCircle2 className="h-10 w-10 mb-4 text-emerald-500 opacity-60" />
+                    <h4 className="text-sm font-bold text-foreground mb-1">No Active Pain-Points</h4>
+                    <p className="text-xs max-w-sm">No significant product pain-point clusters have been detected in recent support tickets.</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-6">
@@ -484,11 +523,13 @@ export default function Dashboard() {
                           <p className="text-xs text-muted-foreground leading-relaxed">{cluster.description}</p>
                           
                           {/* Progress bar */}
-                          <div className="flex flex-col gap-1.5">
-                            <div className="w-full bg-background border border-border h-2 rounded-full overflow-hidden">
-                              <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${Math.min(100, (cluster.arrAtRisk / 750000) * 100)}%` }}></div>
-                            </div>
-                            <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                          <div className="flex flex-col gap-1.5 mt-2">
+                            <Tooltip content={`ARR Impact: $${cluster.arrAtRisk.toLocaleString()} / $750,000 threshold`} position="top">
+                              <div className="w-full bg-card border border-border h-2.5 rounded-full overflow-hidden cursor-help">
+                                <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${Math.min(100, (cluster.arrAtRisk / 750000) * 100)}%` }}></div>
+                              </div>
+                            </Tooltip>
+                            <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1">
                               <span>Impact rating: {isHigh ? 'Urgent Priority' : 'Standard Priority'}</span>
                               <span className="font-semibold text-muted-foreground">Affected accounts: {cluster.accounts.join(', ') || 'None'}</span>
                             </div>
@@ -714,9 +755,10 @@ export default function Dashboard() {
                         <span className="text-[11px] font-semibold text-zinc-150">
                           {t.ticket_id} • {t.subject}
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase flex items-center gap-1 ${
                           t.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-card border border-border text-muted-foreground'
                         }`}>
+                          {t.priority === 'Urgent' && <AlertTriangle className="h-3 w-3" />}
                           {t.priority}
                         </span>
                       </div>

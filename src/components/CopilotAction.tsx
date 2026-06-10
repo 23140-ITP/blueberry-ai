@@ -121,10 +121,10 @@ export function CopilotAction() {
                   </span>
                   <span className="text-[9px] text-muted-foreground/60">{msg.timestamp}</span>
                 </div>
-                <div className={`p-3.5 rounded-xl text-xs leading-relaxed ${
+                <div className={`p-4 md:p-5 rounded-xl text-xs leading-loose ${
                   msg.sender === 'user' 
                     ? 'bg-blue-600 text-white rounded-tr-sm' 
-                    : 'bg-card border border-border text-foreground rounded-tl-sm prose prose-sm dark:prose-invert max-w-none'
+                    : 'bg-card border border-border text-foreground rounded-tl-sm prose prose-sm dark:prose-invert max-w-none prose-p:leading-loose prose-li:leading-loose'
                 }`}>
                   {msg.sender === 'agent' ? (
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={{

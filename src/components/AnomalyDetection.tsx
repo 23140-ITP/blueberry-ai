@@ -1,5 +1,6 @@
-import { TrendingDown, AlertTriangle, Bell, Activity, X } from 'lucide-react';
+import { TrendingDown, AlertTriangle, Bell, Activity, X, Settings, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export function AnomalyDetection() {
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
@@ -26,7 +27,7 @@ export function AnomalyDetection() {
           onClick={() => setIsAlertModalOpen(true)}
           className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded text-xs font-semibold hover:text-foreground transition-colors cursor-pointer"
         >
-          <Bell className="h-3.5 w-3.5" /> Configure Alerts
+          <Settings className="h-3.5 w-3.5" /> Alert Settings
         </button>
       </div>
 
@@ -54,18 +55,27 @@ export function AnomalyDetection() {
             <div key={i} className="flex flex-col gap-2 p-4 bg-card border border-border rounded-lg relative overflow-hidden">
               <div className={`absolute top-0 left-0 w-1 h-full ${anom.score > 90 ? 'bg-red-500' : anom.score > 80 ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
               <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-foreground">{anom.metric}</span>
-                  <span className="text-[10px] bg-background border border-border px-1.5 py-0.5 rounded font-mono text-muted-foreground">{anom.account}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-foreground">{anom.metric}</span>
+                    <span className="text-[10px] bg-background border border-border px-1.5 py-0.5 rounded font-mono text-muted-foreground">{anom.account}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">{anom.description}</p>
                 </div>
-                <div className="flex flex-col items-end">
-                  <span className={`text-xs font-mono font-bold ${anom.score > 90 ? 'text-red-400' : anom.score > 80 ? 'text-amber-400' : 'text-blue-400'}`}>
-                    Score: {anom.score}
-                  </span>
-                  <span className="text-[9px] text-muted-foreground">{anom.time}</span>
+                <div className="flex flex-col items-end gap-1.5">
+                  <div className="flex flex-col items-end">
+                    <span className={`text-xs font-mono font-bold ${anom.score > 90 ? 'text-red-400' : anom.score > 80 ? 'text-amber-400' : 'text-blue-400'}`}>
+                      Score: {anom.score}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground">{anom.time}</span>
+                  </div>
+                  <Link href={`/account/${anom.account}`}>
+                    <span className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 transition cursor-pointer">
+                      View Account <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </Link>
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">{anom.description}</p>
             </div>
           ))}
         </div>

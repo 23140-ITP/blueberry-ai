@@ -50,24 +50,32 @@ export function ElserSearch() {
         </p>
       </div>
 
-      <form onSubmit={handleSearch} className="flex gap-3 mt-4">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Describe an issue intuitively (e.g. 'users complaining about slow export times')..."
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-card text-foreground focus:outline-none focus:border-blue-500 transition-colors"
-          />
+      <form onSubmit={handleSearch} className="flex flex-col gap-3 mt-4">
+        <div className="flex gap-3">
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Describe an issue intuitively (e.g. 'users complaining about slow export times')..."
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-card text-foreground focus:outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !query.trim()}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            {loading ? 'Searching...' : 'Execute ELSER Query'} <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
-        <button
-          type="submit"
-          disabled={loading || !query.trim()}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2 cursor-pointer"
-        >
-          {loading ? 'Searching...' : 'Search'} <ArrowRight className="h-4 w-4" />
-        </button>
+        <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground mt-1">
+          <span>Try these semantic queries:</span>
+          <button type="button" onClick={() => setQuery('export crash')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">export crash</button>
+          <button type="button" onClick={() => setQuery('login failing')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">login failing</button>
+          <button type="button" onClick={() => setQuery('api documentation')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">api documentation</button>
+        </div>
       </form>
 
       {results.length > 0 && (
@@ -79,7 +87,7 @@ export function ElserSearch() {
                 <div className="flex justify-between items-center">
                   <span className="font-mono text-sm font-bold text-foreground">{r.id}</span>
                   <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-mono border border-blue-500/20">
-                    Score: {typeof r.score === 'number' ? r.score.toFixed(3) : r.score}
+                    Relevance Score: {typeof r.score === 'number' ? r.score.toFixed(2) : r.score}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">Matches found in support tickets via text_expansion tokens.</p>

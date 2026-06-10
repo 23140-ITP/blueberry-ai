@@ -1,15 +1,24 @@
 import Link from 'next/link';
-import { SearchX, Sparkles } from 'lucide-react';
+import { SearchX, Sparkles, Search, SlidersHorizontal } from 'lucide-react';
+import { useState } from 'react';
 
 interface RiskRadarProps {
   filteredAccounts: any[];
   loading: boolean;
   searchTerm: string;
-  searchMode: string;
+  searchMode: 'client' | 'keyword' | 'hybrid' | 'vector' | string;
   semanticMatches: Record<string, any>;
+  setSearchTerm: (t: string) => void;
+  setSearchMode: React.Dispatch<React.SetStateAction<any>>;
+  setSemanticMatches: (m: Record<string, any>) => void;
 }
 
-export function RiskRadar({ filteredAccounts, loading, searchTerm, searchMode, semanticMatches }: RiskRadarProps) {
+export function RiskRadar({ 
+  filteredAccounts, loading, searchTerm, searchMode, semanticMatches,
+  setSearchTerm, setSearchMode, setSemanticMatches 
+}: RiskRadarProps) {
+  const [sortOrder, setSortOrder] = useState<'risk_desc' | 'risk_asc' | 'arr_desc'>('risk_desc');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'critical' | 'warning' | 'healthy'>('all');
   const totalARR = filteredAccounts.reduce((sum, acc) => sum + acc.arr, 0);
   const criticalCount = filteredAccounts.filter(acc => acc.risk_score >= 0.75).length;
   const warningCount = filteredAccounts.filter(acc => acc.risk_score >= 0.25 && acc.risk_score < 0.75).length;
@@ -23,6 +32,22 @@ export function RiskRadar({ filteredAccounts, loading, searchTerm, searchMode, s
   const criticalPct = (criticalCount / totalCount) * 100;
   const warningPct = (warningCount / totalCount) * 100;
   const healthyPct = (healthyCount / totalCount) * 100;
+
+  // Apply local sorting and filtering
+  const displayedAccounts = [...filteredAccounts]
+    .filter(acc => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'critical') return acc.risk_score >= 0.75;
+      if (statusFilter === 'warning') return acc.risk_score >= 0.25 && acc.risk_score < 0.75;
+      if (statusFilter === 'healthy') return acc.risk_score < 0.25;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'risk_desc') return b.risk_score - a.risk_score;
+      if (sortOrder === 'risk_asc') return a.risk_score - b.risk_score;
+      if (sortOrder === 'arr_desc') return b.arr - a.arr;
+      return 0;
+    });
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -65,12 +90,82 @@ export function RiskRadar({ filteredAccounts, loading, searchTerm, searchMode, s
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Account list card */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <span>Account List</span>
-            <span className="text-[10px] bg-card border border-border text-muted-foreground px-2 py-0.5 rounded-full font-mono">
-              {filteredAccounts.length}
-            </span>
-          </h3>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card border border-border p-3 rounded-lg shadow-sm">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+              <span>Account List</span>
+              <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full font-mono border border-blue-500/20">
+                {displayedAccounts.length}
+              </span>
+            </h3>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+              <div className="inline-flex bg-background border border-border rounded-lg p-0.5">
+                {(['client', 'keyword', 'vector', 'hybrid'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setSearchMode(mode);
+                      setSearchTerm('');
+                      setSemanticMatches({});
+                    }}
+                    className={`px-3 py-1 text-[10px] font-semibold transition-all duration-150 cursor-pointer ${
+                      searchMode === mode 
+                        ? 'bg-muted text-foreground border border-zinc-700/50 shadow-sm rounded-md' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {mode === 'client' && 'Local'}
+                    {mode === 'keyword' && 'BM25'}
+                    {mode === 'vector' && 'Vector'}
+                    {mode === 'hybrid' && 'Hybrid'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative w-full sm:w-[200px]">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={
+                    searchMode === 'client' ? "Filter list locally..." :
+                    searchMode === 'keyword' ? "Elastic keyword search..." :
+                    searchMode === 'vector' ? "Elastic semantic search..." : "Elastic hybrid search..."
+                  }
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-4 py-1.5 text-xs rounded-md border border-border bg-background/80 text-foreground placeholder-zinc-650 focus:outline-none focus:border-zinc-750 transition"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-2 bg-card border border-border rounded-md p-1 px-2">
+              <SlidersHorizontal className="h-3 w-3 text-muted-foreground" />
+              <select 
+                value={sortOrder} 
+                onChange={(e) => setSortOrder(e.target.value as any)}
+                className="bg-transparent text-foreground outline-none cursor-pointer"
+              >
+                <option value="risk_desc">Sort: Highest Risk</option>
+                <option value="risk_asc">Sort: Lowest Risk</option>
+                <option value="arr_desc">Sort: Highest ARR</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-card border border-border rounded-md p-1 px-2">
+              <select 
+                value={statusFilter} 
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="bg-transparent text-foreground outline-none cursor-pointer"
+              >
+                <option value="all">Status: All</option>
+                <option value="critical">Critical Only</option>
+                <option value="warning">At Risk Only</option>
+                <option value="healthy">Healthy Only</option>
+              </select>
+            </div>
+          </div>
 
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -96,46 +191,50 @@ export function RiskRadar({ filteredAccounts, loading, searchTerm, searchMode, s
                 </div>
               ))}
             </div>
-          ) : filteredAccounts.length === 0 ? (
+          ) : displayedAccounts.length === 0 ? (
             <div className="bg-background/40 border border-border border-dashed rounded-xl p-12 flex flex-col items-center justify-center text-center text-xs text-muted-foreground">
               <SearchX className="h-10 w-10 mb-4 opacity-30" />
-              <p>No accounts matching "{searchTerm}" found.</p>
+              <p>No accounts match the current filters.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredAccounts.map(acc => {
+              {displayedAccounts.map(acc => {
                 const isCrit = acc.risk_score >= 0.75;
                 const isWarn = acc.risk_score >= 0.25 && acc.risk_score < 0.75;
                 const riskPct = Math.round(acc.risk_score * 100);
 
                 return (
                   <Link key={acc.account_id} href={`/account/${acc.account_id}`}>
-                    <div className="bg-background border border-border hover:border-border p-4.5 rounded-xl cursor-pointer transition flex flex-col gap-3.5 h-full">
+                    <div className="bg-background border border-border hover:border-zinc-600 p-5 rounded-xl cursor-pointer transition flex flex-col gap-4 h-full shadow-sm hover:shadow-md">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="text-sm font-bold text-foreground hover:text-blue-400 transition">{acc.company_name}</h4>
-                          <span className="text-[11px] text-muted-foreground">{acc.account_id} • {acc.industry}</span>
+                        <div className="flex-col flex">
+                          <h4 className="text-base font-black text-foreground">{acc.company_name}</h4>
+                          <span className="text-xs text-muted-foreground font-medium">{acc.account_id} • {acc.industry}</span>
                         </div>
-                        
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                          isCrit ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50' :
-                          isWarn ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50' :
-                          'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50'
-                        }`}>
-                          {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
-                        </span>
+                        <div className={`flex flex-col items-end`}>
+                          <span className={`text-2xl font-black font-mono leading-none ${
+                            isCrit ? 'text-red-500' : isWarn ? 'text-amber-500' : 'text-emerald-500'
+                          }`}>
+                            {riskPct}%
+                          </span>
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground mt-1">Risk Score</span>
+                        </div>
                       </div>
 
-                      <div className="flex justify-between items-center border-t border-border/50 pt-2 text-xs mt-auto">
+                      <div className="flex justify-between items-center bg-card/50 rounded-lg p-3 border border-border/50 mt-auto">
                         <div>
-                          <span className="text-[10px] text-muted-foreground uppercase block">ARR</span>
-                          <strong className="text-foreground">${acc.arr.toLocaleString()}</strong>
+                          <span className="text-[10px] text-muted-foreground font-semibold uppercase block mb-0.5">ARR</span>
+                          <strong className="text-sm text-foreground">${acc.arr.toLocaleString()}</strong>
                         </div>
-                        <div className="text-right">
-                          <span className="text-[10px] text-muted-foreground uppercase block">Risk Score</span>
-                          <strong className={`font-mono ${
-                            isCrit ? 'text-red-600 dark:text-red-400' : isWarn ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
-                          }`}>{riskPct}%</strong>
+                        <div className="text-right flex flex-col items-end">
+                          <span className="text-[10px] text-muted-foreground font-semibold uppercase block mb-1">Status</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                            isCrit ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50' :
+                            isWarn ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50' :
+                            'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50'
+                          }`}>
+                            {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
+                          </span>
                         </div>
                       </div>
 
@@ -162,22 +261,27 @@ export function RiskRadar({ filteredAccounts, loading, searchTerm, searchMode, s
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio Analytics</h3>
           <div className="bg-background border border-border rounded-xl p-6 shadow-sm flex flex-col items-center">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider self-start mb-4">Portfolio Distribution</span>
-            <div className="flex justify-center py-4">
-              <svg width="120" height="120" viewBox="0 0 36 36" className="-rotate-90">
+            <div className="flex justify-center py-4 relative">
+              <svg width="140" height="140" viewBox="0 0 36 36" className="-rotate-90">
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3" />
                 {filteredAccounts.length > 0 ? (
                   <>
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="3.2" 
-                      strokeDasharray={`${criticalPct} ${100 - criticalPct}`} strokeDashoffset="0" />
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f59e0b" strokeWidth="3.2" 
-                      strokeDasharray={`${warningPct} ${100 - warningPct}`} strokeDashoffset={`-${criticalPct}`} />
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10b981" strokeWidth="3.2" 
-                      strokeDasharray={`${healthyPct} ${100 - healthyPct}`} strokeDashoffset={`-${criticalPct + warningPct}`} />
+                    {/* Background */}
+                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3.2" />
+                    {/* Segments */}
+                    {criticalPct > 0 && <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="4" strokeDasharray={`${criticalPct} ${100 - criticalPct}`} strokeDashoffset="0" />}
+                    {warningPct > 0 && <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f59e0b" strokeWidth="4" strokeDasharray={`${warningPct} ${100 - warningPct}`} strokeDashoffset={`-${criticalPct}`} />}
+                    {healthyPct > 0 && <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray={`${healthyPct} ${100 - healthyPct}`} strokeDashoffset={`-${criticalPct + warningPct}`} />}
                   </>
                 ) : (
                   <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
                 )}
               </svg>
+              {/* Inner Circle Label overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-3xl font-bold">{totalCount}</span>
+                <span className="text-[9px] uppercase text-muted-foreground">Accounts</span>
+              </div>
             </div>
             
             {/* Legend */}
