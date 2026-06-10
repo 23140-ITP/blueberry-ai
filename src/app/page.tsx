@@ -4,12 +4,23 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Search, LayoutDashboard, Brain, Activity, ShieldAlert, CheckCircle2, 
-  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database, SearchX
+  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database, SearchX,
+  Gauge, TrendingDown, GitMerge, TrendingUp, TerminalSquare, Lock, Hexagon, Globe, Target
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { RiskRadar } from '@/components/RiskRadar';
 import { EventSimulator } from '@/components/EventSimulator';
 import { CopilotAction } from '@/components/CopilotAction';
+import { ElserSearch } from '@/components/ElserSearch';
+import { ApmDashboard } from '@/components/ApmDashboard';
+import { AnomalyDetection } from '@/components/AnomalyDetection';
+import { HybridSearch } from '@/components/HybridSearch';
+import { EmergingTrends } from '@/components/EmergingTrends';
+import { AgentLogs } from '@/components/AgentLogs';
+import { DlsSimulator } from '@/components/DlsSimulator';
+import { IlmTiering } from '@/components/IlmTiering';
+import { VectorSearch } from '@/components/VectorSearch';
+import { CrossCluster } from '@/components/CrossCluster';
 
 interface Account {
   account_id: string;
@@ -27,7 +38,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // Layout View State
-  const [activeView, setActiveView] = useState<'radar' | 'pain-points' | 'simulator' | 'copilot' | 'mcp'>('radar');
+  const [activeView, setActiveView] = useState<'radar' | 'pain-points' | 'simulator' | 'copilot' | 'mcp' | 'elser-search' | 'apm-dashboard' | 'anomaly-detection' | 'hybrid-search' | 'emerging-trends' | 'agent-logs' | 'dls-simulator' | 'ilm-tiering' | 'vector-search' | 'cross-cluster'>('radar');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Interactive UI Modal States
@@ -246,7 +257,17 @@ export default function Dashboard() {
               { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: '/account/ACC-002' },
               { id: 'simulator', label: 'Event Simulator', icon: RefreshCw },
               { id: 'copilot', label: 'Blueberry Copilot', icon: Brain },
-              { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal }
+              { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal },
+              { id: 'elser-search', label: 'ELSER Semantic Search', icon: Sparkles },
+              { id: 'apm-dashboard', label: 'Elastic APM Tracing', icon: Gauge },
+              { id: 'anomaly-detection', label: 'Anomaly Detection', icon: TrendingDown },
+              { id: 'hybrid-search', label: 'Hybrid Search (RRF)', icon: GitMerge },
+              { id: 'emerging-trends', label: 'Emerging Trends', icon: TrendingUp },
+              { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare },
+              { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock },
+              { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database },
+              { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon },
+              { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe }
             ].map(item => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -585,6 +606,56 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* VIEW 6: ELSER SEARCH */}
+          {activeView === 'elser-search' && (
+            <ElserSearch />
+          )}
+
+          {/* VIEW 7: APM DASHBOARD */}
+          {activeView === 'apm-dashboard' && (
+            <ApmDashboard />
+          )}
+
+          {/* VIEW 8: ANOMALY DETECTION */}
+          {activeView === 'anomaly-detection' && (
+            <AnomalyDetection />
+          )}
+
+          {/* VIEW 9: HYBRID SEARCH */}
+          {activeView === 'hybrid-search' && (
+            <HybridSearch />
+          )}
+
+          {/* VIEW 10: EMERGING TRENDS */}
+          {activeView === 'emerging-trends' && (
+            <EmergingTrends />
+          )}
+
+          {/* VIEW 11: AGENT LOGS */}
+          {activeView === 'agent-logs' && (
+            <AgentLogs />
+          )}
+
+          {/* VIEW 12: DLS SIMULATOR */}
+          {activeView === 'dls-simulator' && (
+            <DlsSimulator />
+          )}
+
+          {/* VIEW 13: ILM TIERING */}
+          {activeView === 'ilm-tiering' && (
+            <IlmTiering />
+          )}
+
+          {/* VIEW 14: VECTOR SEARCH */}
+          {activeView === 'vector-search' && (
+            <VectorSearch />
+          )}
+
+          {/* VIEW 15: CROSS-CLUSTER */}
+          {activeView === 'cross-cluster' && (
+            <CrossCluster />
           )}
         </main>
       </div>
