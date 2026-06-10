@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
   Search, LayoutDashboard, Brain, Activity, ShieldAlert, CheckCircle2, 
   AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database, SearchX,
-  Gauge, TrendingDown, GitMerge, TrendingUp, TerminalSquare, Lock, Hexagon, Globe, Target
+  Gauge, TrendingDown, GitMerge, TrendingUp, TerminalSquare, Lock, Hexagon, Globe, Target, Info
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { RiskRadar } from '@/components/RiskRadar';
@@ -21,6 +21,7 @@ import { DlsSimulator } from '@/components/DlsSimulator';
 import { IlmTiering } from '@/components/IlmTiering';
 import { VectorSearch } from '@/components/VectorSearch';
 import { CrossCluster } from '@/components/CrossCluster';
+import { Tooltip } from '@/components/Tooltip';
 
 interface Account {
   account_id: string;
@@ -252,22 +253,22 @@ export default function Dashboard() {
           {/* Navigation Options */}
           <nav className="p-4 flex flex-col gap-1.5">
             {[
-              { id: 'radar', label: 'Retention Radar', icon: LayoutDashboard },
-              { id: 'pain-points', label: 'Pain-Point Clusters', icon: Layers },
-              { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: '/account/ACC-002' },
-              { id: 'simulator', label: 'Event Simulator', icon: RefreshCw },
-              { id: 'copilot', label: 'Blueberry Copilot', icon: Brain },
-              { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal },
-              { id: 'elser-search', label: 'ELSER Semantic Search', icon: Sparkles },
-              { id: 'apm-dashboard', label: 'Elastic APM Tracing', icon: Gauge },
-              { id: 'anomaly-detection', label: 'Anomaly Detection', icon: TrendingDown },
-              { id: 'hybrid-search', label: 'Hybrid Search (RRF)', icon: GitMerge },
-              { id: 'emerging-trends', label: 'Emerging Trends', icon: TrendingUp },
-              { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare },
-              { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock },
-              { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database },
-              { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon },
-              { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe }
+              { id: 'radar', label: 'Retention Radar', icon: LayoutDashboard, desc: 'Overview of your portfolio risk, calculated via support sentiment and recent events.' },
+              { id: 'pain-points', label: 'Pain-Point Clusters', icon: Layers, desc: 'Common issues grouped dynamically using kNN semantic search vectors.' },
+              { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: '/account/ACC-002', desc: 'Deep dive into a specific customer with What-If simulations and action planning.' },
+              { id: 'simulator', label: 'Event Simulator', icon: RefreshCw, desc: 'Trigger mock CSM touchpoints or support tickets to see real-time risk updates.' },
+              { id: 'copilot', label: 'Blueberry Copilot', icon: Brain, desc: 'AI assistant powered by GCP Agent Builder to summarize context and recommend runbooks.' },
+              { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal, desc: 'Model Context Protocol console to directly interact with Elasticsearch indices.' },
+              { id: 'elser-search', label: 'ELSER Semantic Search', icon: Sparkles, desc: 'Perform semantic search using Elastic Learned Sparse EncodeR models.' },
+              { id: 'apm-dashboard', label: 'Elastic APM Tracing', icon: Gauge, desc: 'Monitor end-to-end API latency and distributed traces.' },
+              { id: 'anomaly-detection', label: 'Anomaly Detection', icon: TrendingDown, desc: 'Unsupervised ML jobs alerting on unusual ticket volume or sentiment drops.' },
+              { id: 'hybrid-search', label: 'Hybrid Search (RRF)', icon: GitMerge, desc: 'Combine keyword and vector search using Reciprocal Rank Fusion.' },
+              { id: 'emerging-trends', label: 'Emerging Trends', icon: TrendingUp, desc: 'Discover unknown churn drivers via Significant Terms aggregation.' },
+              { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare, desc: 'Live stream of thought logs from GCP agents executing MCP tools.' },
+              { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock, desc: 'Simulate Document-Level Security filtering by user region.' },
+              { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database, desc: 'Visualize Index Lifecycle Management (Hot, Warm, Cold nodes).' },
+              { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon, desc: 'Generate dense vectors and find nearest neighbors via kNN.' },
+              { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe, desc: 'Run federated searches across North America and Europe clusters.' }
             ].map(item => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -288,15 +289,19 @@ export default function Dashboard() {
                   }`}
                 >
                   <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-400' : 'text-muted-foreground'}`} />
-                  <span>{item.label}</span>
+                  <span className="flex-grow text-left">{item.label}</span>
                 </button>
               );
 
-              return item.href ? (
-                <Link key={item.id} href={item.href}>
-                  {buttonContent}
-                </Link>
-              ) : buttonContent;
+              return (
+                <Tooltip key={item.id} content={item.desc} position="right" className="w-full">
+                  {item.href ? (
+                    <Link href={item.href}>
+                      {buttonContent}
+                    </Link>
+                  ) : buttonContent}
+                </Tooltip>
+              );
             })}
           </nav>
         </div>
@@ -426,6 +431,9 @@ export default function Dashboard() {
                     <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                       <Layers className="h-4 w-4 text-blue-400" />
                       <span>Product Pain-Point Clusters</span>
+                      <Tooltip content="Clustered dynamically using Elasticsearch k-Nearest Neighbor (kNN) vector similarity on recent support tickets." position="top">
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </Tooltip>
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">Financial impact computed by aggregating support tickets into semantic categories.</p>
                   </div>
@@ -754,8 +762,16 @@ export default function Dashboard() {
                     <th scope="col" className="px-4 py-3">Account ID</th>
                     <th scope="col" className="px-4 py-3">Company Name</th>
                     <th scope="col" className="px-4 py-3">Industry</th>
-                    <th scope="col" className="px-4 py-3 text-right">ARR</th>
-                    <th scope="col" className="px-4 py-3 text-right">Risk Score</th>
+                    <th scope="col" className="px-4 py-3 text-right">
+                      <Tooltip content="Annual Recurring Revenue: Total contract value currently at risk." position="top">
+                        <span className="border-b border-dashed border-muted-foreground/50 cursor-help pb-0.5">ARR</span>
+                      </Tooltip>
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-right">
+                      <Tooltip content="Calculated dynamically via Elasticsearch ML by evaluating support ticket sentiment, usage drops, and recent billing events. Score > 0.75 is Critical." position="top">
+                        <span className="border-b border-dashed border-muted-foreground/50 cursor-help pb-0.5">Risk Score</span>
+                      </Tooltip>
+                    </th>
                     <th scope="col" className="px-4 py-3 text-center">Status</th>
                   </tr>
                 </thead>

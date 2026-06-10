@@ -79,6 +79,19 @@ export function ElserSearch() {
           No matches found for that specific semantic intent.
         </div>
       )}
+
+      {/* Under the Hood Card */}
+      <div className="mt-4 p-4 bg-blue-950/20 border border-blue-900/30 rounded-xl flex flex-col md:flex-row gap-4 items-start">
+        <div className="bg-blue-500/20 p-2 rounded-lg shrink-0 mt-1">
+          <Sparkles className="h-5 w-5 text-blue-400" />
+        </div>
+        <div>
+          <h4 className="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-1.5">Under the Hood: ELSER</h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            This feature demonstrates Elasticsearch's <code>text_expansion</code> query. The ELSER model expands the search terms into a vast array of semantically related tokens behind the scenes. This gives us the power of vector similarity search <em>without</em> needing to generate, store, or manage dense vector embeddings in our pipeline.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

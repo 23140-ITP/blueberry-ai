@@ -4,13 +4,14 @@ import { use, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, Brain, ShieldAlert, Activity, Play, Layers, BadgeAlert, 
-  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles, Inbox, BrainCircuit, ChevronDown
+  Send, Copy, AlertTriangle, CheckCircle2, Terminal, HelpCircle, FileText, Sparkles, Inbox, BrainCircuit, ChevronDown, Info
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useRouter } from 'next/navigation';
 
 import { AccountTimeline, TimelineItem } from '@/components/AccountTimeline';
+import { Tooltip } from '@/components/Tooltip';
 
 interface ChatMessage {
   sender: 'user' | 'agent';
@@ -459,7 +460,12 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                     <Activity className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Counterfactual Simulator</h4>
+                    <h4 className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      Counterfactual Simulator
+                      <Tooltip content="Projects future risk by simulating the resolution of open support tickets in real-time." position="top">
+                        <Info className="h-3 w-3 text-blue-500 cursor-help" />
+                      </Tooltip>
+                    </h4>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       If we apply the suggested runbook and resolve the open tickets today, risk drops from <strong className="text-foreground">{riskScore}%</strong> to <strong className="text-emerald-400 font-mono">{(riskScore - (dynamicRiskData.factors.find((f: any) => f.name.includes('Ticket'))?.riskAdded || 0)).toFixed(0)}%</strong>.
                     </p>

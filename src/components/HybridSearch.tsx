@@ -89,6 +89,19 @@ export function HybridSearch() {
           )}
         </div>
       </div>
+
+      {/* Under the Hood Card */}
+      <div className="mt-4 p-4 bg-purple-950/20 border border-purple-900/30 rounded-xl flex flex-col md:flex-row gap-4 items-start">
+        <div className="bg-purple-500/20 p-2 rounded-lg shrink-0 mt-1">
+          <GitMerge className="h-5 w-5 text-purple-400" />
+        </div>
+        <div>
+          <h4 className="text-[11px] font-bold text-purple-400 uppercase tracking-wider mb-1.5">Under the Hood: Reciprocal Rank Fusion</h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            RRF is an algorithm provided natively by Elasticsearch. It allows us to combine the results of multiple search queries (in this case, BM25 keyword matching and kNN vector similarity) with different scoring scales. It ranks documents by evaluating their position across both result sets, ensuring the most mathematically relevant documents always rise to the top.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

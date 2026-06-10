@@ -64,6 +64,19 @@ export function AnomalyDetection() {
           ))}
         </div>
       </div>
+
+      {/* Under the Hood Card */}
+      <div className="mt-4 p-4 bg-amber-950/20 border border-amber-900/30 rounded-xl flex flex-col md:flex-row gap-4 items-start">
+        <div className="bg-amber-500/20 p-2 rounded-lg shrink-0 mt-1">
+          <TrendingDown className="h-5 w-5 text-amber-400" />
+        </div>
+        <div>
+          <h4 className="text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-1.5">Under the Hood: Unsupervised ML</h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            This utilizes Elasticsearch's Machine Learning Anomaly Detection capabilities. We configure a continuous job to profile normal behavior across index time-series data (like ticket frequency). The ML models automatically identify anomalies and assign a normalized score (0-100) indicating the severity of the deviation.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

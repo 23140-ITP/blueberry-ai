@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Terminal, Brain, BrainCircuit, Sparkles } from 'lucide-react';
+import { Send, Terminal, Brain, BrainCircuit, Sparkles, Info } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Tooltip } from '@/components/Tooltip';
 
 interface ChatMessage {
   sender: 'user' | 'agent';
@@ -94,7 +95,12 @@ export function CopilotAction() {
         <div className="p-4.5 border-b border-border flex items-center gap-2.5">
           <span className="w-2 h-2 bg-emerald-500 rounded-full inline-block shadow-[0_0_8px_#10b981]"></span>
           <div>
-            <h2 className="text-xs font-bold text-foreground">Blueberry Copilot Workspace</h2>
+            <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              Blueberry Copilot Workspace
+              <Tooltip content="Powered by Google Cloud Agent Builder. Capable of executing Elastic MCP tools like checking dynamic risk, escalating accounts, and finding pain-point clusters." position="bottom">
+                <Info className="h-3.5 w-3.5 text-emerald-500 cursor-help" />
+              </Tooltip>
+            </h2>
             <span className="text-[10px] text-muted-foreground">Connected to Dialogflow CX Google Cloud Agent</span>
           </div>
         </div>
@@ -180,8 +186,9 @@ export function CopilotAction() {
             </button>
           </div>
           <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-            <button onClick={() => handleSendMessage("Which accounts are currently at critical risk?")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition">Who is at critical risk?</button>
-            <button onClick={() => handleSendMessage("Draft a Slack escalation for ACC-002")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition">Escalate TechFlow (ACC-002)</button>
+            <button onClick={() => handleSendMessage("Summarize the risk status for my entire portfolio")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Summarize my portfolio</button>
+            <button onClick={() => handleSendMessage("Why is TechFlow (ACC-002) at risk of churning?")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Why is TechFlow churning?</button>
+            <button onClick={() => handleSendMessage("Draft a Slack escalation for ACC-002")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Escalate TechFlow (ACC-002)</button>
             <button onClick={() => handleSendMessage("Reset the demo database to default state")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-red-500/20 hover:border-red-500/40">Reset Demo Data</button>
           </div>
         </div>
