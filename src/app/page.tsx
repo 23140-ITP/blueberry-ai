@@ -7,14 +7,9 @@ import {
   AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database, SearchX
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-
-interface ChatMessage {
-  sender: 'user' | 'agent';
-  text: string;
-  timestamp: string;
-}
+import { RiskRadar } from '@/components/RiskRadar';
+import { EventSimulator } from '@/components/EventSimulator';
+import { CopilotAction } from '@/components/CopilotAction';
 
 interface Account {
   account_id: string;
@@ -41,103 +36,18 @@ export default function Dashboard() {
   const [lastSubmittedEvent, setLastSubmittedEvent] = useState<any>(null);
   const [resetting, setResetting] = useState(false);
 
-  // Chat states
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. Ask me anything about your customer accounts, recent calls, or churn risks.", timestamp: '' }
-  ]);
-  const [inputValue, setInputValue] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sessionId, setSessionId] = useState('');
-
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // Initialize session ID and timestamp on mount to prevent SSR hydration mismatch
-  useEffect(() => {
-    setSessionId(`session-${Date.now()}`);
-    setMessages(prev => [
-      {
-        ...prev[0],
-        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-      }
-    ]);
-  }, []);
-
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, sending]);
-
-  const handleSendMessage = async (textToSend: string) => {
-    if (!textToSend.trim()) return;
-
-    const timestampStr = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const newMsg: ChatMessage = {
-      sender: 'user',
-      text: textToSend,
-      timestamp: timestampStr
-    };
-    setMessages(prev => [...prev, newMsg]);
-    setInputValue('');
-    setSending(true);
-
-    try {
-      const res = await fetch('/api/agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: textToSend,
-          sessionId
-        })
-      });
-
-      const data = await res.json();
-      
-      const agentMsg: ChatMessage = {
-        sender: 'agent',
-        text: data.response || "I received your message but could not generate a response.",
-        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, agentMsg]);
-    } catch (err) {
-      console.error(err);
-      const errorMsg: ChatMessage = {
-        sender: 'agent',
-        text: "Error: Failed to communicate with Google Cloud Agent. Please verify your credentials and network settings.",
-        timestamp: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, errorMsg]);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const [searchMode, setSearchMode] = useState<'client' | 'keyword' | 'vector' | 'hybrid'>('client');
+  // Missing States
+  const [aggregations, setAggregations] = useState<any>(null);
+  const [painPoints, setPainPoints] = useState<any[]>([]);
+  const [searchMode, setSearchMode] = useState<'client' | 'keyword' | 'hybrid' | 'vector'>('client');
+  const [semanticMatches, setSemanticMatches] = useState<Record<string, number>>({});
+  
+  // MCP States
   const [mcpTools, setMcpTools] = useState<any[]>([]);
   const [selectedMcpTool, setSelectedMcpTool] = useState<any>(null);
-  const [mcpArgs, setMcpArgs] = useState<string>('{}');
-  const [mcpResult, setMcpResult] = useState<string>('');
-  const [mcpRunning, setMcpRunning] = useState<boolean>(false);
-  const [semanticMatches, setSemanticMatches] = useState<Record<string, { relevanceScore: number; matchReason: string; matchType: string }>>({});
-  const [aggregations, setAggregations] = useState<any[]>([]);
-
-  // Pain points clustering state
-  const [painPoints, setPainPoints] = useState<any[]>([]);
-
-  // Simulation form states
-  const [simType, setSimType] = useState<'ticket' | 'note' | 'call'>('ticket');
-  const [simAccountId, setSimAccountId] = useState('ACC-002');
-  const [simSubject, setSimSubject] = useState('');
-  const [simDesc, setSimDesc] = useState('');
-  const [simPriority, setSimPriority] = useState('High');
-  const [simNoteText, setSimNoteText] = useState('');
-  const [simAuthor, setSimAuthor] = useState('Sarah (CSM)');
-  const [simTranscript, setSimTranscript] = useState('');
-  const [simSummary, setSimSummary] = useState('');
-  const [simDuration, setSimDuration] = useState(15);
-  const [simulating, setSimulating] = useState(false);
-  const [simMessage, setSimMessage] = useState('');
+  const [mcpArgs, setMcpArgs] = useState('{}');
+  const [mcpRunning, setMcpRunning] = useState(false);
+  const [mcpResult, setMcpResult] = useState('');
 
   const fetchPainPoints = async () => {
     try {
@@ -147,96 +57,24 @@ export default function Dashboard() {
         setPainPoints(data.clusters);
       }
     } catch (err) {
-      console.error('Failed to fetch pain points:', err);
+      console.error('Failed to load pain points:', err);
     }
   };
 
-  const handleSimulateEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSimulating(true);
-    setSimMessage('');
-    setLastSubmittedEvent(null);
+  // Chat and Simulation states are now handled in their respective components
+  const fetchAccountsAndData = async () => {
     try {
-      let body: any = { type: simType, accountId: simAccountId };
-      if (simType === 'ticket') {
-        body.subject = simSubject;
-        body.description = simDesc;
-        body.priority = simPriority;
-      } else if (simType === 'note') {
-        body.noteText = simNoteText;
-        body.author = simAuthor;
-      } else if (simType === 'call') {
-        body.transcript = simTranscript;
-        body.summary = simSummary;
-        body.durationMinutes = simDuration;
+      const resAcc = await fetch('/api/accounts');
+      const dataAcc = await resAcc.json();
+      if (dataAcc.accounts) {
+        setAccounts(dataAcc.accounts);
       }
-
-      const res = await fetch('/api/tools/simulate-event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSimMessage(`Success: ${data.message}`);
-        
-        // Cache submission details for user confirmation banner
-        setLastSubmittedEvent({
-          type: simType === 'ticket' ? 'Ticket' : simType === 'note' ? 'CSM Note' : 'Call Transcript',
-          accountId: simAccountId,
-          companyName: data.companyName || simAccountId,
-          subject: simType === 'ticket' ? simSubject : simType === 'note' ? noteTextSummary(simNoteText) : simSummary,
-          newRiskScore: data.healthUpdate?.newRiskScore,
-          newStatus: data.healthUpdate?.newStatus
-        });
-
-        // Clear input fields
-        setSimSubject('');
-        setSimDesc('');
-        setSimNoteText('');
-        setSimTranscript('');
-        setSimSummary('');
-        
-        // Reload accounts and metrics
-        const resAcc = await fetch('/api/accounts');
-        const dataAcc = await resAcc.json();
-        if (dataAcc.accounts) {
-          setAccounts(dataAcc.accounts);
-        }
-        if (dataAcc.aggregations) {
-          setAggregations(dataAcc.aggregations);
-        }
-        fetchPainPoints();
-      } else {
-        setSimMessage(`Error: ${data.error}`);
+      if (dataAcc.aggregations) {
+        setAggregations(dataAcc.aggregations);
       }
-    } catch (err: any) {
-      setSimMessage(`Error: ${err.message}`);
-    } finally {
-      setSimulating(false);
-    }
-  };
-
-  const noteTextSummary = (text: string) => {
-    if (text.length <= 40) return text;
-    return text.slice(0, 40) + '...';
-  };
-
-  const handleAutoFillDemoData = () => {
-    if (simType === 'ticket') {
-      setSimSubject('API Gateway timeout during peak traffic hours');
-      setSimDesc('Our server integration is getting 504 Gateway Timeouts from the reporting endpoint. This is blocking our core nightly sync.');
-      setSimPriority('Urgent');
-      setSimAccountId('ACC-002');
-    } else if (simType === 'note') {
-      setSimNoteText('TechFlow VP David mentioned they are extremely frustrated with the recent report crashes and are actively scheduling a call with a competitor\'s sales team.');
-      setSimAuthor('Sarah (CSM)');
-      setSimAccountId('ACC-002');
-    } else if (simType === 'call') {
-      setSimTranscript('CSM: Hi team, we reviewed the rate limit issue.\nCustomer: We need it raised to 10k requests/min immediately. If this isn\'t approved today we\'ll have to look elsewhere.');
-      setSimSummary('Urgent request for API quota increase. Threatening vendor review if delayed.');
-      setSimDuration(20);
-      setSimAccountId('ACC-002');
+      fetchPainPoints();
+    } catch (err) {
+      console.error('Error fetching data:', err);
     }
   };
 
@@ -374,21 +212,6 @@ export default function Dashboard() {
       acc.account_id.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
-
-  // Compute KPI metrics dynamically based on filtered accounts list (Reactive Filters - Bug 7)
-  const totalARR = filteredAccounts.reduce((sum, acc) => sum + acc.arr, 0);
-  const criticalCount = filteredAccounts.filter(acc => acc.risk_score >= 0.75).length;
-  const warningCount = filteredAccounts.filter(acc => acc.risk_score >= 0.25 && acc.risk_score < 0.75).length;
-  const healthyCount = filteredAccounts.filter(acc => acc.risk_score < 0.25).length;
-  
-  const avgHealth = filteredAccounts.length 
-    ? Math.round(100 - (filteredAccounts.reduce((sum, acc) => sum + acc.risk_score, 0) / filteredAccounts.length) * 100)
-    : 100;
-
-  const totalCount = filteredAccounts.length || 1;
-  const criticalPct = (criticalCount / totalCount) * 100;
-  const warningPct = (warningCount / totalCount) * 100;
-  const healthyPct = (healthyCount / totalCount) * 100;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground font-sans overflow-hidden">
@@ -564,189 +387,13 @@ export default function Dashboard() {
           
           {/* VIEW 1: RETENTION RADAR OVERVIEW */}
           {activeView === 'radar' && (
-            <div className="flex flex-col gap-6 animate-fade-in">
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total ARR Managed</span>
-                  <span className="text-2xl font-bold text-foreground font-heading">${totalARR.toLocaleString()}</span>
-                  <span className="text-[11px] text-emerald-400 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
-                    {filteredAccounts.length} active customer accounts
-                  </span>
-                </div>
-
-                <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">At Risk Accounts</span>
-                  <span className="text-2xl font-bold text-foreground font-heading">
-                    {criticalCount} <span className="text-sm font-normal text-muted-foreground">critical</span>
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {warningCount} accounts flagged in warning status
-                  </span>
-                </div>
-
-                <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio Health</span>
-                  <span className="text-2xl font-bold text-foreground font-heading">{avgHealth}%</span>
-                  <div className="w-full bg-card h-1.5 rounded-full overflow-hidden mt-1">
-                    <div 
-                      className={`h-full rounded-full ${
-                        avgHealth > 75 ? 'bg-emerald-500' : avgHealth > 45 ? 'bg-amber-500' : 'bg-red-500'
-                      }`} 
-                      style={{ width: `${avgHealth}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Main radar panel split */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Account list card */}
-                <div className="lg:col-span-8 flex flex-col gap-4">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    <span>Account List</span>
-                    <span className="text-[10px] bg-card border border-border text-muted-foreground px-2 py-0.5 rounded-full font-mono">
-                      {filteredAccounts.length}
-                    </span>
-                  </h3>
-
-                  {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="bg-background/40 border border-border rounded-xl p-4.5 flex flex-col gap-3.5 h-[140px] animate-pulse">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-2 w-1/2">
-                              <div className="h-4 bg-muted rounded w-full"></div>
-                              <div className="h-3 bg-muted/60 rounded w-2/3"></div>
-                            </div>
-                            <div className="h-5 bg-muted rounded w-16"></div>
-                          </div>
-                          <div className="flex justify-between items-center border-t border-border/50 pt-2 mt-auto">
-                            <div className="space-y-1 w-16">
-                              <div className="h-2 bg-muted/60 rounded w-full"></div>
-                              <div className="h-3 bg-muted rounded w-3/4"></div>
-                            </div>
-                            <div className="space-y-1 w-16 items-end flex flex-col">
-                              <div className="h-2 bg-muted/60 rounded w-full"></div>
-                              <div className="h-3 bg-muted rounded w-3/4"></div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : filteredAccounts.length === 0 ? (
-                    <div className="bg-background/40 border border-border border-dashed rounded-xl p-12 flex flex-col items-center justify-center text-center text-xs text-muted-foreground">
-                      <SearchX className="h-10 w-10 mb-4 opacity-30" />
-                      <p>No accounts matching "{searchTerm}" found.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {filteredAccounts.map(acc => {
-                        const isCrit = acc.risk_score >= 0.75;
-                        const isWarn = acc.risk_score >= 0.25 && acc.risk_score < 0.75;
-                        const riskPct = Math.round(acc.risk_score * 100);
-
-                        return (
-                          <Link key={acc.account_id} href={`/account/${acc.account_id}`}>
-                            <div className="bg-background border border-border hover:border-border p-4.5 rounded-xl cursor-pointer transition flex flex-col gap-3.5 h-full">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h4 className="text-sm font-bold text-foreground hover:text-blue-400 transition">{acc.company_name}</h4>
-                                  <span className="text-[11px] text-muted-foreground">{acc.account_id} • {acc.industry}</span>
-                                </div>
-                                
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                  isCrit ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50' :
-                                  isWarn ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50' :
-                                  'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50'
-                                }`}>
-                                  {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
-                                </span>
-                              </div>
-
-                              <div className="flex justify-between items-center border-t border-border/50 pt-2 text-xs mt-auto">
-                                <div>
-                                  <span className="text-[10px] text-muted-foreground uppercase block">ARR</span>
-                                  <strong className="text-foreground">${acc.arr.toLocaleString()}</strong>
-                                </div>
-                                <div className="text-right">
-                                  <span className="text-[10px] text-muted-foreground uppercase block">Risk Score</span>
-                                  <strong className={`font-mono ${
-                                    isCrit ? 'text-red-600 dark:text-red-400' : isWarn ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
-                                  }`}>{riskPct}%</strong>
-                                </div>
-                              </div>
-
-                              {/* Semantic Match Reason Snippet */}
-                              {searchMode !== 'client' && semanticMatches[acc.account_id] && (
-                                <div className="mt-1 p-2.5 rounded bg-card/60 border border-border text-[11px] text-muted-foreground leading-relaxed">
-                                  <span className="font-semibold text-blue-400 flex items-center gap-1.5 mb-1.5">
-                                    <Sparkles className="h-3 w-3" />
-                                    {searchMode.charAt(0).toUpperCase() + searchMode.slice(1)} Match ({semanticMatches[acc.account_id].relevanceScore}% Relevance)
-                                  </span>
-                                  <p dangerouslySetInnerHTML={{ __html: semanticMatches[acc.account_id].matchReason }} />
-                                </div>
-                              )}
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Distribution chart panel */}
-                <div className="lg:col-span-4 flex flex-col gap-4">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio Analytics</h3>
-                  <div className="bg-background border border-border rounded-xl p-6 shadow-sm flex flex-col items-center">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider self-start mb-4">Portfolio Distribution</span>
-                    <div className="flex justify-center py-4">
-                      <svg width="120" height="120" viewBox="0 0 36 36" className="-rotate-90">
-                        <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3" />
-                        {filteredAccounts.length > 0 ? (
-                          <>
-                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="3.2" 
-                              strokeDasharray={`${criticalPct} ${100 - criticalPct}`} strokeDashoffset="0" />
-                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f59e0b" strokeWidth="3.2" 
-                              strokeDasharray={`${warningPct} ${100 - warningPct}`} strokeDashoffset={`-${criticalPct}`} />
-                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10b981" strokeWidth="3.2" 
-                              strokeDasharray={`${healthyPct} ${100 - healthyPct}`} strokeDashoffset={`-${criticalPct + warningPct}`} />
-                          </>
-                        ) : (
-                          <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-                        )}
-                      </svg>
-                    </div>
-                    
-                    {/* Legend */}
-                    <div className="w-full flex flex-col gap-2.5 mt-4 text-xs">
-                      <div className="flex justify-between items-center pb-2 border-b border-border/40">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                          Critical Risk (≥75%)
-                        </span>
-                        <strong className="text-foreground">{criticalCount}</strong>
-                      </div>
-                      <div className="flex justify-between items-center pb-2 border-b border-border/40">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                          At Risk (25-74%)
-                        </span>
-                        <strong className="text-foreground">{warningCount}</strong>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                          <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                          Healthy (&lt;25%)
-                        </span>
-                        <strong className="text-foreground">{healthyCount}</strong>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <RiskRadar 
+              filteredAccounts={filteredAccounts}
+              loading={loading}
+              searchTerm={searchTerm}
+              searchMode={searchMode}
+              semanticMatches={semanticMatches}
+            />
           )}
 
           {/* VIEW 2: PRODUCT PAIN POINT CLUSTERS */}
@@ -822,304 +469,12 @@ export default function Dashboard() {
 
           {/* VIEW 3: EVENT SIMULATOR */}
           {activeView === 'simulator' && (
-            <div className="max-w-2xl mx-auto w-full animate-fade-in">
-              <div className="bg-background border border-border rounded-xl p-6 shadow-sm">
-                <div className="flex justify-between items-center mb-4 pb-4 border-b border-border">
-                  <div>
-                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 text-blue-400" />
-                      <span>CSM Ingestion & Event Simulator</span>
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">Simulate real-time support events or CSM updates across the database.</p>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={handleAutoFillDemoData}
-                    className="text-[10px] bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded font-semibold uppercase transition cursor-pointer"
-                  >
-                    Demo Auto-Fill
-                  </button>
-                </div>
-
-                <form onSubmit={handleSimulateEvent} className="flex flex-col gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Target Customer Account</label>
-                      <select
-                        value={simAccountId}
-                        onChange={(e) => setSimAccountId(e.target.value)}
-                        className="w-full p-2.5 text-xs rounded border border-border bg-card/60 text-foreground focus:outline-none"
-                      >
-                        {accounts.map(acc => (
-                          <option key={acc.account_id} value={acc.account_id}>{acc.company_name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Activity Category</label>
-                      <select
-                        value={simType}
-                        onChange={(e) => setSimType(e.target.value as any)}
-                        className="w-full p-2.5 text-xs rounded border border-border bg-card/60 text-foreground focus:outline-none"
-                      >
-                        <option value="ticket">Customer Support Ticket</option>
-                        <option value="note">CSM Health Note</option>
-                        <option value="call">CSM Call Transcript</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {simType === 'ticket' && (
-                    <div className="flex flex-col gap-4 border-t border-border pt-4 animate-fade-in">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Ticket Subject</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. SSO Login failures after maintenance release"
-                          value={simSubject}
-                          onChange={(e) => setSimSubject(e.target.value)}
-                          required
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Ticket Description</label>
-                        <textarea
-                          placeholder="Provide error logs, customer complaints, or steps to reproduce..."
-                          value={simDesc}
-                          onChange={(e) => setSimDesc(e.target.value)}
-                          required
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Ticket Priority</label>
-                        <select
-                          value={simPriority}
-                          onChange={(e) => setSimPriority(e.target.value)}
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground focus:outline-none"
-                        >
-                          <option value="Low">Low Priority</option>
-                          <option value="Medium">Medium Priority</option>
-                          <option value="High">High Priority</option>
-                          <option value="Urgent">Urgent Priority (Triggers risk calculator)</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {simType === 'note' && (
-                    <div className="flex flex-col gap-4 border-t border-border pt-4 animate-fade-in">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Note Content</label>
-                        <textarea
-                          placeholder="Log updates. Sentiment models flag negative feedback (e.g. 'unhappy', 'threaten to cancel')."
-                          value={simNoteText}
-                          onChange={(e) => setSimNoteText(e.target.value)}
-                          required
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider font-semibold">Author</label>
-                        <input
-                          type="text"
-                          value={simAuthor}
-                          onChange={(e) => setSimAuthor(e.target.value)}
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {simType === 'call' && (
-                    <div className="flex flex-col gap-4 border-t border-border pt-4 animate-fade-in">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Phone Transcript</label>
-                        <textarea
-                          placeholder="Customer: The export timeout crashes..."
-                          value={simTranscript}
-                          onChange={(e) => setSimTranscript(e.target.value)}
-                          required
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-700 h-24 resize-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Key Takeaway Summary</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. SSO export crashes frequently during reports."
-                          value={simSummary}
-                          onChange={(e) => setSimSummary(e.target.value)}
-                          required
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground placeholder-zinc-650 focus:outline-none focus:border-zinc-700"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5 font-bold tracking-wider">Duration (Minutes)</label>
-                        <input
-                          type="number"
-                          value={simDuration}
-                          onChange={(e) => setSimDuration(Number(e.target.value))}
-                          className="w-full p-2.5 text-xs rounded border border-border bg-card/40 text-foreground focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={simulating}
-                    className="w-full py-2.5 mt-2 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer transition flex items-center justify-center gap-2"
-                  >
-                    <RefreshCw className={`h-3.5 w-3.5 ${simulating ? 'animate-spin' : ''}`} />
-                    {simulating ? 'Ingesting Event Details...' : 'Simulate Event Ingestion'}
-                  </button>
-
-                  {/* Submission Confirmation Banner (Bug 8 / Suggestion 5) */}
-                  {simMessage && (
-                    <div className={`p-3.5 rounded-xl border flex flex-col gap-2.5 relative ${
-                      simMessage.startsWith('Success') 
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/40' 
-                        : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/40'
-                    }`}>
-                      <button 
-                        type="button" 
-                        onClick={() => setSimMessage('')}
-                        className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition cursor-pointer"
-                        aria-label="Dismiss notification"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                      <span className="font-semibold text-xs pr-6">{simMessage}</span>
-                      {lastSubmittedEvent && (
-                        <div className="text-[11px] text-muted-foreground mt-1 border-t border-border/80 pt-2.5 flex flex-col gap-2">
-                          <div className="flex justify-between items-center">
-                            <span>Ingested Event:</span>
-                            <strong className="text-foreground font-mono text-[10px] uppercase">{lastSubmittedEvent.type}</strong>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span>Target Account:</span>
-                            <strong className="text-foreground">{lastSubmittedEvent.companyName} ({lastSubmittedEvent.accountId})</strong>
-                          </div>
-                          {lastSubmittedEvent.subject && (
-                            <div className="flex justify-between items-center">
-                              <span>Detail Summary:</span>
-                              <strong className="text-zinc-250 truncate max-w-[70%]">{lastSubmittedEvent.subject}</strong>
-                            </div>
-                          )}
-                          {lastSubmittedEvent.newRiskScore !== null && (
-                            <div className="flex justify-between items-center">
-                              <span>Recalculated Score:</span>
-                              <strong className="text-blue-400 font-mono">
-                                {Math.round(lastSubmittedEvent.newRiskScore * 100)}% ({lastSubmittedEvent.newStatus})
-                              </strong>
-                            </div>
-                          )}
-                          <Link href={`/account/${lastSubmittedEvent.accountId}`}>
-                            <button type="button" className="w-full mt-2 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 rounded border border-blue-500/30 text-[10px] font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5">
-                              Open Customer War Room
-                            </button>
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </form>
-              </div>
-            </div>
+            <EventSimulator accounts={accounts} onSimulateComplete={fetchAccountsAndData} />
           )}
 
           {/* VIEW 4: BLUEBERRY COPILOT */}
           {activeView === 'copilot' && (
-            <div className="max-w-3xl mx-auto w-full animate-fade-in">
-              <div className="bg-background border border-border rounded-xl flex flex-col h-[650px] overflow-hidden shadow-sm">
-                
-                {/* Chat Header */}
-                <div className="p-4.5 border-b border-border flex items-center gap-2.5">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full inline-block shadow-[0_0_8px_#10b981]"></span>
-                  <div>
-                    <h2 className="text-xs font-bold text-foreground">Blueberry Copilot Workspace</h2>
-                    <span className="text-[10px] text-muted-foreground">Connected to Dialogflow CX Google Cloud Agent</span>
-                  </div>
-                </div>
-
-                {/* Messages list */}
-                <div className="flex-grow p-5 overflow-y-auto flex flex-col gap-4">
-                  {messages.map((msg, idx) => {
-                    const isUser = msg.sender === 'user';
-                    return (
-                      <div 
-                        key={idx} 
-                        className={`max-w-[80%] ${isUser ? 'self-end' : 'self-start'} animate-fade-in`}
-                      >
-                        <div className={`p-4 rounded-xl text-sm leading-relaxed prose prose-invert max-w-none ${
-                          isUser 
-                            ? 'bg-blue-600 text-foreground rounded-br-none prose-p:text-white prose-strong:text-white' 
-                            : 'bg-card border border-border text-foreground rounded-bl-none prose-p:text-foreground prose-strong:text-foreground'
-                        }`}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {msg.text}
-                          </ReactMarkdown>
-                        </div>
-                        <span className={`text-[9px] text-muted-foreground mt-1 block ${isUser ? 'text-right' : 'text-left'}`}>
-                          {msg.timestamp}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {sending && (
-                    <div className="self-start flex flex-col gap-1.5">
-                      <div className="p-2.5 rounded-lg bg-card border border-border flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse"></span>
-                        <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-75"></span>
-                        <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-pulse delay-150"></span>
-                      </div>
-                      <span className="text-[9px] text-muted-foreground">Querying Agent...</span>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-
-                {/* Quick Actions Panel */}
-                <div className="p-3 border-t border-border bg-background/60 flex flex-wrap gap-1.5 justify-center">
-                  <button 
-                    onClick={() => handleSendMessage("Which accounts are currently at critical risk?")} 
-                    disabled={sending}
-                    className="text-[10px] px-3 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
-                  >
-                    ⚠️ Risks
-                  </button>
-                  <button 
-                    onClick={() => handleSendMessage("Summarize support ticket issues across the portfolio")} 
-                    disabled={sending}
-                    className="text-[10px] px-3 py-1 rounded-full border border-border bg-card hover:border-border text-muted-foreground hover:text-foreground cursor-pointer transition"
-                  >
-                    🎫 Tickets
-                  </button>
-                </div>
-
-                {/* Chat Input form */}
-                <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue); }} className="p-4 border-t border-border flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Ask copilot anything..."
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    disabled={sending}
-                    className="flex-grow pl-3 pr-2 py-2 text-xs rounded-md border border-border bg-background text-foreground placeholder-zinc-600 focus:outline-none focus:border-zinc-755"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sending || !inputValue.trim()}
-                    className="px-4 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 transition"
-                  >
-                    Send
-                  </button>
-                </form>
-              </div>
-            </div>
+            <CopilotAction />
           )}
 
           {/* VIEW 5: MODEL CONTEXT PROTOCOL */}

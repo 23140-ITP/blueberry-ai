@@ -1,0 +1,8 @@
+[Console] INFO: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[Console] LOG: [HMR] connected
+[Console] LOG: [Fast Refresh] rebuilding
+[Console] LOG: [Fast Refresh] done in 1126ms
+[Console] INFO: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[Console] LOG: [HMR] connected
+[Console] LOG: [Fast Refresh] rebuilding
+[Console] LOG: [Fast Refresh] done in 607ms
