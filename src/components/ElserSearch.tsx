@@ -5,19 +5,34 @@ export function ElserSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
     setLoading(true);
+    setError(null);
     try {
       // For this demo, we'll hit the standard semantic search endpoint 
       // but pretend it's ELSER powered.
       const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(query)}&mode=semantic`);
+      if (!res.ok) {
+        throw new Error('Search failed');
+      }
       const data = await res.json();
-      setResults(data.matches ? Object.entries(data.matches).map(([id, score]) => ({ id, score })) : []);
+      if (data.matches) {
+        setResults(Object.entries(data.matches).map(([id, score]) => ({ id, score })));
+      } else if (data.data && Array.isArray(data.data)) {
+        setResults(data.data.map((hit: any) => ({
+          id: hit._source?.ticket_id || hit._source?.note_id || hit._source?.call_id || hit._id,
+          score: hit._score || 1.0
+        })));
+      } else {
+        setResults([]);
+      }
     } catch (err) {
       console.error(err);
+      setError('Search failed, try again later.');
     } finally {
       setLoading(false);
     }
@@ -74,7 +89,13 @@ export function ElserSearch() {
         </div>
       )}
 
-      {results.length === 0 && !loading && query && (
+      {error && (
+        <div className="p-4 bg-red-950/30 border border-red-900 text-red-400 rounded-lg text-sm flex items-center gap-2 mt-4">
+          <span>{error}</span>
+        </div>
+      )}
+
+      {results.length === 0 && !loading && query && !error && (
         <div className="p-8 text-center text-sm text-muted-foreground border border-dashed border-border rounded-xl">
           No matches found for that specific semantic intent.
         </div>

@@ -5,26 +5,44 @@ export function AgentLogs() {
   const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
-    // Mock incoming log stream
-    const mockLogs = [
-      { time: '10:02:41.102', level: 'INFO', agent: 'supportResolutionAgent', message: 'Invoked tool searchIssues with query: "SSO timeout".' },
-      { time: '10:02:41.842', level: 'DEBUG', agent: 'Elastic MCP', message: 'Executed ES|QL query on support_tickets index. Returned 3 hits.' },
-      { time: '10:02:42.510', level: 'INFO', agent: 'supportResolutionAgent', message: 'Analyzing hits to formulate response...' },
-      { time: '10:02:44.201', level: 'WARN', agent: 'churnInvestigatorAgent', message: 'High negative sentiment detected in ticket TKT-892.' },
-      { time: '10:02:45.000', level: 'ERROR', agent: 'actionAgent', message: 'Failed to escalate account. Missing CSM assignment ID.' }
+    // Continuous Mock incoming log stream
+    const possibleAgents = ['supportResolutionAgent', 'Elastic MCP', 'churnInvestigatorAgent', 'actionAgent', 'billingAgent', 'complianceAgent'];
+    const possibleMessages = [
+      'Invoked tool searchIssues with query: "SSO timeout".',
+      'Executed ES|QL query on support_tickets index. Returned 3 hits.',
+      'Analyzing hits to formulate response...',
+      'High negative sentiment detected in recent ticket.',
+      'Failed to escalate account. Missing CSM assignment ID.',
+      'Checking billing records for invoice discrepancies.',
+      'Found HIPAA compliance violation flag in audit logs.',
+      'Processing user request for data export.',
+      'Simulating What-If scenario: 10% churn increase.',
+      'Drafting email response to customer via Gmail integration.'
     ];
     
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < mockLogs.length) {
-        setLogs(prev => [...prev, mockLogs[i]]);
-        i++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 800);
+    let interval: any;
+    const streamLogs = () => {
+      const now = new Date();
+      const newLog = {
+        time: now.toISOString().substring(11, 23),
+        level: Math.random() > 0.8 ? (Math.random() > 0.5 ? 'WARN' : 'ERROR') : (Math.random() > 0.5 ? 'INFO' : 'DEBUG'),
+        agent: possibleAgents[Math.floor(Math.random() * possibleAgents.length)],
+        message: possibleMessages[Math.floor(Math.random() * possibleMessages.length)]
+      };
+      
+      setLogs(prev => {
+        const next = [...prev, newLog];
+        if (next.length > 100) return next.slice(next.length - 100);
+        return next;
+      });
+      
+      // Random delay between 500ms and 3000ms
+      interval = setTimeout(streamLogs, 500 + Math.random() * 2500);
+    };
+
+    streamLogs();
     
-    return () => clearInterval(interval);
+    return () => clearTimeout(interval);
   }, []);
 
   return (

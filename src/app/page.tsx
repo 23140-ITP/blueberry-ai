@@ -256,7 +256,7 @@ export default function Dashboard() {
             {[
               { id: 'radar', label: 'Retention Radar', icon: LayoutDashboard, desc: 'Overview of your portfolio risk, calculated via support sentiment and recent events.' },
               { id: 'pain-points', label: 'Pain-Point Clusters', icon: Layers, desc: 'Common issues grouped dynamically using kNN semantic search vectors.' },
-              { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: '/account/ACC-002', desc: 'Deep dive into a specific customer with What-If simulations and action planning.' },
+              { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: accounts.length > 0 ? `/account/${accounts[0].account_id}` : '/account/ACC-002', desc: 'Deep dive into the highest-risk customer with What-If simulations and action planning.' },
               { id: 'simulator', label: 'Event Simulator', icon: RefreshCw, desc: 'Trigger mock CSM touchpoints or support tickets to see real-time risk updates.' },
               { id: 'copilot', label: 'Blueberry Copilot', icon: Brain, desc: 'AI assistant powered by GCP Agent Builder to summarize context and recommend runbooks.' },
               { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal, desc: 'Model Context Protocol console to directly interact with Elasticsearch indices.' },
