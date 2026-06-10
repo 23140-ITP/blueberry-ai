@@ -318,16 +318,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
           ) : (
             <span className="text-foreground">{account?.company_name || accountId}</span>
           )}
-          <span>/</span>
-          <span className="text-blue-400">Customer War Room</span>
         </div>
-        <Link 
-          href="/?view=copilot" 
-          className="cursor-pointer text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition"
-        >
-          <Brain className="h-3.5 w-3.5" />
-          Open Blueberry Copilot
-        </Link>
       </div>
 
       {loading ? (
@@ -450,7 +441,9 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                     }}
                     className="text-[10px] bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground px-2 py-0.5 rounded font-semibold transition cursor-pointer"
                   >
-                    Recalculate & Sync
+                    <Tooltip content="Fetch fresh data and recalculate risk score" position="top">
+                      Recalculate & Sync
+                    </Tooltip>
                   </button>
                   <span className="text-xs text-muted-foreground">
                     Status: <strong style={{ color: healthColor }}>{dynamicRiskData?.status || account?.status}</strong>
@@ -487,7 +480,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <div>
                     <h4 className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      Counterfactual Simulator
+                      What-If Risk Reducer
                       <Tooltip content="Projects future risk by simulating the resolution of open support tickets in real-time." position="top">
                         <Info className="h-3 w-3 text-blue-500 cursor-help" />
                       </Tooltip>
@@ -505,7 +498,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               <div className="flex justify-between items-center pb-2 border-b border-border">
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   <Brain className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Runbook Resolver</span>
+                  <span>Troubleshooting Steps</span>
                 </h2>
                 {selectedTicketId && (
                   <button 
@@ -519,7 +512,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               
               {!selectedTicketId ? (
                 <div className="py-4 text-center text-muted-foreground text-xs border border-dashed border-border rounded-lg leading-relaxed">
-                  Click "🔍 Runbook" on any support ticket in the timeline to pull up the matching troubleshooting procedures.
+                  No runbooks triggered yet. Open a support ticket in the timeline to load one.
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -553,17 +546,17 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                   {isMemoryBankOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   <Brain className="h-3.5 w-3.5 text-blue-450" />
-                  <span>Agent Memory Bank</span>
+                  <span>Smart Notes</span>
                 </h2>
-                <span className="text-[10px] bg-blue-950/20 text-blue-400 border border-blue-900/40 px-2 py-0.5 rounded font-mono">
-                  {memories.length} facts cached
+                <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded font-mono">
+                  {memories.length} notes saved
                 </span>
               </div>
               
               {isMemoryBankOpen && (
                 <div className="flex flex-col gap-3.5 animate-fade-in mt-1">
               <p className="text-[11px] text-muted-foreground">
-                Long-term preferences and escalation triggers cached in the <code className="text-[10px] text-blue-400 bg-card px-1 py-0.5 rounded">agent_memory</code> index.
+                Long-term preferences and escalation triggers automatically remembered by Blueberry AI.
               </p>
 
               {/* Memory List */}
@@ -783,7 +776,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              The account status has been updated to <strong className="text-red-400 font-bold">Critical (99% Risk)</strong> in Elasticsearch. An escalation milestone has been written to the agent memory bank.
+              The account status has been updated to <strong className="text-red-400 font-bold">Critical (99% Risk)</strong> in Elasticsearch. An escalation milestone has been written to the Smart Notes.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">

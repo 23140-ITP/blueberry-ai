@@ -12,7 +12,7 @@ interface ChatMessage {
 
 export function CopilotAction() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. Ask me anything about your customer accounts, recent calls, or churn risks.", timestamp: '' }
+    { sender: 'agent', text: "Hello! I am your Blueberry Copilot. Ask me anything about your customer accounts, recent calls, or churn risks.\n\n**Here are a few things you can ask me:**\n- *Summarize my portfolio risk*\n- *Why is TechFlow churning?*\n- *Draft an escalation for TechFlow*\n- *What are the latest pain points?*", timestamp: '' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [sending, setSending] = useState(false);
@@ -97,11 +97,13 @@ export function CopilotAction() {
           <div>
             <h2 className="text-xs font-bold text-foreground flex items-center gap-1.5">
               Blueberry Copilot Workspace
-              <Tooltip content="Powered by Google Cloud Agent Builder. Capable of executing Elastic MCP tools like checking dynamic risk, escalating accounts, and finding pain-point clusters." position="bottom">
+              <Tooltip content="Capable of checking dynamic risk, escalating accounts, and finding pain-point clusters." position="bottom">
                 <Info className="h-3.5 w-3.5 text-emerald-500 cursor-help" />
               </Tooltip>
             </h2>
-            <span className="text-[10px] text-muted-foreground">Connected to Dialogflow CX Google Cloud Agent</span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[10px] text-emerald-500 font-semibold">AI Assistant Online</span>
+            </div>
           </div>
         </div>
 
@@ -187,9 +189,9 @@ export function CopilotAction() {
           </div>
           <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
             <button onClick={() => handleSendMessage("Summarize the risk status for my entire portfolio")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Summarize my portfolio</button>
-            <button onClick={() => handleSendMessage("Why is TechFlow (ACC-002) at risk of churning?")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Why is TechFlow churning?</button>
-            <button onClick={() => handleSendMessage("Draft a Slack escalation for ACC-002")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Escalate TechFlow (ACC-002)</button>
-            <button onClick={() => handleSendMessage("Reset the demo database to default state")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-red-500/20 hover:border-red-500/40">Reset Demo Data</button>
+            <button onClick={() => handleSendMessage("Why is TechFlow churning?")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Why is TechFlow churning?</button>
+            <button onClick={() => handleSendMessage("Draft a Slack escalation for TechFlow")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Escalate TechFlow</button>
+            <button onClick={() => handleSendMessage("Reset the sample data to default state")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-red-500/20 hover:border-red-500/40">Reset Sample Data</button>
           </div>
         </div>
       </div>

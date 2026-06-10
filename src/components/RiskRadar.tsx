@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { SearchX, Sparkles, Search, SlidersHorizontal } from 'lucide-react';
+import { SearchX, Sparkles, Search, SlidersHorizontal, Info } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 import { useState } from 'react';
 
 interface RiskRadarProps {
@@ -12,6 +13,18 @@ interface RiskRadarProps {
   setSearchMode: React.Dispatch<React.SetStateAction<any>>;
   setSemanticMatches: (m: Record<string, any>) => void;
 }
+
+const getRiskColor = (score: number) => {
+  if (score >= 0.75) return '#ef4444'; // red-500
+  if (score >= 0.25) return '#eab308'; // yellow-500
+  return '#10b981'; // emerald-500
+};
+
+const getRiskBadgeStyle = (score: number) => {
+  if (score >= 0.75) return 'bg-red-500/10 text-red-500 border-red-500/20';
+  if (score >= 0.25) return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+  return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+};
 
 export function RiskRadar({ 
   filteredAccounts, loading, searchTerm, searchMode, semanticMatches,
@@ -63,18 +76,26 @@ export function RiskRadar({
         </div>
 
         <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">At Risk Accounts</span>
-          <span className="text-2xl font-bold text-foreground font-heading">
-            {criticalCount} <span className="text-sm font-normal text-muted-foreground">critical</span>
-          </span>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            AT RISK ACCOUNTS
+            <Tooltip content="Accounts with a Risk Score > 75%" position="top">
+              <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+            </Tooltip>
+          </h3>
+          <p className="text-3xl font-black text-red-400 font-mono mt-1">{criticalCount} <span className="text-sm font-semibold text-muted-foreground">critical</span></p>
           <span className="text-[11px] text-muted-foreground">
             {warningCount} accounts flagged in warning status
           </span>
         </div>
 
         <div className="bg-background border border-border rounded-xl p-5 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Portfolio Health</span>
-          <span className="text-2xl font-bold text-foreground font-heading">{avgHealth}%</span>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            PORTFOLIO HEALTH
+            <Tooltip content="% of accounts not at risk of churning." position="top">
+              <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+            </Tooltip>
+          </h3>
+          <p className="text-3xl font-black text-emerald-400 font-mono mt-1">{Math.round(healthyPct)}%</p>
           <div className="w-full bg-card h-1.5 rounded-full overflow-hidden mt-1">
             <div 
               className={`h-full rounded-full ${
@@ -114,10 +135,20 @@ export function RiskRadar({
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    {mode === 'client' && 'Local'}
-                    {mode === 'keyword' && 'BM25'}
-                    {mode === 'vector' && 'Vector'}
-                    {mode === 'hybrid' && 'Hybrid'}
+                    <Tooltip 
+                      content={
+                        mode === 'client' ? 'Filter list locally on device' :
+                        mode === 'keyword' ? 'Standard keyword matching' :
+                        mode === 'vector' ? 'Smart conceptual search' :
+                        'AI-Powered combination of keywords and concepts'
+                      } 
+                      position="top"
+                    >
+                      {mode === 'client' && 'Basic Search'}
+                      {mode === 'keyword' && 'Standard Search'}
+                      {mode === 'vector' && 'Smart Search'}
+                      {mode === 'hybrid' && 'AI-Powered Search'}
+                    </Tooltip>
                   </button>
                 ))}
               </div>
@@ -201,7 +232,6 @@ export function RiskRadar({
               {displayedAccounts.map(acc => {
                 const isCrit = acc.risk_score >= 0.75;
                 const isWarn = acc.risk_score >= 0.25 && acc.risk_score < 0.75;
-                const riskPct = Math.round(acc.risk_score * 100);
 
                 return (
                   <Link key={acc.account_id} href={`/account/${acc.account_id}`}>
@@ -211,13 +241,18 @@ export function RiskRadar({
                           <h4 className="text-base font-black text-foreground">{acc.company_name}</h4>
                           <span className="text-xs text-muted-foreground font-medium">{acc.account_id} • {acc.industry}</span>
                         </div>
-                        <div className={`flex flex-col items-end`}>
-                          <span className={`text-2xl font-black font-mono leading-none ${
-                            isCrit ? 'text-red-500' : isWarn ? 'text-amber-500' : 'text-emerald-500'
-                          }`}>
-                            {riskPct}%
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-2xl font-black font-mono tracking-tight" style={{ color: getRiskColor(acc.risk_score) }}>
+                              {Math.round(acc.risk_score * 100)}%
+                            </span>
+                            <Tooltip content="Risk Score indicates likelihood of churn. >75% = Critical." position="top">
+                              <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
+                            </Tooltip>
+                          </div>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${getRiskBadgeStyle(acc.risk_score)} min-w-[70px] text-center whitespace-nowrap`}>
+                            {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
                           </span>
-                          <span className="text-[9px] uppercase font-bold text-muted-foreground mt-1">Risk Score</span>
                         </div>
                       </div>
 

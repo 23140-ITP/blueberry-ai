@@ -179,8 +179,11 @@ async function main() {
   const ticketSubjects = ['SSO Login failure', 'Billing inquiry', 'Feature request: dark mode', 'API rate limit exceeded', 'Dashboard loading slowly', 'How to add users', 'Cannot reset password', 'Data sync delayed', 'Report generation failed', 'Missing invoice'];
   const ticketDescs = ['Experiencing issues when trying to perform this action. Need support.', 'This feature is critical for our team. When will it be available?', 'We are getting errors intermittently.', 'Please advise on how to proceed with the configuration.', 'The system is unresponsive during peak hours.'];
   
-  const noteSentiments = ['Positive', 'Neutral', 'Negative'];
-  const noteTexts = ['Routine check-in completed. Customer is satisfied.', 'Discussed upcoming renewal. Some concerns about pricing, but generally positive.', 'Training session completed for the new admins.', 'Customer requested a feature that is on our Q3 roadmap.', 'Escalated a support ticket regarding slow performance.', 'Executive sponsor has changed, need to establish new relationship.'];
+  const noteTexts = {
+    Positive: ['Routine check-in completed. Customer is satisfied.', 'Training session completed for the new admins.', 'Discussed upcoming renewal. Some concerns about pricing, but generally positive.'],
+    Neutral: ['Customer requested a feature that is on our Q3 roadmap.', 'Executive sponsor has changed, need to establish new relationship.', 'Scheduled a follow up call for next week.'],
+    Negative: ['Escalated a support ticket regarding slow performance.', 'Customer is frustrated with the recent downtime.', 'User adoption is dropping, need to schedule a re-training.']
+  };
   
   const callTopics = ['QBR Review', 'Onboarding Kickoff', 'Technical Troubleshooting', 'Renewal Discussion', 'Feature Walkthrough'];
 
@@ -205,12 +208,16 @@ async function main() {
 
     const numNotes = Math.floor(Math.random() * 4) + 5; // 5 to 8
     for (let i = 0; i < numNotes; i++) {
+      const generatedSentiment = account.risk_score > 0.6 ? (Math.random() > 0.3 ? 'Negative' : 'Neutral') : (Math.random() > 0.5 ? 'Positive' : 'Neutral');
+      const texts = noteTexts[generatedSentiment as keyof typeof noteTexts];
+      const text = texts[Math.floor(Math.random() * texts.length)];
+
       notes.push({
         note_id: `N-${noteCounter++}`,
         account_id: account.account_id,
         author: ['Sarah (CSM)', 'John (CSM)', 'Lisa (CSM)', 'Mark (CSM)'][Math.floor(Math.random() * 4)],
-        note_text: noteTexts[Math.floor(Math.random() * noteTexts.length)],
-        sentiment: account.risk_score > 0.6 ? (Math.random() > 0.3 ? 'Negative' : 'Neutral') : (Math.random() > 0.5 ? 'Positive' : 'Neutral'),
+        note_text: text,
+        sentiment: generatedSentiment,
         created_at: randomDate(new Date(2026, 0, 1), new Date(2026, 5, 10))
       });
     }

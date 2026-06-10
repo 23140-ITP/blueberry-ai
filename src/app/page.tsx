@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isElasticGroupOpen, setIsElasticGroupOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [devMode, setDevMode] = useState(false);
 
   // Interactive UI Modal States
   const [selectedCluster, setSelectedCluster] = useState<any>(null);
@@ -306,26 +307,26 @@ export default function Dashboard() {
                 onClick={() => setIsElasticGroupOpen(!isElasticGroupOpen)}
                 className="w-full flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2 hover:text-foreground cursor-pointer"
               >
-                <span>Elasticsearch Integrations</span>
+                <span>Advanced Settings</span>
                 <span className="text-[8px]">{isElasticGroupOpen ? '▼' : '▶'}</span>
               </button>
               
               {isElasticGroupOpen && (
                 <div className="flex flex-col gap-1 pl-1 border-l border-border/50 ml-3">
                   {[
-                    { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal, desc: 'Model Context Protocol console to directly interact with Elasticsearch indices.' },
+                    { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal, desc: 'Model Context Protocol console to directly interact with Elasticsearch indices.', devOnly: true },
                     { id: 'elser-search', label: 'ELSER Semantic Search', icon: Sparkles, desc: 'Perform semantic search using Elastic Learned Sparse EncodeR models.' },
                     { id: 'apm-dashboard', label: 'Elastic APM Tracing', icon: Gauge, desc: 'Monitor end-to-end API latency and distributed traces.' },
                     { id: 'anomaly-detection', label: 'Anomaly Detection', icon: TrendingDown, desc: 'Unsupervised ML jobs alerting on unusual ticket volume or sentiment drops.' },
                     { id: 'hybrid-search', label: 'Hybrid Search (RRF)', icon: GitMerge, desc: 'Combine keyword and vector search using Reciprocal Rank Fusion.' },
                     { id: 'emerging-trends', label: 'Emerging Trends', icon: TrendingUp, desc: 'Discover unknown churn drivers via Significant Terms aggregation.' },
-                    { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare, desc: 'Live stream of thought logs from GCP agents executing MCP tools.' },
+                    { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare, desc: 'Live stream of thought logs from GCP agents executing MCP tools.', devOnly: true },
                     { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock, desc: 'Simulate Document-Level Security filtering by user region.' },
                     { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database, desc: 'Visualize Index Lifecycle Management (Hot, Warm, Cold nodes).' },
                     { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon, desc: 'Generate dense vectors and find nearest neighbors via kNN.' },
                     { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe, desc: 'Run federated searches across North America and Europe clusters.' },
-                    { id: 'raw-data', label: 'Raw Data Explorer', icon: Database, desc: 'Direct view into the Elasticsearch indices powering the Blueberry AI features.' }
-                  ].map(item => {
+                    { id: 'raw-data', label: 'Raw Data Explorer', icon: Database, desc: 'Direct view into the Elasticsearch indices powering the Blueberry AI features.', devOnly: true }
+                  ].filter(item => !item.devOnly || devMode).map(item => {
                     const Icon = item.icon;
                     const isActive = activeView === item.id;
                     
@@ -374,7 +375,7 @@ export default function Dashboard() {
               className="flex-grow py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded text-[10px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <Database className="h-3 w-3" />
-              {resetting ? 'Resetting...' : 'Reset Demo'}
+              {resetting ? 'Resetting...' : 'Reset Sample Data'}
             </button>
             <div className="shrink-0">
               <ThemeToggle />
@@ -406,6 +407,15 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <span className="font-medium">GCP Agent Builder</span>
                   <span className="text-emerald-400 font-mono">Ready</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Developer Mode</span>
+                  <div 
+                    onClick={() => setDevMode(!devMode)}
+                    className={`w-6 h-3.5 rounded-full cursor-pointer relative transition-colors ${devMode ? 'bg-blue-500' : 'bg-muted-foreground/30'}`}
+                  >
+                    <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all ${devMode ? 'left-[11px]' : 'left-0.5'}`}></div>
+                  </div>
                 </div>
               </div>
             )}
@@ -509,13 +519,17 @@ export default function Dashboard() {
                         >
                           <div className="flex justify-between items-start gap-4">
                             <div>
-                              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
-                                {cluster.count} Open {cluster.count === 1 ? 'ticket' : 'tickets'} • Click to Drill down
+                              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider group-hover:underline">
+                                {cluster.count} Open {cluster.count === 1 ? 'ticket' : 'tickets'} • View detailed analysis →
                               </span>
                               <h4 className="text-base font-semibold text-foreground mt-0.5">{cluster.category}</h4>
                             </div>
                             <div className="text-right">
-                              <span className="text-[10px] text-muted-foreground uppercase block">ARR-at-Risk</span>
+                              <span className="text-[10px] text-muted-foreground uppercase block">
+                                <Tooltip content="Annual Recurring Revenue at risk of churning." position="top">
+                                  <span className="cursor-help border-b border-dashed border-muted-foreground/50 pb-0.5">ARR-at-Risk</span>
+                                </Tooltip>
+                              </span>
                               <span className={`font-mono text-base font-bold ${color}`}>${cluster.arrAtRisk.toLocaleString()}</span>
                             </div>
                           </div>
@@ -800,7 +814,7 @@ export default function Dashboard() {
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-              A comprehensive breakdown of all accounts, their revenue, and dynamic risk statuses currently index-locked in Elasticsearch.
+              A detailed breakdown of all accounts, displaying their current revenue and assessed risk of churning.
             </p>
 
             <div className="overflow-x-auto border border-border rounded-xl">

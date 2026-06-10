@@ -110,16 +110,16 @@ export function EventSimulator({ accounts, onSimulateComplete }: EventSimulatorP
           <div>
             <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
               <RefreshCw className="h-4 w-4 text-blue-400" />
-              <span>CSM Ingestion & Event Simulator</span>
+              <span>Event Simulator</span>
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">Simulate real-time support events or CSM updates across the database.</p>
+            <p className="text-xs text-muted-foreground mt-1">Log a new support ticket or customer note. This will update the account's risk score in real time.</p>
           </div>
           <button 
             type="button"
             onClick={handleAutoFillDemoData}
             className="text-[10px] bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded font-semibold uppercase transition cursor-pointer"
           >
-            Demo Auto-Fill
+            Auto-Fill Example
           </button>
         </div>
 
@@ -256,7 +256,7 @@ export function EventSimulator({ accounts, onSimulateComplete }: EventSimulatorP
             className="w-full py-2.5 mt-2 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer transition flex items-center justify-center gap-2"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${simulating ? 'animate-spin' : ''}`} />
-            {simulating ? 'Ingesting Event Details...' : 'Simulate Event Ingestion'}
+            {simulating ? 'Saving...' : 'Log This Event'}
           </button>
 
           {/* Submission Confirmation Banner */}

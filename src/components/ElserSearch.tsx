@@ -21,7 +21,10 @@ export function ElserSearch() {
       }
       const data = await res.json();
       if (data.matches) {
-        setResults(Object.entries(data.matches).map(([id, score]) => ({ id, score })));
+        setResults(Object.entries(data.matches).map(([id, matchObj]: [string, any]) => ({ 
+          id, 
+          score: typeof matchObj === 'number' ? matchObj : matchObj?.relevanceScore || 1.0 
+        })));
       } else if (data.data && Array.isArray(data.data)) {
         setResults(data.data.map((hit: any) => ({
           id: hit._source?.ticket_id || hit._source?.note_id || hit._source?.call_id || hit._id,
