@@ -17,7 +17,7 @@ export function HybridSearch() {
             Compare standard keyword search (BM25) against semantic search (kNN) and see how Reciprocal Rank Fusion (RRF) provides the optimal combined result set.
           </p>
         </div>
-        <button className="p-2 bg-card border border-border rounded-lg text-muted-foreground hover:text-foreground cursor-pointer transition">
+        <button className="p-2 bg-card border border-border rounded-lg text-muted-foreground cursor-not-allowed opacity-80">
           <SlidersHorizontal className="h-4 w-4" />
         </button>
       </div>

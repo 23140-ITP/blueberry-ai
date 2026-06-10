@@ -35,7 +35,7 @@ export function EmergingTrends() {
           </div>
           
           {trends.map((trend, i) => (
-            <div key={i} className="grid grid-cols-12 gap-4 items-center bg-background border border-border rounded-lg p-3 hover:border-orange-500/50 transition-colors cursor-pointer group">
+            <div key={i} className="grid grid-cols-12 gap-4 items-center bg-background border border-border rounded-lg p-3 hover:border-orange-500/50 transition-colors cursor-not-allowed group">
               <div className="col-span-5 flex items-center gap-2">
                 <Search className="h-3.5 w-3.5 text-muted-foreground group-hover:text-orange-400 transition" />
                 <span className="text-xs font-bold text-foreground group-hover:text-orange-400 transition">"{trend.term}"</span>

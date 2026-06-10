@@ -12,7 +12,7 @@ export function AgentLogs() {
       'Executed ES|QL query on support_tickets index. Returned 3 hits.',
       'Analyzing hits to formulate response...',
       'High negative sentiment detected in recent ticket.',
-      'Failed to escalate account. Missing CSM assignment ID.',
+      'Successfully mapped user query to structured ES|QL parameters.',
       'Checking billing records for invoice discrepancies.',
       'Found HIPAA compliance violation flag in audit logs.',
       'Processing user request for data export.',

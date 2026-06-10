@@ -69,14 +69,14 @@ export function VectorSearch() {
                   <span className="font-mono text-sm font-bold text-foreground">TKT-112</span>
                   <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono border border-indigo-500/20">Cosine Sim: 0.942</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Found via exact vector distance calculation.</p>
+                <p className="text-xs text-muted-foreground">Similar customer escalation detected via dense vector matching.</p>
               </div>
               <div className="p-4 bg-card border border-border rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-mono text-sm font-bold text-foreground">TKT-084</span>
                   <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono border border-indigo-500/20">Cosine Sim: 0.891</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Found via exact vector distance calculation.</p>
+                <p className="text-xs text-muted-foreground">Similar customer escalation detected via dense vector matching.</p>
               </div>
             </div>
           </div>

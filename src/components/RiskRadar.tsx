@@ -32,21 +32,8 @@ export function RiskRadar({
 }: RiskRadarProps) {
   const [sortOrder, setSortOrder] = useState<'risk_desc' | 'risk_asc' | 'arr_desc'>('risk_desc');
   const [statusFilter, setStatusFilter] = useState<'all' | 'critical' | 'warning' | 'healthy'>('all');
-  const totalARR = filteredAccounts.reduce((sum, acc) => sum + acc.arr, 0);
-  const criticalCount = filteredAccounts.filter(acc => acc.risk_score >= 0.75).length;
-  const warningCount = filteredAccounts.filter(acc => acc.risk_score >= 0.25 && acc.risk_score < 0.75).length;
-  const healthyCount = filteredAccounts.filter(acc => acc.risk_score < 0.25).length;
-  
-  const avgHealth = filteredAccounts.length 
-    ? Math.round(100 - (filteredAccounts.reduce((sum, acc) => sum + acc.risk_score, 0) / filteredAccounts.length) * 100)
-    : 100;
 
-  const totalCount = filteredAccounts.length || 1;
-  const criticalPct = (criticalCount / totalCount) * 100;
-  const warningPct = (warningCount / totalCount) * 100;
-  const healthyPct = (healthyCount / totalCount) * 100;
-
-  // Apply local sorting and filtering
+  // Apply local sorting and filtering FIRST
   const displayedAccounts = [...filteredAccounts]
     .filter(acc => {
       if (statusFilter === 'all') return true;
@@ -59,8 +46,28 @@ export function RiskRadar({
       if (sortOrder === 'risk_desc') return b.risk_score - a.risk_score;
       if (sortOrder === 'risk_asc') return a.risk_score - b.risk_score;
       if (sortOrder === 'arr_desc') return b.arr - a.arr;
+      if (sortOrder === 'relevance' && searchMode !== 'client') {
+        const scoreA = semanticMatches[a.account_id]?.relevanceScore || 0;
+        const scoreB = semanticMatches[b.account_id]?.relevanceScore || 0;
+        return scoreB - scoreA;
+      }
       return 0;
     });
+
+  const totalARR = displayedAccounts.reduce((sum, acc) => sum + acc.arr, 0);
+  const criticalCount = displayedAccounts.filter(acc => acc.risk_score >= 0.75).length;
+  const warningCount = displayedAccounts.filter(acc => acc.risk_score >= 0.25 && acc.risk_score < 0.75).length;
+  const healthyCount = displayedAccounts.filter(acc => acc.risk_score < 0.25).length;
+  
+  const avgHealth = displayedAccounts.length 
+    ? Math.round(100 - (displayedAccounts.reduce((sum, acc) => sum + acc.risk_score, 0) / displayedAccounts.length) * 100)
+    : 100;
+
+  const totalCount = displayedAccounts.length || 1;
+  const criticalPct = (criticalCount / totalCount) * 100;
+  const warningPct = (warningCount / totalCount) * 100;
+  const healthyPct = (healthyCount / totalCount) * 100;
+
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -71,7 +78,7 @@ export function RiskRadar({
           <span className="text-2xl font-bold text-foreground font-heading">${totalARR.toLocaleString()}</span>
           <span className="text-[11px] text-emerald-400 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
-            {filteredAccounts.length} active customer accounts
+            {displayedAccounts.length} active customer accounts
           </span>
         </div>
 
@@ -128,6 +135,8 @@ export function RiskRadar({
                       setSearchMode(mode);
                       setSearchTerm('');
                       setSemanticMatches({});
+                      if (mode !== 'client') setSortOrder('relevance' as any);
+                      else if (sortOrder === 'relevance') setSortOrder('risk_desc');
                     }}
                     className={`px-3 py-1 text-[10px] font-semibold transition-all duration-150 cursor-pointer ${
                       searchMode === mode 
@@ -176,11 +185,13 @@ export function RiskRadar({
               <select 
                 value={sortOrder} 
                 onChange={(e) => setSortOrder(e.target.value as any)}
+                onClick={(e) => e.stopPropagation()}
                 className="bg-transparent text-foreground outline-none cursor-pointer [&>option]:bg-background [&>option]:text-foreground"
               >
                 <option value="risk_desc">Sort: Highest Risk</option>
                 <option value="risk_asc">Sort: Lowest Risk</option>
                 <option value="arr_desc">Sort: Highest ARR</option>
+                {searchMode !== 'client' && <option value="relevance">Sort: Relevance</option>}
               </select>
             </div>
             
@@ -188,6 +199,7 @@ export function RiskRadar({
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value as any)}
+                onClick={(e) => e.stopPropagation()}
                 className="bg-transparent text-foreground outline-none cursor-pointer [&>option]:bg-background [&>option]:text-foreground"
               >
                 <option value="all">Status: All</option>
@@ -296,7 +308,7 @@ export function RiskRadar({
             <div className="flex justify-center py-4 relative">
               <svg width="140" height="140" viewBox="0 0 36 36" className="-rotate-90">
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3" />
-                {filteredAccounts.length > 0 ? (
+                {displayedAccounts.length > 0 ? (
                   <>
                     {/* Background */}
                     <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="3.2" />

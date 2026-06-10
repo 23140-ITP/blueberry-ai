@@ -308,10 +308,10 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
       {/* Navigation Breadcrumbs & Buttons */}
       <div className="mb-6 flex justify-between items-center">
         <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-          <Link href="/" className="hover:text-foreground transition flex items-center gap-1">
+          <button onClick={() => router.back()} className="hover:text-foreground transition flex items-center gap-1 bg-transparent border-none cursor-pointer">
             <ArrowLeft className="h-3.5 w-3.5" />
             Retention Radar
-          </Link>
+          </button>
           <span>/</span>
           {loading ? (
             <span className="text-zinc-600 animate-pulse w-24 h-4 bg-muted rounded"></span>
@@ -329,9 +329,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
         <div className="bg-background border border-border rounded-xl p-12 text-center flex-grow flex flex-col justify-center items-center gap-3">
           <h2 className="text-sm font-bold text-red-400 uppercase tracking-wider">Account Data Error</h2>
           <p className="text-xs text-muted-foreground">{error}</p>
-          <Link href="/">
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer transition">Go Back</button>
-          </Link>
+          <button onClick={() => router.back()} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer transition">Go Back</button>
         </div>
       ) : (
         /* Main Layout Grid */
@@ -356,7 +354,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
             {/* Account Info Header */}
             <div className="bg-background border border-border rounded-xl p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-blue-600/10 text-blue-500 text-[10px] font-bold px-3 py-1 uppercase tracking-widest rounded-bl-lg border-b border-l border-blue-500/20">
-                Customer War Room
+                ACCOUNT DETAILS
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -726,7 +724,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
                     <Search className="h-3 w-3" /> Search tickets
                   </button>
                   <button 
-                    onClick={() => handleSendMessage(`Log a CSM note: Reached out to ${account?.company_name} engineering team to schedule a technical review regarding the ongoing open issues.`)} 
+                    onClick={() => handleSendMessage(`Log a CSM note for account ${account?.account_id} (${account?.company_name}) with Neutral sentiment: Reached out to engineering team to schedule a technical review regarding the ongoing open issues.`)} 
                     disabled={sending}
                     className="text-[10px] px-2.5 py-1.5 rounded-full border border-border bg-card hover:border-zinc-500 text-muted-foreground hover:text-foreground cursor-pointer transition flex flex-grow items-center justify-center gap-1.5"
                   >

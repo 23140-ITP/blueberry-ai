@@ -188,10 +188,10 @@ export function CopilotAction() {
             </button>
           </div>
           <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-            <button onClick={() => handleSendMessage("Summarize the risk status for my entire portfolio")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Summarize my portfolio</button>
-            <button onClick={() => handleSendMessage("Why is TechFlow churning?")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Why is TechFlow churning?</button>
-            <button onClick={() => handleSendMessage("Draft a Slack escalation for TechFlow")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Escalate TechFlow</button>
-            <button onClick={() => handleSendMessage("Reset the sample data to default state")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-red-500/20 hover:border-red-500/40">Reset Sample Data</button>
+            <button onClick={() => handleSendMessage("Summarize the risk status for my entire portfolio using the getPortfolioSummary tool")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Summarize my portfolio</button>
+            <button onClick={() => handleSendMessage("Why is TechFlow (ACC-002) churning?")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Why is TechFlow churning?</button>
+            <button onClick={() => handleSendMessage("Draft a Slack escalation for TechFlow (ACC-002) using the escalateAccount tool")} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-transparent hover:border-blue-500/30">Escalate TechFlow</button>
+            <button onClick={() => { if(window.confirm('Are you sure you want to reset the demo database? This will revert all modified records to their default seed state.')) handleSendMessage("Reset the sample data to default state using the resetDemoDatabase tool"); }} className="shrink-0 text-[10px] bg-muted hover:bg-muted/80 text-muted-foreground px-2.5 py-1 rounded-full whitespace-nowrap transition border border-red-500/20 hover:border-red-500/40">Reset Sample Data</button>
           </div>
         </div>
       </div>

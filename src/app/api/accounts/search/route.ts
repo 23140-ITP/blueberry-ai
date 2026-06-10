@@ -18,10 +18,10 @@ export async function GET(request: Request) {
     // Build query based on selected mode
     let queryObj: any = {};
 
-    if (mode === 'keyword') {
       queryObj = {
         bool: {
           should: [
+            { match: { company_name: { query: q } } },
             { match: { subject: { query: q } } },
             { match: { description: { query: q } } },
             { match: { note_text: { query: q } } },
@@ -48,6 +48,7 @@ export async function GET(request: Request) {
         bool: {
           should: [
             // Keyword matches
+            { match: { company_name: { query: q, boost: 2.0 } } },
             { match: { subject: { query: q, boost: 0.5 } } },
             { match: { description: { query: q, boost: 0.5 } } },
             { match: { note_text: { query: q, boost: 0.5 } } },
@@ -67,10 +68,11 @@ export async function GET(request: Request) {
     let searchResult: any = null;
     try {
       searchResult = await client.search({
-        index: ['tickets', 'health_notes', 'call_transcripts'],
+        index: ['accounts', 'tickets', 'health_notes', 'call_transcripts'],
         query: queryObj,
         highlight: {
           fields: {
+            company_name: {},
             subject: {},
             description: {},
             note_text: {},
@@ -96,10 +98,11 @@ export async function GET(request: Request) {
         }
       };
       searchResult = await client.search({
-        index: ['tickets', 'health_notes', 'call_transcripts'],
+        index: ['accounts', 'tickets', 'health_notes', 'call_transcripts'],
         query: fallbackQuery,
         highlight: {
           fields: {
+            company_name: {},
             subject: {},
             description: {},
             note_text: {},
@@ -141,7 +144,11 @@ export async function GET(request: Request) {
         }
       }
 
-      if (hit._index.includes('tickets')) {
+      if (hit._index.includes('accounts')) {
+        type = 'account';
+        accountId = source.account_id;
+        if (!snippet) snippet = `Account Match: ${source.company_name}`;
+      } else if (hit._index.includes('tickets')) {
         type = 'ticket';
         if (!snippet) snippet = `Ticket: ${source.subject}`;
       } else if (hit._index.includes('health_notes')) {

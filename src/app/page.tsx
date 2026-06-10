@@ -262,7 +262,7 @@ export default function Dashboard() {
                 {[
                   { id: 'radar', label: 'Retention Radar', icon: LayoutDashboard, desc: 'Overview of your portfolio risk, calculated via support sentiment and recent events.' },
                   { id: 'pain-points', label: 'Pain-Point Clusters', icon: Layers, desc: 'Common issues grouped dynamically using kNN semantic search vectors.' },
-                  { id: 'war-room', label: 'Customer War Room', icon: ShieldAlert, href: accounts.length > 0 ? `/account/${accounts[0].account_id}` : '/account/ACC-002', desc: 'Deep dive into the highest-risk customer with What-If simulations and action planning.' },
+                  { id: 'war-room', label: 'Customer War Room (Account View)', icon: ShieldAlert, href: accounts.length > 0 ? `/account/${accounts[0].account_id}` : '/account/ACC-002', desc: 'Deep dive into the highest-risk customer with What-If simulations and action planning.' },
                   { id: 'simulator', label: 'Event Simulator', icon: RefreshCw, desc: 'Trigger mock CSM touchpoints or support tickets to see real-time risk updates.' },
                   { id: 'copilot', label: 'Blueberry Copilot', icon: Brain, desc: 'AI assistant powered by GCP Agent Builder to summarize context and recommend runbooks.' },
                 ].map(item => {
@@ -661,7 +661,7 @@ export default function Dashboard() {
                       {mcpResult && (
                         <div>
                           <span className="text-[10px] text-muted-foreground uppercase block mb-1.5">Response Content:</span>
-                          <pre className="w-full max-h-56 overflow-auto p-3.5 bg-card/80 border border-border rounded-lg text-foreground font-mono text-[11px] leading-relaxed">
+                          <pre className="w-full max-h-96 overflow-y-auto break-all whitespace-pre-wrap p-3.5 bg-card/80 border border-border rounded-lg text-foreground font-mono text-[11px] leading-relaxed">
                             {mcpResult}
                           </pre>
                         </div>

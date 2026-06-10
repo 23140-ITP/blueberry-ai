@@ -7,15 +7,17 @@ export function ElserSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const handleSearch = async (e?: React.FormEvent, directQuery?: string) => {
+    if (e) e.preventDefault();
+    const q = directQuery || query;
+    if (!q.trim()) return;
+    setQuery(q);
     setLoading(true);
     setError(null);
     try {
       // For this demo, we'll hit the standard semantic search endpoint 
       // but pretend it's ELSER powered.
-      const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(query)}&mode=semantic`);
+      const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(q)}&mode=semantic`);
       if (!res.ok) {
         throw new Error('Search failed');
       }
@@ -75,9 +77,9 @@ export function ElserSearch() {
         </div>
         <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground mt-1">
           <span>Try these semantic queries:</span>
-          <button type="button" onClick={() => setQuery('export crash')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">export crash</button>
-          <button type="button" onClick={() => setQuery('login failing')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">login failing</button>
-          <button type="button" onClick={() => setQuery('api documentation')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">api documentation</button>
+          <button type="button" onClick={() => handleSearch(undefined, 'export crash')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">export crash</button>
+          <button type="button" onClick={() => handleSearch(undefined, 'login failing')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">login failing</button>
+          <button type="button" onClick={() => handleSearch(undefined, 'api documentation')} className="bg-card border border-border px-2 py-1 rounded hover:bg-muted hover:text-foreground transition cursor-pointer">api documentation</button>
         </div>
       </form>
 
@@ -93,7 +95,7 @@ export function ElserSearch() {
                     Relevance Score: {typeof r.score === 'number' ? r.score.toFixed(2) : r.score}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">Matches found in support tickets via text_expansion tokens.</p>
+                <p className="text-xs text-muted-foreground">Customer support issue identified via semantic text expansion.</p>
               </div>
             ))}
           </div>

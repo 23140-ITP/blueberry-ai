@@ -450,18 +450,8 @@ export async function getDynamicRiskScoreService(accountId: string, saveToDb: bo
     });
   }
 
-  // Check last contact age
-  const lastContactTime = new Date(accountDoc.last_contact_date).getTime();
-  const daysSinceContact = Math.floor((Date.now() - lastContactTime) / (1000 * 60 * 60 * 24));
-  if (daysSinceContact > 20) {
-    const contactRisk = 0.15;
-    score += contactRisk;
-    factors.push({
-      name: 'CSM Contact Latency',
-      value: `No contact in ${daysSinceContact} days`,
-      riskAdded: Math.round(contactRisk * 100)
-    });
-  }
+  // Removed daysSinceContact to keep the mock risk score deterministic
+  // A deterministic score is necessary so it doesn't artificially inflate over time during the demo.
 
   // Clamp score between 0.02 and 0.99
   const finalScore = Math.min(0.99, Math.max(0.02, score));

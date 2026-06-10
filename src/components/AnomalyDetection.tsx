@@ -25,7 +25,7 @@ export function AnomalyDetection() {
         </div>
         <button 
           onClick={() => setIsAlertModalOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded text-xs font-semibold hover:text-foreground transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded text-xs font-semibold hover:text-foreground transition-colors cursor-not-allowed opacity-80"
         >
           <Settings className="h-3.5 w-3.5" /> Alert Settings
         </button>
@@ -70,7 +70,7 @@ export function AnomalyDetection() {
                     <span className="text-[9px] text-muted-foreground">{anom.time}</span>
                   </div>
                   <Link href={`/account/${anom.account}`}>
-                    <span className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 transition cursor-pointer">
+                    <span className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 transition cursor-not-allowed">
                       View Account <ArrowRight className="h-3 w-3" />
                     </span>
                   </Link>
