@@ -30,7 +30,7 @@ export function RiskRadar({
   filteredAccounts, loading, searchTerm, searchMode, semanticMatches,
   setSearchTerm, setSearchMode, setSemanticMatches 
 }: RiskRadarProps) {
-  const [sortOrder, setSortOrder] = useState<'risk_desc' | 'risk_asc' | 'arr_desc'>('risk_desc');
+  const [sortOrder, setSortOrder] = useState<'risk_desc' | 'risk_asc' | 'arr_desc' | 'relevance'>('risk_desc');
   const [statusFilter, setStatusFilter] = useState<'all' | 'critical' | 'warning' | 'healthy'>('all');
 
   // Apply local sorting and filtering FIRST

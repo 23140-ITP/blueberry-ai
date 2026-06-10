@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     // Build query based on selected mode
     let queryObj: any = {};
-
+    if (mode === 'keyword') {
       queryObj = {
         bool: {
           should: [
@@ -127,7 +127,7 @@ export async function GET(request: Request) {
 
     searchResult.hits.hits.forEach((hit: any) => {
       const source = hit._source;
-      const accountId = source.account_id;
+      let accountId = source.account_id;
       if (!accountId) return;
 
       // Calculate relative relevance percentage (0-100%)
