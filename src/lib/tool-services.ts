@@ -5,6 +5,15 @@ const SEED_ACCOUNTS = [
   { account_id: 'ACC-001', company_name: 'Acme Corp', industry: 'Retail', arr: 150000, risk_score: 0.1, status: 'Active', last_contact_date: '2026-06-01T10:00:00Z' },
   { account_id: 'ACC-002', company_name: 'TechFlow', industry: 'SaaS', arr: 500000, risk_score: 0.85, status: 'At Risk', last_contact_date: '2026-06-08T14:30:00Z' },
   { account_id: 'ACC-003', company_name: 'Global Industries', industry: 'Manufacturing', arr: 250000, risk_score: 0.3, status: 'Active', last_contact_date: '2026-05-15T09:00:00Z' },
+  { account_id: 'ACC-004', company_name: 'Zenith Media', industry: 'Media', arr: 85000, risk_score: 0.05, status: 'Active', last_contact_date: '2026-06-05T11:00:00Z' },
+  { account_id: 'ACC-005', company_name: 'Pinnacle Finance', industry: 'Finance', arr: 1200000, risk_score: 0.45, status: 'At Risk', last_contact_date: '2026-05-20T10:00:00Z' },
+  { account_id: 'ACC-006', company_name: 'Vertex Logistics', industry: 'Logistics', arr: 310000, risk_score: 0.15, status: 'Active', last_contact_date: '2026-06-02T16:00:00Z' },
+  { account_id: 'ACC-007', company_name: 'Quantum Health', industry: 'Healthcare', arr: 750000, risk_score: 0.92, status: 'Critical', last_contact_date: '2026-06-07T14:00:00Z' },
+  { account_id: 'ACC-008', company_name: 'Nexus Education', industry: 'Education', arr: 95000, risk_score: 0.2, status: 'Active', last_contact_date: '2026-05-28T13:00:00Z' },
+  { account_id: 'ACC-009', company_name: 'Horizon Energy', industry: 'Energy', arr: 2200000, risk_score: 0.6, status: 'At Risk', last_contact_date: '2026-06-04T09:30:00Z' },
+  { account_id: 'ACC-010', company_name: 'Alpha Tech', industry: 'SaaS', arr: 420000, risk_score: 0.08, status: 'Active', last_contact_date: '2026-06-06T15:00:00Z' },
+  { account_id: 'ACC-011', company_name: 'Omega Services', industry: 'Consulting', arr: 180000, risk_score: 0.35, status: 'Active', last_contact_date: '2026-05-22T10:00:00Z' },
+  { account_id: 'ACC-012', company_name: 'Delta Data', industry: 'Data Analytics', arr: 650000, risk_score: 0.78, status: 'Critical', last_contact_date: '2026-06-01T11:30:00Z' }
 ];
 
 export async function listAllAccountsService() {
@@ -836,7 +845,7 @@ export async function simulateEventService(body: any) {
 export async function resetDemoDatabaseService() {
   const client = getElasticClient();
 
-  // 1. Reset the three accounts to their original seeded scores and statuses
+  // 1. Reset all accounts to their original seeded scores and statuses
   for (const account of SEED_ACCOUNTS) {
     await client.update({
       index: 'accounts',
@@ -849,52 +858,56 @@ export async function resetDemoDatabaseService() {
     });
   }
 
-  // 2. Delete simulated tickets (keep only original: TKT-100, TKT-101, TKT-102, TKT-103)
+  // 2. Delete simulated tickets (keep only original seeded ones: TKT-100 to TKT-126)
+  const validTicketIds = Array.from({ length: 27 }, (_, i) => `TKT-${100 + i}`);
   await client.deleteByQuery({
     index: 'tickets',
     query: {
       bool: {
         must_not: [
-          { terms: { ticket_id: ['TKT-100', 'TKT-101', 'TKT-102', 'TKT-103'] } }
+          { terms: { ticket_id: validTicketIds } }
         ]
       }
     },
     refresh: true
   });
 
-  // 3. Delete simulated notes (keep only N-01, N-02)
+  // 3. Delete simulated notes (keep only N-01 to N-12)
+  const validNoteIds = Array.from({ length: 12 }, (_, i) => `N-${String(i + 1).padStart(2, '0')}`);
   await client.deleteByQuery({
     index: 'health_notes',
     query: {
       bool: {
         must_not: [
-          { terms: { note_id: ['N-01', 'N-02'] } }
+          { terms: { note_id: validNoteIds } }
         ]
       }
     },
     refresh: true
   });
 
-  // 4. Delete simulated transcripts (keep only C-99)
+  // 4. Delete simulated transcripts (keep C-99 to C-106)
+  const validCallIds = Array.from({ length: 8 }, (_, i) => `C-${99 + i}`);
   await client.deleteByQuery({
     index: 'call_transcripts',
     query: {
       bool: {
         must_not: [
-          { terms: { call_id: ['C-99'] } }
+          { terms: { call_id: validCallIds } }
         ]
       }
     },
     refresh: true
   });
 
-  // 5. Delete simulated agent memories (keep only MEM-01, MEM-02)
+  // 5. Delete simulated agent memories (keep MEM-01 to MEM-05)
+  const validMemoryIds = Array.from({ length: 5 }, (_, i) => `MEM-${String(i + 1).padStart(2, '0')}`);
   await client.deleteByQuery({
     index: 'agent_memory',
     query: {
       bool: {
         must_not: [
-          { terms: { memory_id: ['MEM-01', 'MEM-02'] } }
+          { terms: { memory_id: validMemoryIds } }
         ]
       }
     },

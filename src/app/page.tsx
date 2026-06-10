@@ -21,6 +21,7 @@ import { DlsSimulator } from '@/components/DlsSimulator';
 import { IlmTiering } from '@/components/IlmTiering';
 import { VectorSearch } from '@/components/VectorSearch';
 import { CrossCluster } from '@/components/CrossCluster';
+import { RawDataExplorer } from '@/components/RawDataExplorer';
 import { Tooltip } from '@/components/Tooltip';
 
 interface Account {
@@ -39,7 +40,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // Layout View State
-  const [activeView, setActiveView] = useState<'radar' | 'pain-points' | 'simulator' | 'copilot' | 'mcp' | 'elser-search' | 'apm-dashboard' | 'anomaly-detection' | 'hybrid-search' | 'emerging-trends' | 'agent-logs' | 'dls-simulator' | 'ilm-tiering' | 'vector-search' | 'cross-cluster'>('radar');
+  const [activeView, setActiveView] = useState<'radar' | 'pain-points' | 'simulator' | 'copilot' | 'mcp' | 'elser-search' | 'apm-dashboard' | 'anomaly-detection' | 'hybrid-search' | 'emerging-trends' | 'agent-logs' | 'dls-simulator' | 'ilm-tiering' | 'vector-search' | 'cross-cluster' | 'raw-data'>('radar');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Interactive UI Modal States
@@ -268,7 +269,8 @@ export default function Dashboard() {
               { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock, desc: 'Simulate Document-Level Security filtering by user region.' },
               { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database, desc: 'Visualize Index Lifecycle Management (Hot, Warm, Cold nodes).' },
               { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon, desc: 'Generate dense vectors and find nearest neighbors via kNN.' },
-              { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe, desc: 'Run federated searches across North America and Europe clusters.' }
+              { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe, desc: 'Run federated searches across North America and Europe clusters.' },
+              { id: 'raw-data', label: 'Raw Data Explorer', icon: Database, desc: 'Direct view into the Elasticsearch indices powering the Blueberry AI features.' }
             ].map(item => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
@@ -423,6 +425,10 @@ export default function Dashboard() {
           )}
 
           {/* VIEW 2: PRODUCT PAIN POINT CLUSTERS */}
+          {activeView === 'raw-data' && (
+            <RawDataExplorer />
+          )}
+
           {activeView === 'pain-points' && (
             <div className="max-w-4xl mx-auto w-full flex flex-col gap-6 animate-fade-in">
               <div className="bg-background border border-border rounded-xl p-6 shadow-sm">
