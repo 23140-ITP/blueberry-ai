@@ -703,7 +703,7 @@ export default function AccountDetailPage({ params }: { params: Promise<{ id: st
               {/* Quick Actions Panel (Contextually Updated) */}
               <div className="p-3 border-t border-border bg-background flex flex-col gap-2">
                 <button 
-                  onClick={() => handleSendMessage(`Act as the Supervisor Agent. Run a full account review on ${account?.company_name}. Call the supportResolutionAgent, churnInvestigatorAgent, and voiceOfCustomerAgent. Then, use the actionAgent to save a unified Executive Brief to memory.`)} 
+                  onClick={() => handleSendMessage(`Run a full account review on ${account?.company_name}. Use your tools to retrieve the account context, check the dynamic churn risk, search for open issues, and then write a unified Executive Brief health note.`)} 
                   disabled={sending}
                   className="w-full text-xs font-semibold py-2 rounded border border-blue-500 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(37,99,235,0.2)]"
                 >
