@@ -235,7 +235,7 @@ export default function Dashboard() {
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border flex flex-col justify-between transform transition-transform duration-200 md:translate-x-0 md:static md:h-screen shrink-0 ${
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex flex-col flex-grow overflow-y-auto">
+        <div className="flex flex-col flex-grow overflow-y-auto overflow-x-hidden">
           {/* Brand header */}
           <div className="p-5 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -255,7 +255,7 @@ export default function Dashboard() {
           </div>
 
           {/* Navigation Options */}
-          <nav className="p-4 flex flex-col gap-4 overflow-y-auto pb-20">
+          <nav className="p-4 flex flex-col gap-4 overflow-y-auto overflow-x-hidden pb-20">
             <div>
               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">Core CRM Features</h3>
               <div className="flex flex-col gap-1">

@@ -21,22 +21,18 @@ Blueberry AI reduces **mean-time-to-escalation from 3 days to 15 minutes** for C
 
 ## 🏗️ System Architecture
 
-![Architecture Diagram](./docs/architecture_diagram.png)
-
 *Note: Google Cloud Agent Builder is configured to connect directly against the Elastic Agent Builder MCP endpoint. Our Next.js `/api/mcp` acts as a custom MCP bridge extending this functionality, empowering the agent with highly customized ES|QL retrieval and Elasticsearch write-back tools.*
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for a complete architecture overview and codebase navigation guide.
 
 ---
 
 ## 🖼️ Application Views
 
-### Risk Radar
-![Risk Radar](./docs/risk_radar_ui.png)
-
-### Chronological Account Timeline
-![Account Timeline](./docs/account_timeline_ui.png)
-
-### Agent Orchestration (Multi-step Action)
-![Copilot Action](./docs/copilot_action_ui.png)
+The application provides three main views for Customer Success teams:
+- **Risk Radar:** Overview of portfolio risk, calculated via support sentiment and recent events.
+- **Chronological Account Timeline:** Deep dive into a single account's history with combined signals from multiple Elastic indices.
+- **Agent Orchestration:** A Blueberry Copilot chat interface for multi-step tasks like drafting escalations and summarizing pain points.
 
 ---
 
@@ -82,6 +78,23 @@ Here is a real example of the agent executing a multi-step trace via our Elastic
 ]
 ```
 
+### 📊 ES|QL Query Example
+To power the `detectChurnRisk` tool, the Next.js MCP bridge executes real-time ES|QL queries to aggregate signal data before computing the final mathematical score. Here are the exact queries executed:
+
+**Aggregate Open Support Tickets by Priority:**
+```esql
+FROM tickets 
+| WHERE account_id == "ACC-002" AND status == "Open" 
+| STATS count(ticket_id) by priority
+```
+
+**Aggregate CSM Health Notes by Sentiment:**
+```esql
+FROM health_notes 
+| WHERE account_id == "ACC-002" 
+| STATS count(note_id) by sentiment
+```
+
 ---
 
 ## 🚀 Getting Started
@@ -108,6 +121,8 @@ npm run dev
 **MCP Server Connection:**
 Since the app is deployed to Google Cloud Run, your Google Agent Builder must be configured to connect directly to the live MCP endpoint:
 `https://blueberry-ai-<hash>.run.app/api/mcp`
+
+*Note on Cold Starts: Cloud Run containers spin down when idle. If you experience a brief `503 Service Unavailable` on the first load of the Live Demo or MCP tools, simply wait 5-10 seconds and refresh. The application features built-in loading states to handle API latency once the container is warm.*
 
 ---
 

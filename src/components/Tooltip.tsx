@@ -23,9 +23,9 @@ export function Tooltip({ children, content, position = 'top', className = '' }:
   };
 
   return (
-    <div className={`relative group inline-block ${className}`}>
+    <div className={`relative group inline-block ${className} hover:z-[100]`}>
       {children}
-      <div className={`absolute z-50 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 w-max max-w-[250px] px-3 py-2 text-xs font-medium text-white bg-zinc-800 rounded-lg shadow-xl pointer-events-none ${positionClasses[position]}`}>
+      <div className={`absolute z-[100] invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 w-max max-w-[250px] px-3 py-2 text-xs font-medium text-white bg-zinc-800 rounded-lg shadow-xl pointer-events-none ${positionClasses[position]}`}>
         <div className="whitespace-normal leading-relaxed">{content}</div>
         <div className={`absolute border-4 ${arrowClasses[position]}`}></div>
       </div>

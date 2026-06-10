@@ -176,7 +176,7 @@ export function RiskRadar({
               <select 
                 value={sortOrder} 
                 onChange={(e) => setSortOrder(e.target.value as any)}
-                className="bg-transparent text-foreground outline-none cursor-pointer"
+                className="bg-transparent text-foreground outline-none cursor-pointer [&>option]:bg-background [&>option]:text-foreground"
               >
                 <option value="risk_desc">Sort: Highest Risk</option>
                 <option value="risk_asc">Sort: Lowest Risk</option>
@@ -188,7 +188,7 @@ export function RiskRadar({
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="bg-transparent text-foreground outline-none cursor-pointer"
+                className="bg-transparent text-foreground outline-none cursor-pointer [&>option]:bg-background [&>option]:text-foreground"
               >
                 <option value="all">Status: All</option>
                 <option value="critical">Critical Only</option>
@@ -235,7 +235,7 @@ export function RiskRadar({
 
                 return (
                   <Link key={acc.account_id} href={`/account/${acc.account_id}`}>
-                    <div className="bg-background border border-border hover:border-zinc-600 p-5 rounded-xl cursor-pointer transition flex flex-col gap-4 h-full shadow-sm hover:shadow-md">
+                    <div className="bg-background border border-border hover:border-zinc-600 p-5 rounded-xl cursor-pointer transition flex flex-col gap-4 h-full shadow-sm hover:shadow-md relative hover:z-50">
                       <div className="flex justify-between items-start">
                         <div className="flex-col flex">
                           <h4 className="text-base font-black text-foreground">{acc.company_name}</h4>
@@ -250,9 +250,6 @@ export function RiskRadar({
                               <Info className="h-3 w-3 text-muted-foreground/50 cursor-help" />
                             </Tooltip>
                           </div>
-                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${getRiskBadgeStyle(acc.risk_score)} min-w-[70px] text-center whitespace-nowrap`}>
-                            {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
-                          </span>
                         </div>
                       </div>
 
