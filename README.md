@@ -53,7 +53,7 @@ We learned the sheer power and speed of ES|QL. Shifting aggregation logic direct
 ## 🟢 Live Demo & Submission Details
 
 - **Live Hosted App:** [https://blueberry-ai-359524452928.us-central1.run.app/](https://blueberry-ai-359524452928.us-central1.run.app/) 
-- **Demo Video (3 Min):** [Pending Hackathon Recording]
+- **Demo Video (3 Min):** [Watch on YouTube](https://youtu.be/P18sNpqo7Bc)
 - **Hackathon Track:** Elastic
 - **Demo Flow:** The agent retrieves a portfolio summary, runs an advanced ES|QL churn risk analysis on a specific account, and executes a multi-step escalation.
 - **Judge Tip:** Use the "Event Simulator" tab or the `reset-demo` tool in the Copilot chat to freely test risk calculations without destroying permanent data!
