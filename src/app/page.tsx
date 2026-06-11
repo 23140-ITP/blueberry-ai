@@ -36,7 +36,7 @@ export default function LandingPage() {
           
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-8 animate-fade-in">
             <Zap className="h-3.5 w-3.5" />
-            Built for the Elastic Hackathon
+            Powered by Elasticsearch
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight animate-fade-in" style={{ animationDelay: '100ms' }}>
@@ -273,7 +273,7 @@ export default function LandingPage() {
             <span className="font-bold text-foreground">Blueberry AI</span>
           </div>
           <div className="text-sm text-muted-foreground">
-            Built for the <a href="https://devpost.com" className="text-foreground hover:underline">Elastic AI Hackathon</a> • Open Source under MIT
+            Open Source under MIT
           </div>
           <div className="flex gap-4 text-sm font-medium">
             <a href="https://github.com/23140-ITP/blueberry-ai" className="hover:text-foreground transition-colors">GitHub Repository</a>
