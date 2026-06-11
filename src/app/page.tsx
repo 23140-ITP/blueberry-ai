@@ -1,875 +1,285 @@
-"use client";
-
-import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { 
-  Search, LayoutDashboard, Brain, Activity, ShieldAlert, CheckCircle2, 
-  AlertTriangle, ArrowRight, Terminal, Send, Play, RefreshCw, Layers, Sparkles, Menu, X, Database, SearchX,
-  Gauge, TrendingDown, GitMerge, TrendingUp, TerminalSquare, Lock, Hexagon, Globe, Target, Info
-} from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { RiskRadar } from '@/components/RiskRadar';
-import { EventSimulator } from '@/components/EventSimulator';
-import { CopilotAction } from '@/components/CopilotAction';
-import { ElserSearch } from '@/components/ElserSearch';
-import { ApmDashboard } from '@/components/ApmDashboard';
-import { AnomalyDetection } from '@/components/AnomalyDetection';
-import { HybridSearch } from '@/components/HybridSearch';
-import { EmergingTrends } from '@/components/EmergingTrends';
-import { AgentLogs } from '@/components/AgentLogs';
-import { DlsSimulator } from '@/components/DlsSimulator';
-import { IlmTiering } from '@/components/IlmTiering';
-import { VectorSearch } from '@/components/VectorSearch';
-import { CrossCluster } from '@/components/CrossCluster';
-import { RawDataExplorer } from '@/components/RawDataExplorer';
-import { Tooltip } from '@/components/Tooltip';
+import { ArrowRight, Bot, Database, Zap, CheckCircle2, ShieldAlert, LineChart } from 'lucide-react';
 
-interface Account {
-  account_id: string;
-  company_name: string;
-  industry: string;
-  arr: number;
-  risk_score: number;
-  status: string;
-  last_contact_date: string;
-}
-
-export default function Dashboard() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // Layout View State
-  const [activeView, setActiveView] = useState<'radar' | 'pain-points' | 'simulator' | 'copilot' | 'mcp' | 'elser-search' | 'apm-dashboard' | 'anomaly-detection' | 'hybrid-search' | 'emerging-trends' | 'agent-logs' | 'dls-simulator' | 'ilm-tiering' | 'vector-search' | 'cross-cluster' | 'raw-data'>('radar');
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isElasticGroupOpen, setIsElasticGroupOpen] = useState(false);
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [devMode, setDevMode] = useState(false);
-
-  // Interactive UI Modal States
-  const [selectedCluster, setSelectedCluster] = useState<any>(null);
-  const [showArrAnalysis, setShowArrAnalysis] = useState(false);
-  const [lastSubmittedEvent, setLastSubmittedEvent] = useState<any>(null);
-  const [resetting, setResetting] = useState(false);
-
-  // Missing States
-  const [aggregations, setAggregations] = useState<any>(null);
-  const [painPoints, setPainPoints] = useState<any[]>([]);
-  const [searchMode, setSearchMode] = useState<'client' | 'keyword' | 'hybrid' | 'vector'>('client');
-  const [semanticMatches, setSemanticMatches] = useState<Record<string, number>>({});
-  
-  // MCP States
-  const [mcpTools, setMcpTools] = useState<any[]>([]);
-  const [selectedMcpTool, setSelectedMcpTool] = useState<any>(null);
-  const [mcpArgs, setMcpArgs] = useState('{}');
-  const [mcpRunning, setMcpRunning] = useState(false);
-  const [mcpResult, setMcpResult] = useState('');
-
-  const fetchPainPoints = async () => {
-    try {
-      const res = await fetch('/api/tools/pain-points');
-      const data = await res.json();
-      if (data.clusters) {
-        setPainPoints(data.clusters);
-      }
-    } catch (err) {
-      console.error('Failed to load pain points:', err);
-    }
-  };
-
-  // Chat and Simulation states are now handled in their respective components
-  const fetchAccountsAndData = async () => {
-    try {
-      const resAcc = await fetch('/api/accounts');
-      const dataAcc = await resAcc.json();
-      if (dataAcc.accounts) {
-        setAccounts(dataAcc.accounts);
-      }
-      if (dataAcc.aggregations) {
-        setAggregations(dataAcc.aggregations);
-      }
-      fetchPainPoints();
-    } catch (err) {
-      console.error('Error fetching data:', err);
-    }
-  };
-
-  const handleResetDemoDatabase = async () => {
-    if (!window.confirm("Are you sure you want to reset the demo database? This will revert all modified records to their default seed state.")) return;
-    setResetting(true);
-    try {
-      const res = await fetch('/api/tools/reset-demo', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        
-        // Reload all data
-        setLoading(true);
-        const resAcc = await fetch('/api/accounts');
-        const dataAcc = await resAcc.json();
-        if (dataAcc.accounts) {
-          setAccounts(dataAcc.accounts);
-        }
-        if (dataAcc.aggregations) {
-          setAggregations(dataAcc.aggregations);
-        }
-        fetchPainPoints();
-      } else {
-        alert(`Error: ${data.error}`);
-      }
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
-    } finally {
-      setResetting(false);
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    async function fetchAccounts() {
-      try {
-        const res = await fetch('/api/accounts');
-        const data = await res.json();
-        if (data.accounts) {
-          setAccounts(data.accounts);
-        }
-        if (data.aggregations) {
-          setAggregations(data.aggregations);
-        }
-      } catch (err) {
-        console.error('Failed to load accounts:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAccounts();
-    fetchPainPoints();
-  }, []);
-
-  useEffect(() => {
-    async function fetchMcpTools() {
-      try {
-        const res = await fetch('/api/mcp');
-        const data = await res.json();
-        if (data.tools) {
-          setMcpTools(data.tools);
-          setSelectedMcpTool(data.tools[0]);
-          setMcpArgs(JSON.stringify({ accountId: 'ACC-002' }, null, 2));
-        }
-      } catch (err) {
-        console.error('Failed to fetch MCP tools:', err);
-      }
-    }
-    fetchMcpTools();
-  }, []);
-
-  const runMcpTool = async () => {
-    if (!selectedMcpTool) return;
-    setMcpRunning(true);
-    setMcpResult('');
-    try {
-      let parsedArgs = {};
-      try {
-        parsedArgs = JSON.parse(mcpArgs);
-      } catch (e) {
-        setMcpResult(`Error: Invalid arguments JSON: ${(e as Error).message}`);
-        setMcpRunning(false);
-        return;
-      }
-
-      const res = await fetch('/api/mcp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: 'tools/call',
-          params: {
-            name: selectedMcpTool.name,
-            arguments: parsedArgs
-          }
-        })
-      });
-      const data = await res.json();
-      setMcpResult(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setMcpResult(`Error running tool: ${(err as Error).message}`);
-    } finally {
-      setMcpRunning(false);
-    }
-  };
-
-  useEffect(() => {
-    if (searchMode === 'client' || !searchTerm.trim()) {
-      setSemanticMatches({});
-      return;
-    }
-
-    const delayDebounceFn = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(searchTerm)}&mode=${searchMode}`);
-        const data = await res.json();
-        if (data.matches) {
-          setSemanticMatches(data.matches);
-        }
-      } catch (err) {
-        console.error('Failed to run semantic search:', err);
-      }
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, searchMode]);
-
-  const filteredAccounts = accounts.filter(acc => {
-    if (searchMode !== 'client' && searchTerm.trim() !== '') {
-      return !!semanticMatches[acc.account_id];
-    }
-    return (
-      acc.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      acc.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      acc.account_id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen flex bg-background text-foreground font-sans overflow-hidden">
-      {/* Sidebar Navigation */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border flex flex-col justify-between transform transition-transform duration-200 md:translate-x-0 md:static md:h-screen shrink-0 ${
-        isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex flex-col flex-grow overflow-y-auto overflow-x-hidden">
-          {/* Brand header */}
-          <div className="p-5 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 bg-blue-500 rounded-full inline-block shadow-[0_0_10px_#3b82f6]"></span>
-              <div>
-                <h1 className="text-sm font-bold tracking-tight text-foreground font-heading">Blueberry AI</h1>
-                <span className="text-[10px] text-muted-foreground font-medium block mt-0.5">Retention Radar v1.2</span>
-              </div>
+    <div className="min-h-screen bg-background text-foreground selection:bg-blue-500/30 font-sans">
+      {/* Navbar */}
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <Bot className="h-5 w-5 text-white" />
             </div>
-            {/* Mobile Close Button */}
-            <button 
-              onClick={() => setIsMobileSidebarOpen(false)}
-              className="md:hidden text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded hover:bg-card transition"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <span className="font-bold text-lg tracking-tight">Blueberry AI</span>
           </div>
-
-          {/* Navigation Options */}
-          <nav className="p-4 flex flex-col gap-4 overflow-y-auto overflow-x-hidden pb-20">
-            <div>
-              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">Core CRM Features</h3>
-              <div className="flex flex-col gap-1">
-                {[
-                  { id: 'radar', label: 'Retention Radar', icon: LayoutDashboard, desc: 'Overview of your portfolio risk, calculated via support sentiment and recent events.' },
-                  { id: 'pain-points', label: 'Pain-Point Clusters', icon: Layers, desc: 'Common issues grouped dynamically using kNN semantic search vectors.' },
-                  { id: 'war-room', label: 'Customer War Room (Account View)', icon: ShieldAlert, href: accounts.length > 0 ? `/account/${accounts[0].account_id}` : '/account/ACC-002', desc: 'Deep dive into the highest-risk customer with What-If simulations and action planning.' },
-                  { id: 'simulator', label: 'Event Simulator', icon: RefreshCw, desc: 'Trigger mock CSM touchpoints or support tickets to see real-time risk updates.' },
-                  { id: 'copilot', label: 'Blueberry Copilot', icon: Brain, desc: 'AI assistant powered by GCP Agent Builder to summarize context and recommend runbooks.' },
-                ].map(item => {
-                  const Icon = item.icon;
-                  const isActive = activeView === item.id;
-                  
-                  const buttonContent = (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        if (!item.href) {
-                          setActiveView(item.id as any);
-                          setIsMobileSidebarOpen(false);
-                        }
-                      }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                        isActive 
-                          ? 'bg-blue-500/10 border-l-4 border-l-blue-500 border-t border-b border-r border-t-transparent border-b-transparent border-r-transparent text-foreground shadow-sm' 
-                          : 'text-muted-foreground hover:text-foreground hover:bg-card/40 border-l-4 border-l-transparent border-t border-b border-r border-t-transparent border-b-transparent border-r-transparent'
-                      }`}
-                    >
-                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-500' : 'text-muted-foreground'}`} />
-                      <span className="flex-grow text-left">{item.label}</span>
-                    </button>
-                  );
-
-                  return (
-                    <Tooltip key={item.id} content={item.desc} position="right" className="w-full">
-                      {item.href ? (
-                        <Link href={item.href}>
-                          {buttonContent}
-                        </Link>
-                      ) : buttonContent}
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <button 
-                onClick={() => setIsElasticGroupOpen(!isElasticGroupOpen)}
-                className="w-full flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2 hover:text-foreground cursor-pointer"
-              >
-                <span>Advanced Settings</span>
-                <span className="text-[8px]">{isElasticGroupOpen ? '▼' : '▶'}</span>
-              </button>
-              
-              {isElasticGroupOpen && (
-                <div className="flex flex-col gap-1 pl-1 border-l border-border/50 ml-3">
-                  {[
-                    { id: 'mcp', label: 'Elastic MCP Hub', icon: Terminal, desc: 'Model Context Protocol console to directly interact with Elasticsearch indices.', devOnly: true },
-                    { id: 'elser-search', label: 'ELSER Semantic Search', icon: Sparkles, desc: 'Perform semantic search using Elastic Learned Sparse EncodeR models.' },
-                    { id: 'apm-dashboard', label: 'Elastic APM Tracing', icon: Gauge, desc: 'Monitor end-to-end API latency and distributed traces.' },
-                    { id: 'anomaly-detection', label: 'Anomaly Detection', icon: TrendingDown, desc: 'Unsupervised ML jobs alerting on unusual ticket volume or sentiment drops.' },
-                    { id: 'hybrid-search', label: 'Hybrid Search (RRF)', icon: GitMerge, desc: 'Combine keyword and vector search using Reciprocal Rank Fusion.' },
-                    { id: 'emerging-trends', label: 'Emerging Trends', icon: TrendingUp, desc: 'Discover unknown churn drivers via Significant Terms aggregation.' },
-                    { id: 'agent-logs', label: 'Agent Observability', icon: TerminalSquare, desc: 'Live stream of thought logs from GCP agents executing MCP tools.', devOnly: true },
-                    { id: 'dls-simulator', label: 'DLS Access Control', icon: Lock, desc: 'Simulate Document-Level Security filtering by user region.' },
-                    { id: 'ilm-tiering', label: 'ILM Data Tiering', icon: Database, desc: 'Visualize Index Lifecycle Management (Hot, Warm, Cold nodes).' },
-                    { id: 'vector-search', label: 'Vector Similarity', icon: Hexagon, desc: 'Generate dense vectors and find nearest neighbors via kNN.' },
-                    { id: 'cross-cluster', label: 'Cross-Cluster Search', icon: Globe, desc: 'Run federated searches across North America and Europe clusters.' },
-                    { id: 'raw-data', label: 'Raw Data Explorer', icon: Database, desc: 'Direct view into the Elasticsearch indices powering the Blueberry AI features.', devOnly: true }
-                  ].filter(item => !item.devOnly || devMode).map(item => {
-                    const Icon = item.icon;
-                    const isActive = activeView === item.id;
-                    
-                    const buttonContent = (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          if (!(item as any).href) {
-                            setActiveView(item.id as any);
-                            setIsMobileSidebarOpen(false);
-                          }
-                        }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded text-xs transition-all duration-150 cursor-pointer ${
-                          isActive 
-                            ? 'bg-blue-500/10 text-foreground font-semibold shadow-sm' 
-                            : 'text-muted-foreground hover:text-foreground hover:bg-card/40'
-                        }`}
-                      >
-                        <Icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? 'text-blue-500' : 'text-muted-foreground'}`} />
-                        <span className="flex-grow text-left">{item.label}</span>
-                      </button>
-                    );
-
-                    return (
-                      <Tooltip key={item.id} content={item.desc} position="right" className="w-full">
-                        {(item as any).href ? (
-                          <Link href={(item as any).href}>
-                            {buttonContent}
-                          </Link>
-                        ) : buttonContent}
-                      </Tooltip>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+          <nav className="hidden md:flex gap-6 text-sm font-medium text-muted-foreground">
+            <a href="#problem" className="hover:text-foreground transition-colors">The Problem</a>
+            <a href="#solution" className="hover:text-foreground transition-colors">Our Solution</a>
+            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           </nav>
-        </div>
-
-        {/* Sidebar Footer with system statuses */}
-        <div className="p-4 border-t border-border bg-background flex flex-col gap-3">
-          <div className="flex gap-2 w-full">
-            <button
-              onClick={handleResetDemoDatabase}
-              disabled={resetting}
-              className="flex-grow py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 rounded text-[10px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/demo" 
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
             >
-              <Database className="h-3 w-3" />
-              {resetting ? 'Resetting...' : 'Reset Sample Data'}
-            </button>
-            <div className="shrink-0">
-              <ThemeToggle />
-            </div>
-          </div>
-          
-          <div className="border border-border rounded-lg overflow-hidden bg-card/50">
-            <button 
-              onClick={() => setIsStatusOpen(!isStatusOpen)}
-              className="w-full flex items-center justify-between p-2 text-[10px] font-semibold text-muted-foreground hover:bg-muted/50 cursor-pointer"
-            >
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block animate-pulse"></span>
-                System Status
-              </span>
-              <span className="text-[8px]">{isStatusOpen ? '▼' : '▶'}</span>
-            </button>
-            
-            {isStatusOpen && (
-              <div className="p-2 border-t border-border flex flex-col gap-2 text-[9px] text-muted-foreground bg-background">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Elasticsearch</span>
-                  <span className="text-emerald-400 font-mono">v9.5.0</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Dialogflow CX</span>
-                  <span className="text-emerald-400 font-mono">Connected</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">GCP Agent Builder</span>
-                  <span className="text-emerald-400 font-mono">Ready</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Developer Mode</span>
-                  <div 
-                    onClick={() => setDevMode(!devMode)}
-                    className={`w-6 h-3.5 rounded-full cursor-pointer relative transition-colors ${devMode ? 'bg-blue-500' : 'bg-muted-foreground/30'}`}
-                  >
-                    <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all ${devMode ? 'left-[11px]' : 'left-0.5'}`}></div>
-                  </div>
-                </div>
-              </div>
-            )}
+              Try a Demo <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Backdrop overlay for mobile sidebar */}
-      {isMobileSidebarOpen && (
-        <div 
-          onClick={() => setIsMobileSidebarOpen(false)}
-          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-xs"
-        />
-      )}
-
-      {/* Main Content Pane */}
-      <div className="flex-grow flex flex-col min-w-0 h-screen overflow-y-auto">
-        {/* Top Header Bar */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/20 backdrop-blur-md sticky top-0 z-30 min-h-[64px]">
-          <div className="flex items-center gap-3">
-            {/* Mobile Hamburger menu */}
-            <button 
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="md:hidden text-muted-foreground hover:text-foreground cursor-pointer p-1.5 rounded hover:bg-card transition"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider font-heading">
-              {activeView === 'radar' && 'Retention Radar'}
-              {activeView === 'pain-points' && 'Product Pain-Point Clusters'}
-              {activeView === 'simulator' && 'CSM Ingestion Simulator'}
-              {activeView === 'copilot' && 'Blueberry Chat Copilot'}
-              {activeView === 'mcp' && 'Model Context Protocol'}
-            </h2>
-          </div>
-        </header>
-
-        {/* View Layout Panels */}
-        <main className="flex-grow p-6 md:p-8 max-w-[1600px] w-full mx-auto flex flex-col gap-8">
+      <main>
+        {/* Hero Section */}
+        <section className="pt-32 pb-20 px-6 max-w-7xl mx-auto text-center relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] -z-10 pointer-events-none" />
           
-          {/* VIEW 1: RETENTION RADAR OVERVIEW */}
-          {activeView === 'radar' && (
-            <RiskRadar 
-              filteredAccounts={filteredAccounts}
-              loading={loading}
-              searchTerm={searchTerm}
-              searchMode={searchMode}
-              semanticMatches={semanticMatches}
-              setSearchTerm={setSearchTerm}
-              setSearchMode={setSearchMode}
-              setSemanticMatches={setSemanticMatches}
-            />
-          )}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-8 animate-fade-in">
+            <Zap className="h-3.5 w-3.5" />
+            Built for the Elastic Hackathon
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight animate-fade-in" style={{ animationDelay: '100ms' }}>
+            Proactive Customer <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+              Success Intelligence
+            </span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed animate-fade-in" style={{ animationDelay: '200ms' }}>
+            Blueberry AI aggregates fragmented customer signals to surface churn risks instantly using advanced ES|QL and an autonomous agent—without the manual data entry.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
+            <Link 
+              href="/demo" 
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg transition-all hover:scale-105 flex items-center gap-2 shadow-lg shadow-blue-600/20"
+            >
+              Try a Live Demo <ArrowRight className="h-5 w-5" />
+            </Link>
+            <a 
+              href="https://github.com/23140-ITP/blueberry-ai" 
+              target="_blank"
+              rel="noreferrer"
+              className="px-8 py-4 bg-card border border-border hover:bg-muted text-foreground rounded-xl font-bold text-lg transition-all flex items-center gap-2"
+            >
+              View on GitHub
+            </a>
+          </div>
 
-          {/* VIEW 2: PRODUCT PAIN POINT CLUSTERS */}
-          {activeView === 'raw-data' && (
-            <RawDataExplorer />
-          )}
-
-          {activeView === 'pain-points' && (
-            <div className="max-w-4xl mx-auto w-full flex flex-col gap-6 animate-fade-in">
-              <div className="bg-background border border-border rounded-xl p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4 pb-4 border-b border-border">
-                  <div>
-                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                      <Layers className="h-4 w-4 text-blue-400" />
-                      <span>Product Pain-Point Clusters</span>
-                      <Tooltip content="Clustered dynamically using Elasticsearch k-Nearest Neighbor (kNN) vector similarity on recent support tickets." position="top">
-                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                      </Tooltip>
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">Financial impact computed by aggregating support tickets into semantic categories.</p>
+          {/* Hero Visual Mockup */}
+          <div className="mt-20 relative mx-auto max-w-5xl animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+            <div className="rounded-xl overflow-hidden border border-border shadow-2xl bg-zinc-950 p-2">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800 bg-zinc-900/50 rounded-t-lg">
+                <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <div className="w-3 h-3 rounded-full bg-green-500/80" />
+              </div>
+              <div className="p-8 bg-zinc-950 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                <div className="col-span-2 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <ShieldAlert className="h-6 w-6 text-red-400" />
+                    <h3 className="text-xl font-bold text-zinc-100">ACC-002 • Critical Churn Risk Detected</h3>
                   </div>
-                  <button
-                    onClick={() => setShowArrAnalysis(true)}
-                    className="text-[10px] bg-blue-600 hover:bg-blue-700 text-foreground border border-blue-500 px-4 py-2 rounded-full font-bold uppercase self-start sm:self-auto transition cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(37,99,235,0.3)]"
-                  >
-                    <Activity className="h-3.5 w-3.5" />
-                    ARR Impact Analysis
-                  </button>
+                  <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-xs text-zinc-400">
+                    <span className="text-blue-400">GET</span> _msearch<br/>
+                    {`{"index":"tickets"}`}<br/>
+                    {`{"query":{"bool":{"must":[{"match":{"account_id":"ACC-002"}},{"match":{"priority":"High"}}]}}}`}<br/>
+                    <br/>
+                    <span className="text-emerald-400">// ES|QL Aggregation complete. Risk Score: 0.94</span>
+                  </div>
                 </div>
-
-                {painPoints.length === 0 ? (
-                  <div className="py-16 text-center flex flex-col items-center justify-center border border-dashed border-border rounded-xl bg-card/20 text-muted-foreground">
-                    <CheckCircle2 className="h-10 w-10 mb-4 text-emerald-500 opacity-60" />
-                    <h4 className="text-sm font-bold text-foreground mb-1">No Active Pain-Points</h4>
-                    <p className="text-xs max-w-sm">No significant product pain-point clusters have been detected in recent support tickets.</p>
+                <div className="p-5 rounded-lg bg-blue-900/10 border border-blue-500/20 flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
+                    <Bot className="h-4 w-4" /> Agent Action Executed
                   </div>
-                ) : (
-                  <div className="flex flex-col gap-6">
-                    {painPoints.map(cluster => {
-                      const isHigh = cluster.arrAtRisk >= 500000;
-                      const color = isHigh ? 'text-red-400' : 'text-amber-400';
-                      const progressColor = isHigh ? 'bg-red-500' : 'bg-amber-500';
-
-                      return (
-                        <div 
-                          key={cluster.id} 
-                          onClick={() => setSelectedCluster(cluster)}
-                          className="p-5 rounded-xl bg-card/30 border border-border hover:border-border flex flex-col gap-4 transition cursor-pointer"
-                        >
-                          <div className="flex justify-between items-start gap-4">
-                            <div>
-                              <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider group-hover:underline">
-                                {cluster.count} Open {cluster.count === 1 ? 'ticket' : 'tickets'} • View detailed analysis →
-                              </span>
-                              <h4 className="text-base font-semibold text-foreground mt-0.5">{cluster.category}</h4>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-[10px] text-muted-foreground uppercase block">
-                                <Tooltip content="Annual Recurring Revenue at risk of churning." position="top">
-                                  <span className="cursor-help border-b border-dashed border-muted-foreground/50 pb-0.5">ARR-at-Risk</span>
-                                </Tooltip>
-                              </span>
-                              <span className={`font-mono text-base font-bold ${color}`}>${cluster.arrAtRisk.toLocaleString()}</span>
-                            </div>
-                          </div>
-                          
-                          <p className="text-xs text-muted-foreground leading-relaxed">{cluster.description}</p>
-                          
-                          {/* Progress bar */}
-                          <div className="flex flex-col gap-1.5 mt-2">
-                            <Tooltip content={`ARR Impact: $${cluster.arrAtRisk.toLocaleString()} / $750,000 threshold`} position="top">
-                              <div className="w-full bg-card border border-border h-2.5 rounded-full overflow-hidden cursor-help">
-                                <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${Math.min(100, (cluster.arrAtRisk / 750000) * 100)}%` }}></div>
-                              </div>
-                            </Tooltip>
-                            <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1">
-                              <span>Impact rating: {isHigh ? 'Urgent Priority' : 'Standard Priority'}</span>
-                              <span className="font-semibold text-muted-foreground">Affected accounts: {cluster.accounts.join(', ') || 'None'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Automatically retrieved context, computed mathematical risk via ES|QL, and generated an escalation payload for the CSM team.
+                  </p>
+                </div>
               </div>
             </div>
-          )}
+          </div>
+        </section>
 
-          {/* VIEW 3: EVENT SIMULATOR */}
-          {activeView === 'simulator' && (
-            <EventSimulator accounts={accounts} onSimulateComplete={fetchAccountsAndData} />
-          )}
+        {/* Problem Section */}
+        <section id="problem" className="py-24 bg-muted/30 border-y border-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Legacy CS platforms are static and fragmented.</h2>
+              <p className="text-muted-foreground text-lg max-w-2xl">The current way Customer Success Managers identify churn is broken.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="p-6 rounded-2xl bg-background border border-border shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20">
+                  <Database className="h-6 w-6 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Scattered Signals</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Crucial telemetry is fragmented across Zendesk support tickets, Salesforce CRM notes, and Gong call transcripts, making a unified timeline impossible.
+                </p>
+              </div>
+              <div className="p-6 rounded-2xl bg-background border border-border shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-6 border border-amber-500/20">
+                  <ShieldAlert className="h-6 w-6 text-amber-500" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Hidden Indicators</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  CSMs miss critical churn indicators hiding in unstructured text or deeply nested semantic context until the customer has already decided to leave.
+                </p>
+              </div>
+              <div className="p-6 rounded-2xl bg-background border border-border shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-6 border border-orange-500/20">
+                  <LineChart className="h-6 w-6 text-orange-500" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">Read-Only Platforms</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Current tools are strictly read-only, requiring immense manual intervention to map fragmented data and escalate issues to engineering or leadership.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-          {/* VIEW 4: BLUEBERRY COPILOT */}
-          {activeView === 'copilot' && (
-            <CopilotAction />
-          )}
-
-          {/* VIEW 5: MODEL CONTEXT PROTOCOL */}
-          {activeView === 'mcp' && (
-            <div className="bg-background border border-border rounded-xl p-6 md:p-8 flex flex-col gap-6 animate-fade-in shadow-sm">
+        {/* Solution Section */}
+        <section id="solution" className="py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div>
-                <h3 className="text-sm font-bold text-foreground mb-1 flex items-center gap-2">
-                  <span>Model Context Protocol (MCP) Server Hub</span>
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block"></span>
-                </h3>
-                <p className="text-xs text-muted-foreground max-w-3xl leading-relaxed">
-                  Blueberry AI implements a fully compliant MCP Server at <code className="text-[11px] text-blue-400 bg-card px-1.5 py-0.5 rounded border border-border font-mono">/api/mcp</code>.
-                  This interface allows external AI engines (such as Google Cloud Agent Builder) to query database indices, perform semantic lookups, and log customer health notes in real time.
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">An Autonomous, Context-Aware Copilot</h2>
+                <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+                  Blueberry AI isn't just a dashboard; it's an intelligent layer powered by the Elastic Model Context Protocol (MCP) and Google Agent Builder.
+                </p>
+                <ul className="space-y-6">
+                  <li className="flex gap-4">
+                    <div className="mt-1"><CheckCircle2 className="h-6 w-6 text-emerald-500" /></div>
+                    <div>
+                      <h4 className="font-bold text-foreground">Aggregates Signals</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Pulls fragmented customer data into one semantic timeline natively stored in Elasticsearch.</p>
+                    </div>
+                  </li>
+                  <li className="flex gap-4">
+                    <div className="mt-1"><CheckCircle2 className="h-6 w-6 text-emerald-500" /></div>
+                    <div>
+                      <h4 className="font-bold text-foreground">Dynamic ES|QL Risk Scoring</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Instantaneously computes mathematical churn-risk models by piping ticket volumes and sentiment directly through ES|QL.</p>
+                    </div>
+                  </li>
+                  <li className="flex gap-4">
+                    <div className="mt-1"><CheckCircle2 className="h-6 w-6 text-emerald-500" /></div>
+                    <div>
+                      <h4 className="font-bold text-foreground">Autonomous Escalation</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Reads contexts, reasons over risk, drafts Slack payloads, and writes events back into Elasticsearch.</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-card border border-border rounded-2xl p-8 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-32 bg-blue-500/5 rounded-full blur-[80px]" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">ES|QL Power in Action</h3>
+                <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-800 font-mono text-sm leading-loose overflow-x-auto text-zinc-300">
+                  <span className="text-blue-400">FROM</span> tickets <br/>
+                  <span className="text-purple-400">|</span> <span className="text-blue-400">WHERE</span> account_id == "ACC-002" <br/>
+                  &nbsp;&nbsp;<span className="text-blue-400">AND</span> status == "Open" <br/>
+                  <span className="text-purple-400">|</span> <span className="text-blue-400">STATS</span> count(ticket_id) <span className="text-blue-400">BY</span> priority <br/>
+                  <span className="text-purple-400">|</span> <span className="text-blue-400">EVAL</span> risk_weight = <span className="text-amber-300">case</span>(priority == "High", 3.0, 1.0)<br/>
+                  <br/>
+                  <span className="text-emerald-500">// Native execution slashes latency by 90%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features / How It Works */}
+        <section id="features" className="py-24 bg-muted/30 border-y border-border">
+          <div className="max-w-7xl mx-auto px-6 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-16">How Blueberry AI Works</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+              <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-emerald-500/0" />
+              
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full bg-card border-4 border-background flex items-center justify-center shadow-xl shadow-blue-900/20 mb-6">
+                  <span className="text-2xl font-black text-blue-500">1</span>
+                </div>
+                <h3 className="text-xl font-bold mb-3">Retrieve Context</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed px-4">
+                  The Google Agent Builder connects to our custom Elastic MCP bridge, semantically searching support tickets, transcripts, and notes.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start border-t border-border pt-6">
-                {/* Tool list */}
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Registered MCP Tools</h4>
-                  <div className="flex flex-col gap-3">
-                    {mcpTools.map(tool => (
-                      <div
-                        key={tool.name}
-                        onClick={() => {
-                          setSelectedMcpTool(tool);
-                          if (tool.name === 'getAccountContext' || tool.name === 'getAgentMemory' || tool.name === 'getDynamicRiskScore' || tool.name === 'escalateAccount') {
-                            setMcpArgs(JSON.stringify({ accountId: 'ACC-002' }, null, 2));
-                          } else if (tool.name === 'writeHealthNote') {
-                            setMcpArgs(JSON.stringify({ accountId: 'ACC-002', noteText: 'CSM scheduled a follow-up review for Friday.', sentiment: 'Neutral' }, null, 2));
-                          } else if (tool.name === 'searchIssues') {
-                            setMcpArgs(JSON.stringify({ query: 'export crash', accountId: 'ACC-002' }, null, 2));
-                          } else if (tool.name === 'writeAgentMemory') {
-                            setMcpArgs(JSON.stringify({ accountId: 'ACC-002', content: 'Customer prefers morning calls.', category: 'preference' }, null, 2));
-                          } else if (tool.name === 'recommendRunbook') {
-                            setMcpArgs(JSON.stringify({ ticketId: 'TKT-101' }, null, 2));
-                          } else if (tool.name === 'simulateEvent') {
-                            setMcpArgs(JSON.stringify({ type: 'ticket', accountId: 'ACC-002', subject: 'Simulated Crash Ticket', description: 'Okta SSO timeout failures in production.', priority: 'Urgent' }, null, 2));
-                          } else {
-                            setMcpArgs('{}');
-                          }
-                        }}
-                        className={`p-3.5 rounded-lg border transition cursor-pointer ${
-                          selectedMcpTool?.name === tool.name 
-                            ? 'border-blue-500 bg-blue-950/10' 
-                            : 'border-border bg-background hover:bg-card/40'
-                        }`}
-                      >
-                        <div className="flex justify-between items-center mb-1.5">
-                          <strong className={`text-xs font-bold ${
-                            selectedMcpTool?.name === tool.name ? 'text-blue-400' : 'text-foreground'
-                          }`}>
-                            {tool.name}
-                          </strong>
-                          <span className="text-[9px] bg-card border border-border text-muted-foreground px-1.5 py-0.5 rounded">
-                            tool
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
-                          {tool.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full bg-card border-4 border-background flex items-center justify-center shadow-xl shadow-blue-900/20 mb-6">
+                  <span className="text-2xl font-black text-blue-500">2</span>
                 </div>
+                <h3 className="text-xl font-bold mb-3">Compute Risk</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed px-4">
+                  Raw metrics are piped directly through the Elasticsearch query engine using ES|QL to compile an instantaneous mathematical risk score.
+                </p>
+              </div>
 
-                {/* Run Tool Console */}
-                <div>
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">MCP Execution Console</h4>
-                  {selectedMcpTool ? (
-                    <div className="bg-background border border-border rounded-xl p-5 flex flex-col gap-4">
-                      <div>
-                        <span className="text-[10px] text-muted-foreground uppercase">Executing:</span>
-                        <strong className="block text-xs font-bold text-blue-450 mt-0.5">{selectedMcpTool.name}</strong>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] text-muted-foreground uppercase block mb-1.5">Arguments JSON:</span>
-                        <textarea
-                          value={mcpArgs}
-                          onChange={(e) => setMcpArgs(e.target.value)}
-                          className="w-full h-24 p-3 bg-card/60 border border-border rounded-lg text-emerald-450 font-mono text-[11px] outline-none"
-                        />
-                      </div>
-
-                      <button
-                        onClick={runMcpTool}
-                        disabled={mcpRunning}
-                        className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-foreground rounded-md text-xs font-semibold cursor-pointer disabled:opacity-60 transition"
-                      >
-                        {mcpRunning ? 'Running tool...' : '🔌 Call Tool'}
-                      </button>
-
-                      {mcpResult && (
-                        <div>
-                          <span className="text-[10px] text-muted-foreground uppercase block mb-1.5">Response Content:</span>
-                          <pre className="w-full max-h-96 overflow-y-auto break-all whitespace-pre-wrap p-3.5 bg-card/80 border border-border rounded-lg text-foreground font-mono text-[11px] leading-relaxed">
-                            {mcpResult}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="bg-background border border-border rounded-xl p-8 text-center text-xs text-muted-foreground">
-                      Select a tool from the list to execute in the console.
-                    </div>
-                  )}
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full bg-card border-4 border-background flex items-center justify-center shadow-xl shadow-emerald-900/20 mb-6">
+                  <span className="text-2xl font-black text-emerald-500">3</span>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* VIEW 6: ELSER SEARCH */}
-          {activeView === 'elser-search' && (
-            <ElserSearch />
-          )}
-
-          {/* VIEW 7: APM DASHBOARD */}
-          {activeView === 'apm-dashboard' && (
-            <ApmDashboard />
-          )}
-
-          {/* VIEW 8: ANOMALY DETECTION */}
-          {activeView === 'anomaly-detection' && (
-            <AnomalyDetection />
-          )}
-
-          {/* VIEW 9: HYBRID SEARCH */}
-          {activeView === 'hybrid-search' && (
-            <HybridSearch />
-          )}
-
-          {/* VIEW 10: EMERGING TRENDS */}
-          {activeView === 'emerging-trends' && (
-            <EmergingTrends />
-          )}
-
-          {/* VIEW 11: AGENT LOGS */}
-          {activeView === 'agent-logs' && (
-            <AgentLogs />
-          )}
-
-          {/* VIEW 12: DLS SIMULATOR */}
-          {activeView === 'dls-simulator' && (
-            <DlsSimulator />
-          )}
-
-          {/* VIEW 13: ILM TIERING */}
-          {activeView === 'ilm-tiering' && (
-            <IlmTiering />
-          )}
-
-          {/* VIEW 14: VECTOR SEARCH */}
-          {activeView === 'vector-search' && (
-            <VectorSearch />
-          )}
-
-          {/* VIEW 15: CROSS-CLUSTER */}
-          {activeView === 'cross-cluster' && (
-            <CrossCluster />
-          )}
-        </main>
-      </div>
-
-      {/* MODAL 1: PAIN-POINT CLUSTER DRILL-DOWN MODAL (Bug 10 / Suggestion 3) */}
-      {selectedCluster && (
-        <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[999] backdrop-blur-xs">
-          <div className="bg-background border border-border w-[90%] max-w-[700px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center border-b border-border pb-3">
-              <div>
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Pain-Point Cluster Details</span>
-                <h3 className="text-base font-bold text-foreground">{selectedCluster.category}</h3>
-              </div>
-              <button 
-                onClick={() => setSelectedCluster(null)}
-                className="px-2.5 py-1 text-xs rounded border border-border bg-card text-muted-foreground hover:text-zinc-250 cursor-pointer transition"
-              >
-                Close
-              </button>
-            </div>
-
-            <p className="text-xs text-muted-foreground leading-relaxed">{selectedCluster.description}</p>
-            
-            <div className="flex justify-between items-center text-xs border-y border-border/80 py-3 mt-1 bg-card/20 px-3 rounded-lg">
-              <div>
-                <span className="text-[10px] text-muted-foreground block uppercase">Total ARR affected</span>
-                <strong className="text-sm text-red-400 font-bold font-mono">${selectedCluster.arrAtRisk.toLocaleString()}</strong>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-muted-foreground block uppercase">Active Tickets</span>
-                <strong className="text-sm text-foreground font-bold font-mono">{selectedCluster.count} open</strong>
-              </div>
-            </div>
-
-            <div className="mt-2">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3.5">Associated Support Tickets</h4>
-              <div className="flex flex-col gap-3">
-                {selectedCluster.tickets && selectedCluster.tickets.length > 0 ? (
-                  selectedCluster.tickets.map((t: any) => (
-                    <div key={t.ticket_id} className="p-3.5 rounded-lg border border-border bg-background flex flex-col gap-2.5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[11px] font-semibold text-zinc-150">
-                          {t.ticket_id} • {t.subject}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase flex items-center gap-1 ${
-                          t.priority === 'Urgent' ? 'bg-red-950/30 text-red-400 border border-red-900/40' : 'bg-card border border-border text-muted-foreground'
-                        }`}>
-                          {t.priority === 'Urgent' && <AlertTriangle className="h-3 w-3" />}
-                          {t.priority}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                        <span>Affected Client: <strong className="text-muted-foreground">{t.companyName}</strong></span>
-                        <Link href={`/account/${t.account_id}`}>
-                          <span className="text-blue-400 hover:underline flex items-center gap-1 cursor-pointer">
-                            View Account Details
-                            <ArrowRight className="h-3 w-3" />
-                          </span>
-                        </Link>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <span className="text-xs text-muted-foreground text-center py-4">No open tickets listed.</span>
-                )}
+                <h3 className="text-xl font-bold mb-3">Execute Escalation</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed px-4">
+                  The agent doesn't just read—it writes. It automatically generates an escalation payload and logs the memory back into Elasticsearch.
+                </p>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </section>
 
-      {/* MODAL 2: ARR IMPACT ANALYSIS TABLE MODAL (Bug 9) */}
-      {showArrAnalysis && (
-        <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[999] backdrop-blur-xs">
-          <div className="bg-background border border-border w-[90%] max-w-[800px] max-h-[80vh] overflow-y-auto p-6 md:p-8 rounded-xl flex flex-col gap-4 shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center border-b border-border pb-3">
-              <div>
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">ARR Impact Analysis</span>
-                <h3 className="text-base font-bold text-foreground">Customer Portfolio Risk Table</h3>
-              </div>
-              <button 
-                onClick={() => setShowArrAnalysis(false)}
-                className="px-2.5 py-1 text-xs rounded border border-border bg-card text-muted-foreground hover:text-zinc-250 cursor-pointer transition"
-              >
-                Close
-              </button>
+        {/* Comparison Section */}
+        <section className="py-24">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-3xl font-bold tracking-tight mb-8">Why not Gainsight or ChurnZero?</h2>
+            <div className="p-8 rounded-2xl bg-card border border-border shadow-lg text-left">
+              <p className="text-muted-foreground leading-relaxed mb-6">
+                While traditional platforms rely on static rule engines and are strictly <strong>read-only</strong>, Blueberry AI flips the paradigm. We utilize the Model Context Protocol (MCP) to provide an autonomous agent with <strong>read-and-write</strong> capabilities. 
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                We don't just show you a dashboard of problems; our Copilot actively searches historical resolutions via ELSER semantic search, calculates the exact impact, and acts on your behalf to retain revenue.
+              </p>
             </div>
+          </div>
+        </section>
 
-            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-              A detailed breakdown of all accounts, displaying their current revenue and assessed risk of churning.
+        {/* Final CTA */}
+        <section className="py-32 bg-blue-600 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-600/50 to-blue-900/80" />
+          <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">Stop guessing about churn.</h2>
+            <p className="text-blue-100 text-xl mb-10 max-w-2xl mx-auto">
+              Experience the power of Elastic Serverless, ES|QL, and Google Agent Builder today.
             </p>
+            <Link 
+              href="/demo" 
+              className="inline-flex px-10 py-5 bg-white text-blue-900 hover:bg-zinc-100 rounded-xl font-bold text-xl transition-all hover:scale-105 items-center gap-3 shadow-2xl"
+            >
+              Try the Live Demo <ArrowRight className="h-6 w-6" />
+            </Link>
+          </div>
+        </section>
+      </main>
 
-            <div className="overflow-x-auto border border-border rounded-xl">
-              <table className="w-full text-xs text-left text-muted-foreground">
-                <thead className="text-[10px] uppercase bg-background text-muted-foreground border-b border-border">
-                  <tr>
-                    <th scope="col" className="px-4 py-3">Account ID</th>
-                    <th scope="col" className="px-4 py-3">Company Name</th>
-                    <th scope="col" className="px-4 py-3">Industry</th>
-                    <th scope="col" className="px-4 py-3 text-right">
-                      <Tooltip content="Annual Recurring Revenue: Total contract value currently at risk." position="top">
-                        <span className="border-b border-dashed border-muted-foreground/50 cursor-help pb-0.5">ARR</span>
-                      </Tooltip>
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-right">
-                      <Tooltip content="Calculated dynamically via Elasticsearch ML by evaluating support ticket sentiment, usage drops, and recent billing events. Score > 0.75 is Critical." position="top">
-                        <span className="border-b border-dashed border-muted-foreground/50 cursor-help pb-0.5">Risk Score</span>
-                      </Tooltip>
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-900">
-                  {accounts.map(acc => {
-                    const isCrit = acc.risk_score >= 0.75;
-                    const isWarn = acc.risk_score >= 0.25 && acc.risk_score < 0.75;
-                    return (
-                      <tr key={acc.account_id} className="hover:bg-card/30">
-                        <td className="px-4 py-3.5 font-mono text-muted-foreground">{acc.account_id}</td>
-                        <td className="px-4 py-3.5 font-bold text-foreground hover:text-blue-400 transition cursor-pointer">
-                          <Link href={`/account/${acc.account_id}`}>{acc.company_name}</Link>
-                        </td>
-                        <td className="px-4 py-3.5 text-muted-foreground">{acc.industry}</td>
-                        <td className="px-4 py-3.5 text-right font-mono">${acc.arr.toLocaleString()}</td>
-                        <td className={`px-4 py-3.5 text-right font-bold font-mono ${isCrit ? 'text-red-400' : isWarn ? 'text-amber-400' : 'text-emerald-400'}`}>
-                          {Math.round(acc.risk_score * 100)}%
-                        </td>
-                        <td className="px-4 py-3.5 text-center">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                            isCrit ? 'bg-red-950/30 text-red-400 border border-red-900/50' :
-                            isWarn ? 'bg-amber-950/30 text-amber-400 border border-amber-900/50' :
-                            'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50'
-                          }`}>
-                            {isCrit ? 'Critical' : isWarn ? 'At Risk' : 'Healthy'}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+      {/* Footer */}
+      <footer className="py-12 bg-background border-t border-border">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-blue-500" />
+            <span className="font-bold text-foreground">Blueberry AI</span>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Built for the <a href="https://devpost.com" className="text-foreground hover:underline">Elastic AI Hackathon</a> • Open Source under MIT
+          </div>
+          <div className="flex gap-4 text-sm font-medium">
+            <a href="https://github.com/23140-ITP/blueberry-ai" className="hover:text-foreground transition-colors">GitHub Repository</a>
           </div>
         </div>
-      )}
+      </footer>
     </div>
   );
 }
